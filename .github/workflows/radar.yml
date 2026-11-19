@@ -6,7 +6,8 @@ on:
   workflow_dispatch:        # "Run workflow" button in the Actions tab
   push:
     branches: [main]
-    paths: ["site/**", "!site/data/**"]   # redeploy when the site's code changes
+    # Redeploy committed data when code changes (doesn't rerun the radar).
+    paths: ["site/**", "radar.py", ".github/workflows/**", "!site/data/**"]
 
 permissions:
   contents: write   # commit each day's results to site/data
