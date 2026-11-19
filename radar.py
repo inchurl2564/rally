@@ -446,9 +446,9 @@ def annotate(w: dict) -> None:
             t["lead_days"] = lead
             near.append(t)
         elif t["type"] in ("derivative", "same-creator") and -45 <= lead < -3:
-            # attention building ahead of an upcoming release
+            # attention building ahead of a release
             t["lead_days"] = lead
-            t["text"] += " (upcoming)"
+            t["text"] += " (upcoming)" if d > w["window_end"] else " (attention rose before release)"
             near.append(t)
     # anniversaries (only if we know the release day, precision 11 = day)
     r = w["release"]
@@ -816,7 +816,9 @@ def main():
         since = min(r["spike_start"] for r in results) - dt.timedelta(days=50)
         find_triggers(results, since)
         for r in results:
+            r["window_end"] = end
             annotate(r)
+            del r["window_end"]
 
     log("      sanity checks (seasonality, automated traffic)")
     with cf.ThreadPoolExecutor(max_workers=2) as ex:
