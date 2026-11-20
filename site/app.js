@@ -1172,28 +1172,39 @@ function comingPage() {
     h("td", {}, h("b", {}, plain(a.label)), h("div", { class: "small muted" }, `${a.kind}, ${a.release.slice(0, 4)}`)),
     h("td", { class: "num" }, `${a.years}th`),
     h("td", { class: "num" }, a.audience ? fmt(a.audience) : "–")));
-  // Two lists side by side on wide screens (stacked on phones), each showing the next 10 with a link for the rest.
+  // Each list shows the next 12, with a link that opens the rest and closes it again.
   return [
     h("p", { class: "intro" }, "What's about to bring old favorites back over the next six months: sequels, remakes and adaptations on the way, plus the big birthdays. We check later whether we were right."),
-    h("div", { class: "cols2" },
-      h("section", {},
-        sectionHead("Due for a comeback", "A sequel, remake or adaptation is on the way. Release dates can slip."),
-        (cu.derivatives || []).length ? h("div", { class: "rail" }, pictured(cu.derivatives).slice(0, 8).map(derivMini)) : null,
-        table(["The original", "What's bringing it back", "Due"], dRows, 10, "releases")),
-      h("section", {},
-        sectionHead("Big anniversaries", "Round-number birthdays, in date order."),
-        (cu.anniversaries || []).length ? h("div", { class: "rail" }, bigAnniversaries(cu.anniversaries, 8).map(annMini)) : null,
-        table(["Date", "Work", "Turns", "Usual views a day"], aRows, 10, "anniversaries"))),
+    sectionHead("Due for a comeback", "A sequel, remake or adaptation is on the way. Release dates can slip."),
+    (cu.derivatives || []).length ? h("div", { class: "rail" }, pictured(cu.derivatives).slice(0, 12).map(derivMini)) : null,
+    table(["The original", "What's bringing it back", "Due"], dRows, 12, "releases"),
+    sectionHead("Big anniversaries", "Round-number birthdays, in date order."),
+    (cu.anniversaries || []).length ? h("div", { class: "rail" }, bigAnniversaries(cu.anniversaries, 12).map(annMini)) : null,
+    table(["Date", "Work", "Turns", "Views on a normal day"], aRows, 12, "anniversaries"),
   ].filter(Boolean);
 }
-// `cap` shows the first rows with a "Show all" link that extends the list in place.
+// `cap` shows the first rows, with a link that shows the rest and one that folds them away again.
 function table(head, rows, cap = Infinity, noun = "rows") {
   if (!rows.length) return h("p", { class: "muted" }, "Nothing here yet. This fills in once the daily run has built its watchlist.");
   if (rows.length > cap) {
-    const t = table(head, rows.slice(0, cap));
-    const more = h("button", { type: "button", class: "btn ghost show-all" }, `Show all ${rows.length} ${noun}`);
-    more.addEventListener("click", () => { t.replaceWith(table(head, rows)); more.remove(); });
-    return h("div", {}, t, more);
+    const full = table(head, rows);
+    const extra = rows.slice(cap);
+    const box = h("div", {}, full);
+    const toggle = h("button", { type: "button", class: "btn ghost show-all", "aria-expanded": "false" });
+    const set = (open) => {
+      extra.forEach((tr) => { tr.hidden = !open; });
+      toggle.setAttribute("aria-expanded", String(open));
+      toggle.textContent = open ? `Show fewer ${noun}` : `Show all ${rows.length} ${noun}`;
+    };
+    toggle.addEventListener("click", () => {
+      const open = toggle.getAttribute("aria-expanded") !== "true";
+      set(open);
+      // Folding a long list back up keeps the reader at the list, not far below it.
+      if (!open) box.scrollIntoView({ block: "nearest", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+    });
+    set(false);
+    box.append(toggle);
+    return box;
   }
   // A heading lines up with its column: numeric columns (every cell .num) get right-aligned headings.
   const numeric = head.map((_, i) => rows.length && rows.every((tr) => tr.children[i] && tr.children[i].classList.contains("num")));
