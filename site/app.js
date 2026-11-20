@@ -389,7 +389,7 @@ const live = () => state.data.results.filter((r) => !FILTERED.has(r.verdict)).so
 
 // Today's sections wear the color of their reason, matching the chart and the story labels.
 const SECTION_COLOR = { "In the news": "var(--s1)", "New releases": "var(--s2)", "Unexplained": "var(--s3)",
-  "In memoriam": "var(--s4)", "Coming up": "var(--s5)" };
+  "In memoriam": "var(--s4)", "Coming up": "var(--s5)", "Linked by one person": "var(--s3)", "Open cases": "var(--s3)" };
 function sectionHead(title, sub, moreLabel, moreView) {
   return h("div", { class: "section-head", style: SECTION_COLOR[title] ? `--sec:${SECTION_COLOR[title]}` : null },
     h("div", {}, h("h2", {}, title), sub ? h("p", {}, sub) : null),
@@ -840,19 +840,26 @@ function annMini(a) {
 }
 
 // ---------- Mysteries ----------
+// On a page that is all one reason, the reason label on each card would only repeat the page title.
+const noKicker = (el) => { el.querySelector(".kicker")?.remove(); return el; };
 function mysteriesPage() {
   // Only what we can't explain: no named cause, no likely cause, no explained group.
   const threads = (state.data.common_threads || []).filter((t) => !threadExplained(t));
   const inThreads = new Set(threads.flatMap((t) => t.works.map((w) => w.qid)));
   const L = live().filter((r) => reasonOf(r).key === "unexplained" && !inThreads.has(r.qid))
     .sort((a, b) => b.spike_start.localeCompare(a.spike_start) || b.score - a.score);
+  const groups = threads.map((t) => {
+    const ws = t.works.map((w) => state.byQid[w.qid]).filter(Boolean).sort((a, b) => b.score - a.score);
+    return ws.length >= 2 ? { works: ws, story: threadStory(t), sources: () => threadSources(t) } : null;
+  }).filter(Boolean).sort((a, b) => b.works[0].score - a.works[0].score);
   return [
     h("p", { class: "intro" }, "Old favorites that are suddenly back, and we can't tell why yet. Know why? Tell us."),
-    threads.length ? sectionHead("Linked by one person", "Several titles with the same person, all rising at the same time, for no reason we can find.") : null,
-    threads.length ? h("div", {}, threads.map(threadFeature)) : null,
-    sectionHead("Open cases", "Newest first."),
     scoreKey(),
-    h("div", { class: "grid" }, L.map(storyCard)),
+    // Both sections use the same cards in the same grid as the home page.
+    groups.length ? sectionHead("Linked by one person", "Several titles with the same person, all rising at the same time, for no reason we can find.") : null,
+    groups.length ? h("div", { class: "grid", style: "--sec:var(--s3)" }, groups.map(groupStoryCard).map(noKicker)) : null,
+    sectionHead("Open cases", "Newest first."),
+    h("div", { class: "grid", style: "--sec:var(--s3)" }, L.map(storyCard).map(noKicker)),
   ].filter(Boolean);
 }
 
