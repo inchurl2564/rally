@@ -384,8 +384,11 @@ function render() {
 
 const live = () => state.data.results.filter((r) => !FILTERED.has(r.verdict)).sort((a, b) => b.score - a.score);
 
+// Today's sections wear the color of their reason, matching the chart and the story labels.
+const SECTION_COLOR = { "In the news": "var(--s1)", "New releases": "var(--s2)", "Unexplained": "var(--s3)",
+  "In memoriam": "var(--s4)", "Coming up": "var(--s5)" };
 function sectionHead(title, sub, moreLabel, moreView) {
-  return h("div", { class: "section-head" },
+  return h("div", { class: "section-head", style: SECTION_COLOR[title] ? `--sec:${SECTION_COLOR[title]}` : null },
     h("div", {}, h("h2", {}, title), sub ? h("p", {}, sub) : null),
     moreView ? h("button", { type: "button", class: "more", onclick: () => goto(moreView) }, `${moreLabel} →`) : null);
 }
