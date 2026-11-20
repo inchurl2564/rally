@@ -274,7 +274,7 @@ const VIEWS = {
   mysteries: { label: "Unexplained", page: "mysteries" },
   coming: { label: "Coming up", page: "coming" },
   accuracy: { label: "Track record", page: "accuracy" },
-  alerts: { label: "Alerts", page: "alerts" },
+  about: { label: "About us", page: "about" },
   // professional views
   journalists: { pro: true, label: "Journalists",
     intro: "Story leads: big comebacks nobody has explained, works that rose together around one person, and causes suggested by news and Wikipedia edits.",
@@ -317,7 +317,8 @@ async function init() {
   sel.value = first;
   sel.addEventListener("change", () => loadRun(sel.value));
   const tab = params.get("tab");
-  state.view = VIEWS[tab] ? tab : tab === "overview" ? "today" : "today";
+  // Old links: ?tab=alerts now opens About us (where the feeds moved).
+  state.view = VIEWS[tab] ? tab : tab === "alerts" ? "about" : "today";
   renderTabs();
   await loadRun(first);
 }
@@ -373,7 +374,7 @@ function applyPreset() {
 function render() {
   if (!state.data) return;
   const v = VIEWS[state.view];
-  const page = { today: todayPage, mysteries: mysteriesPage, coming: comingPage, accuracy: accuracyPage, alerts: alertsPage }[v.page];
+  const page = { today: todayPage, mysteries: mysteriesPage, coming: comingPage, accuracy: accuracyPage, about: aboutPage }[v.page];
   $("view").replaceChildren(...(page ? page() : proPage(v)));
   if ($("cards")) renderList();
   const { meta } = state.data, health = meta.health || {};
@@ -1040,7 +1041,7 @@ function panel(name) {
 function feedStrip(names) {
   return h("p", { class: "feedstrip" }, "Follow this view: ",
     names.map((n, i) => [i ? " · " : "", h("a", { href: `feeds/${n}.xml` }, `${n}.xml`)]),
-    " · ", h("button", { type: "button", class: "linkish", onclick: () => goto("alerts") }, "all feeds"));
+    " · ", h("button", { type: "button", class: "linkish", onclick: () => goto("about") }, "all feeds"));
 }
 
 // ---------- the full list ----------
@@ -1389,7 +1390,8 @@ function accuracyPage() {
 }
 
 // ---------- Alerts ----------
-function alertsPage() {
+// About us: the mission, how we work, and the feeds (formerly the Alerts page).
+function aboutPage() {
   const base = new URL(".", location.href).href;
   const feeds = [
     ["all", "Everything new: every comeback, plus what's coming up"],
@@ -1397,9 +1399,20 @@ function alertsPage() {
     ["coming-up", "Coming up: originals with a sequel, remake or adaptation on the way"],
     ["film-tv", "Film & TV"], ["music", "Songs, albums and musicals"], ["games", "Video games"], ["books", "Books, manga and comics"],
   ];
+  const go = (view, label) => h("button", { type: "button", class: "linkish", onclick: () => goto(view) }, label);
   return [
-    h("p", { class: "intro" }, "Get new comebacks in your feed reader, every morning."),
-    sectionHead("Feeds", "Copy a link into any feed reader: Feedly, Inoreader, NetNewsWire, Outlook, Slack and others."),
+    h("p", { class: "intro" }, "The Rallyback notices when the past comes back, and finds out why."),
+    sectionHead("Our mission", null),
+    h("div", { class: "about" },
+      h("p", { class: "mission" }, "Old favorites don't stop mattering when they leave the charts. Every day, a film, show, song, game or book from years ago suddenly finds a new audience, because of a sequel, a death, an anniversary, a meme or a story in the news. Our mission is to spot those comebacks as they happen, explain them honestly, and keep a permanent public record of what came back and why."),
+      h("h3", {}, "How we work"),
+      h("ul", { class: "about-list" },
+        h("li", {}, h("b", {}, "Every morning. "), "A new edition is built automatically each night from what millions of people read, play, stream and buy."),
+        h("li", {}, h("b", {}, "Open data only. "), "Wikipedia and Wikidata, public charts, Steam, Open Library, Project Gutenberg, news archives and public Bluesky posts. Every story links to its sources."),
+        h("li", {}, h("b", {}, "Honest about what we don't know. "), "When we can't find the reason, a comeback goes on the ", go("mysteries", "Unexplained"), " page, and we say so."),
+        h("li", {}, h("b", {}, "Keeping score in public. "), "We predict comebacks before they happen and check afterwards whether we were right. See the ", go("accuracy", "Track record"), "."),
+        h("li", {}, h("b", {}, "Readers help. "), "Know why something is back, or spotted a mistake? Use ", h("i", {}, "Know why? Tell us"), " on any story. Tips that check out become editor's notes."))),
+    sectionHead("Feeds", "Get new comebacks every morning. Copy a link into any feed reader: Feedly, Inoreader, NetNewsWire, Outlook, Slack and others."),
     h("ul", { class: "plain" }, feeds.map(([n, d]) => h("li", {},
       h("a", { href: `feeds/${n}.xml` }, h("b", {}, `${n}.xml`)),
       h("button", { type: "button", class: "copy", onclick: (e) => copy(`${base}feeds/${n}.xml`, e.target) }, "Copy link"),

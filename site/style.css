@@ -384,3 +384,9 @@ tr.card-row .story { max-width: 560px; margin: 0; }
 .contents a.toggle::after { content: " +"; color: var(--muted); }
 .contents a.toggle[aria-expanded="true"]::after { content: " –"; }
 .case-closed[hidden] { display: none; }
+/* About us */
+.about { max-width: 72ch; }
+.about .mission { font: 400 19px/1.55 var(--serif); margin: 0 0 8px; }
+.about h3 { font: 800 12px/1.2 var(--sans); letter-spacing: .08em; text-transform: uppercase; margin: 28px 0 8px; }
+.about-list { margin: 0; padding-left: 18px; }
+.about-list li { margin: 8px 0; line-height: 1.5; }
