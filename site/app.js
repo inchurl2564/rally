@@ -1404,7 +1404,7 @@ function aboutPage() {
     h("div", { class: "about" },
       h("p", { class: "intro" }, "We notice when the past comes back, and find out why."),
       h("h3", { class: "about-first" }, "Our mission"),
-      h("p", { class: "mission" }, "Old favorites don't stop mattering when they leave the charts. Every day, a film, show, song, game or book from years ago suddenly finds a new audience, because of a sequel, a death, an anniversary, a meme or a story in the news. Our mission is to spot those comebacks as they happen, explain them honestly, and keep a permanent public record of what came back and why."),
+      h("p", { class: "mission" }, "Old favorites don't stop mattering when they leave the charts. Every day, a film, show, song, game or book from years ago suddenly finds a new audience, because of a sequel, a death, an anniversary, a meme or a story in the news. The Rallyback's mission is to spot those comebacks as they happen, explain them honestly, and keep a permanent public record of what came back and why."),
       h("h3", {}, "How we work"),
       h("ul", { class: "about-list" },
         h("li", {}, h("b", {}, "Every morning. "), "A new edition is built automatically each night from what millions of people read, play, stream and buy."),
