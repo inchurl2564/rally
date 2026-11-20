@@ -156,6 +156,10 @@ function oldNames(works) {
   if (ws.length === 2) return `${nm(ws[0])} and ${nm(ws[1])}`;
   return `${nm(ws[0])}, ${nm(ws[1])} and ${ws.length - 2} more`;
 }
+// A group's headline jumps to the card of its biggest comeback (the first one it names).
+const topOf = (works) => [...works].sort((a, b) => (b.score || 0) - (a.score || 0))[0];
+const hedLink = (r, text) => (r ? link(r, text) : text);
+
 // The biggest old work in a group that has a photo, so groups are pictured by what came back.
 const topPictured = (works) => {
   const ws = [...works].sort((a, b) => (b.score || 0) - (a.score || 0));
@@ -550,7 +554,7 @@ function noteFeature(group) {
   const top = topPictured(works), note = group[0].editor_note;
   return withPic("article", "feature", top ? pic(null, top.image, top.label, 300, top.image_of) : null,
     h("div", {}, kickerEl(STREAM_TYPES[0]),
-      h("h3", { class: "hed" }, `${oldNames(works)} are back`),
+      h("h3", { class: "hed" }, hedLink(topOf(works), `${oldNames(works)} are back`)),
       h("p", { class: "dek" }, `${note.text} ${works.length} older titles connected to the story started rising together.`),
       workChips(works), sourcesBox([sourceLine(note)])));
 }
@@ -560,7 +564,8 @@ function sharedFeature(t) {
   return withPic("article", "feature",
     top ? pic(null, top.image, top.label, 300, top.image_of)
       : t.image ? pic(null, t.image, t.text.split(": ").pop().split(" (")[0], 300) : null,
-    h("div", {}, kickerEl(sst.reason, sst.kicker), h("h3", { class: "hed" }, sst.hed), h("p", { class: "dek" }, sst.dek),
+    h("div", {}, kickerEl(sst.reason, sst.kicker),
+      h("h3", { class: "hed" }, hedLink(topOf(t.works.map((q) => state.byQid[q]).filter(Boolean)), sst.hed)), h("p", { class: "dek" }, sst.dek),
       workChips(t.works.map((q) => state.byQid[q]).filter(Boolean))));
 }
 
@@ -635,7 +640,8 @@ function threadFeature(t) {
   const st = threadStory(t), top = topPictured(t.works.map((w) => state.byQid[w.qid]).filter(Boolean));
   return withPic("article", "feature", top ? pic(null, top.image, top.label, 300, top.image_of)
       : pic(null, t.image, t.name, 300, t.name),
-    h("div", {}, kickerEl(st.reason, st.kicker), h("h3", { class: "hed" }, st.hed), h("p", { class: "dek" }, st.dek),
+    h("div", {}, kickerEl(st.reason, st.kicker),
+      h("h3", { class: "hed" }, hedLink(topOf(t.works.map((w) => state.byQid[w.qid]).filter(Boolean)), st.hed)), h("p", { class: "dek" }, st.dek),
       workChips(t.works.map((w) => state.byQid[w.qid]).filter(Boolean)),
       sourcesBox(threadSources(t))));
 }
@@ -661,13 +667,13 @@ function derivMini(c) {
   return withPic("article", "mini", c.old_image ? pic(null, c.old_image, c.old_label, 480, c.old_image_of)
     : c.new_image ? pic(null, c.new_image, c.new_label, 480, c.new_label) : null,
     h("div", { class: "when" }, `Comeback due ${short(c.date)}`),
-    h("h3", { class: "hed" }, plain(c.old_label), ` (${c.old_release.slice(0, 4)})`),
+    h("h3", { class: "hed" }, hedLink(state.byQid[c.old], plain(c.old_label)), ` (${c.old_release.slice(0, 4)})`),
     h("p", { class: "dek" }, `${NEWREL[c.rel] ? NEWREL[c.rel][0].toUpperCase() + NEWREL[c.rel].slice(1) : "A new release"}, ${c.new_label}, arrives ${fmtDate(c.date)}.`));
 }
 function annMini(a) {
   return withPic("article", "mini", pic(null, a.image, a.label, 480, a.image_of),
     h("div", { class: "when" }, short(a.date)),
-    h("h3", { class: "hed" }, `${a.label} turns ${a.years}`),
+    h("h3", { class: "hed" }, hedLink(state.byQid[a.qid], `${a.label} turns ${a.years}`)),
     h("p", { class: "dek" }, `${noun(a.kind)[0].toUpperCase()}${noun(a.kind).slice(1)}, ${a.release.slice(0, 4)}${a.audience ? ` · ${fmt(a.audience)} views on a normal day` : ""}`));
 }
 
@@ -885,7 +891,8 @@ function card(r, open) {
     photo,
     h("div", {},
       kickerEl(st.reason, st.kicker),
-      h("h3", { class: "hed" }, st.hed),
+      h("h3", { class: "hed" }, h("a", { href: `#w-${r.qid}`, onclick: (e) => {
+        e.preventDefault(); const d = e.target.closest(".card").querySelector("details"); d.open = !d.open; } }, st.hed)),
       h("p", { class: "dek" }, st.dek),
       h("div", { class: "tags" },
         h("span", { class: "tagx" }, `${r.label} · ${r.release_year}`),
@@ -938,9 +945,11 @@ function sparkline(r, compact) {
 
 function focusCard(qid) {
   let el = $(`w-${qid}`);
+  if (!el && $("cards") && !state.showAll) { state.showAll = true; renderList(); el = $(`w-${qid}`); }
   if (!el && !$("cards")) { goto("today"); el = $(`w-${qid}`); }
   if (!el) {
     state.verdicts.clear(); state.kinds.clear(); state.stages.clear(); state.hideFiltered = false; state.q = "";
+    state.showAll = true;
     if ($("q")) $("q").value = "";
     renderList();
     el = $(`w-${qid}`);
@@ -949,6 +958,8 @@ function focusCard(qid) {
   const d = el.querySelector("details");
   if (d) d.open = true;
   el.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+  // Cards rendered just now (and photos loading) can shift the layout mid-scroll; settle on the card.
+  for (const ms of [700, 1400]) setTimeout(() => { if (Math.abs(el.getBoundingClientRect().top) > 40) el.scrollIntoView({ block: "start" }); }, ms);
   el.classList.add("flash"); setTimeout(() => el.classList.remove("flash"), 1800);
 }
 
