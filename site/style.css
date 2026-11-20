@@ -381,3 +381,6 @@ tr.card-row .story { max-width: 560px; margin: 0; }
 .closed-more > summary::after { content: " +"; color: var(--muted); }
 .closed-more[open] > summary::after { content: " –"; }
 .closed-more[open] > summary { margin-bottom: 6px; }
+.contents a.toggle::after { content: " +"; color: var(--muted); }
+.contents a.toggle[aria-expanded="true"]::after { content: " –"; }
+.case-closed[hidden] { display: none; }

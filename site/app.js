@@ -844,10 +844,17 @@ function annMini(a) {
 // One template: an intro, a contents line with counts, then each section as a heading band,
 // the top 6 as cards, and the rest in a table showing 12 rows with Show all / Show fewer.
 const secId = (t) => `sec-${t.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+// A part with `toggle` opens and closes a hidden panel (by id) instead of jumping to a section.
 function contentsLine(parts) {
   return h("p", { class: "contents" }, parts.filter((x) => x.n).map((x, i) => [i ? h("span", { class: "sep" }, " · ") : null,
-    h("a", { href: `#${secId(x.title)}`, onclick: (e) => { e.preventDefault(); $(secId(x.title))?.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); } },
-      h("b", {}, fmt(x.n)), ` ${x.label}`)]));
+    x.toggle
+      ? h("a", { href: `#${x.toggle}`, class: "toggle", "aria-expanded": "false", "aria-controls": x.toggle, onclick: (e) => {
+          e.preventDefault(); const a = e.currentTarget, panel = $(x.toggle); if (!panel) return;
+          const open = a.getAttribute("aria-expanded") !== "true";
+          panel.hidden = !open; a.setAttribute("aria-expanded", String(open)); } },
+        h("b", {}, fmt(x.n)), ` ${x.label}`)
+      : h("a", { href: `#${secId(x.title)}`, onclick: (e) => { e.preventDefault(); $(secId(x.title))?.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); } },
+        h("b", {}, fmt(x.n)), ` ${x.label}`)]));
 }
 // A table row whose title opens that item's card right under it (and closes it again).
 // One card open at a time per list. The card stays on this page: its headline isn't a link away.
@@ -934,13 +941,11 @@ function caseClosed() {
       h("div", { class: "closed-why" }, causeLine(r), via ? h("span", { class: "closed-via" }, ` Solved thanks to a ${via}.`) : null));
     return li;
   });
-  // Folded by default: the heading and one line, with a link that opens the list.
-  return h("section", { class: "case-closed", "aria-label": "Mysteries solved this week" },
+  // Hidden until opened from the "solved this week" link in the contents line.
+  return h("section", { class: "case-closed", id: "case-closed", hidden: "", "aria-label": "Mysteries solved this week" },
     h("h2", {}, "Case closed"),
     h("p", { class: "small muted" }, "Mysteries from the past week that we've now explained. They've moved to their sections on Today."),
-    h("details", { class: "closed-more" },
-      h("summary", {}, `See the ${items.length} solved ${items.length === 1 ? "mystery" : "mysteries"}`),
-      h("ul", { class: "closed-list" }, items)));
+    h("ul", { class: "closed-list" }, items));
 }
 
 // ---------- Mysteries ----------
@@ -971,7 +976,8 @@ function mysteriesPage() {
     scoreCell(Math.max(...g.works.map((w) => w.rally_score || 0))));
   return [
     h("p", { class: "intro" }, "Old favorites that are suddenly back, and we can't tell why yet. Know why? Tell us."),
-    contentsLine([{ n: L.length, label: "open cases", title: "Open cases" }, { n: groups.length, label: "linked by one person", title: "Linked by one person" }]),
+    contentsLine([{ n: L.length, label: "open cases", title: "Open cases" }, { n: groups.length, label: "linked by one person", title: "Linked by one person" },
+      { n: (state.data.solved || []).filter((x) => state.byQid[x.qid]).length, label: "solved this week", toggle: "case-closed" }]),
     caseClosed(),
     scoreKey(),
     ...pageSection("Open cases", "Comebacks we can't explain yet, newest first.",
