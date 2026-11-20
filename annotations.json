@@ -77,7 +77,7 @@
   },
   {
     "id": "godzilla-new-film-2026",
-    "status": "draft",
+    "status": "published",
     "note": "A new Godzilla film was released.",
     "works": [
       "Shin Godzilla",
@@ -94,7 +94,10 @@
       "opened"
     ],
     "last_checked": "2026-11-20",
-    "source": null
+    "source": "https://variety.com/2024/film/news/godzilla-sequel-new-movie-minus-one-director-1236197482/",
+    "source_text": "On November 1, 2024, Toho announced plans to move forward with a new Godzilla film with Yamazaki returning to direct, write, and handle visual effects. Later revealed as Godzilla Minus Zero, it is to be released on November 3, 2026 in Japan; select theaters in the United States provided early access",
+    "source_kind": "Wikipedia (cited)",
+    "corroborated": "2026-11-20"
   },
   {
     "id": "cat-in-the-hat-film-2026",

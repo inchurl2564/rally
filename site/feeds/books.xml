@@ -4,8 +4,29 @@
   <id>https://inchurl2564.github.io/rally/feeds/books.xml</id>
   <link rel="self" href="https://inchurl2564.github.io/rally/feeds/books.xml"/>
   <link href="https://inchurl2564.github.io/rally/"/>
-  <updated>2026-11-18T06:00:00Z</updated>
+  <updated>2026-11-19T06:00:00Z</updated>
   <author><name>The Rallyback</name></author>
+  <entry>
+    <id>https://inchurl2564.github.io/rally/#work-Q25218724-2026-11-16</id>
+    <title>The Nightingale (2015) is back: 4.4× usual attention</title>
+    <link href="https://inchurl2564.github.io/rally/?run=2026-11-19#w-Q25218724"/>
+    <updated>2026-11-19T06:00:00Z</updated>
+    <summary>No trigger found · emerging. No recorded cause yet. Spike began 2026-11-16; usual 1,151 views/day.</summary>
+  </entry>
+  <entry>
+    <id>https://inchurl2564.github.io/rally/#work-Q607112-2026-11-17</id>
+    <title>The Three-Body Problem (2006) is back: 1.1× usual attention</title>
+    <link href="https://inchurl2564.github.io/rally/?run=2026-11-19#w-Q607112"/>
+    <updated>2026-11-19T06:00:00Z</updated>
+    <summary>No trigger found · emerging. No recorded cause yet. Spike began 2026-11-17; usual 2,890 views/day.</summary>
+  </entry>
+  <entry>
+    <id>https://inchurl2564.github.io/rally/#work-Q138117-2026-11-09</id>
+    <title>GetBackers (1999) is back: 2.7× usual attention</title>
+    <link href="https://inchurl2564.github.io/rally/?run=2026-11-19#w-Q138117"/>
+    <updated>2026-11-19T06:00:00Z</updated>
+    <summary>No trigger found · fading. No recorded cause yet. Spike began 2026-11-09; usual 89 views/day.</summary>
+  </entry>
   <entry>
     <id>https://inchurl2564.github.io/rally/#work-Q8001555-2026-08-10</id>
     <title>Wildwood: The Wildwood Chronicles (2011) is back: 31.6× usual attention</title>
@@ -33,40 +54,5 @@
     <link href="https://inchurl2564.github.io/rally/?run=2026-11-18#w-Q62010317"/>
     <updated>2026-11-18T06:00:00Z</updated>
     <summary>No trigger found · emerging. No recorded cause yet. Spike began 2026-11-14; usual 795 views/day.</summary>
-  </entry>
-  <entry>
-    <id>https://inchurl2564.github.io/rally/#work-Q623394-2026-09-27</id>
-    <title>Carrie (1974) is back: 4.1× usual attention</title>
-    <link href="https://inchurl2564.github.io/rally/?run=2026-11-18#w-Q623394"/>
-    <updated>2026-11-18T06:00:00Z</updated>
-    <summary>New work by same creator · fading. new work by Stephen King: Other Worlds Than These (attention rose before release). Spike began 2026-09-27; usual 816 views/day.</summary>
-  </entry>
-  <entry>
-    <id>https://inchurl2564.github.io/rally/#work-Q302960-2026-10-19</id>
-    <title>Bag of Bones (1998) is back: 4.9× usual attention</title>
-    <link href="https://inchurl2564.github.io/rally/?run=2026-11-18#w-Q302960"/>
-    <updated>2026-11-18T06:00:00Z</updated>
-    <summary>New work by same creator · fading. new work by Stephen King: Other Worlds Than These. Spike began 2026-10-19; usual 172 views/day.</summary>
-  </entry>
-  <entry>
-    <id>https://inchurl2564.github.io/rally/#work-Q6507-2026-09-25</id>
-    <title>Finnegans Wake (1939) is back: 3.4× usual attention</title>
-    <link href="https://inchurl2564.github.io/rally/?run=2026-11-18#w-Q6507"/>
-    <updated>2026-11-18T06:00:00Z</updated>
-    <summary>No trigger found · sustained. No recorded cause yet. Spike began 2026-09-25; usual 998 views/day.</summary>
-  </entry>
-  <entry>
-    <id>https://inchurl2564.github.io/rally/#work-Q437383-2026-11-15</id>
-    <title>Dune Messiah (1969) is back: 2.0× usual attention</title>
-    <link href="https://inchurl2564.github.io/rally/?run=2026-11-18#w-Q437383"/>
-    <updated>2026-11-18T06:00:00Z</updated>
-    <summary>New sequel/adaptation · emerging. adaptation/based on it: Dune: Part Three (upcoming). Spike began 2026-11-15; usual 1,541 views/day.</summary>
-  </entry>
-  <entry>
-    <id>https://inchurl2564.github.io/rally/#work-Q1266082-2026-11-16</id>
-    <title>Alan Ford (1969) is back: 1.6× usual attention</title>
-    <link href="https://inchurl2564.github.io/rally/?run=2026-11-18#w-Q1266082"/>
-    <updated>2026-11-18T06:00:00Z</updated>
-    <summary>No trigger found · emerging. No recorded cause yet. Spike began 2026-11-16; usual 53 views/day.</summary>
   </entry>
 </feed>
