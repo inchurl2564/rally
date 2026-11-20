@@ -127,7 +127,11 @@ def corroborate(note: dict) -> dict | None:
     if note.get("entity_name"):
         found += current_events(note["entity_name"], around)
         found += explain.news(note["entity_name"], around)
-    hits = [e for e in found if e.get("url") and any(k in e["text"].lower() for k in kws)]
+    # Wikipedia diffs can include older facts that were merely re-edited, so cited sentences
+    # must also mention the note's month or year (Current events pages are dated already).
+    when = {str(around.year), around.strftime("%B").lower()}
+    hits = [e for e in found if e.get("url") and any(k in e["text"].lower() for k in kws)
+            and (e["source"] == "Wikipedia Current events" or any(t in e["text"].lower() for t in when))]
     hits.sort(key=lambda e: (e["source"] != "Wikipedia (cited)", e["source"] != "Wikipedia Current events"))
     return hits[0] if hits else None
 

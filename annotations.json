@@ -22,7 +22,7 @@
   {
     "id": "russell-brand-verdict-2026",
     "status": "published",
-    "note": "Russell Brand was convicted of sexual assault.",
+    "note": "On Nov. 5, Russell Brand was convicted of one count of rape and three counts of sexual assault.",
     "works": [
       "Arthur",
       "Get Him to the Greek",
@@ -68,7 +68,7 @@
   },
   {
     "id": "godzilla-new-film-2026",
-    "status": "published",
+    "status": "draft",
     "note": "A new Godzilla film was released.",
     "works": [
       "Shin Godzilla",
@@ -84,11 +84,8 @@
       "box office",
       "opened"
     ],
-    "source": "https://variety.com/2024/film/news/godzilla-sequel-new-movie-minus-one-director-1236197482/",
     "last_checked": "2026-11-20",
-    "source_text": "On November 1, 2024, Toho announced plans to move forward with a new Godzilla film with Yamazaki returning to direct, write, and handle visual effects. Later revealed as Godzilla Minus Zero, it is to be released on November 3, 2026 in Japan; select theaters in the United States provided early access",
-    "source_kind": "Wikipedia (cited)",
-    "corroborated": "2026-11-20"
+    "source": null
   },
   {
     "id": "cat-in-the-hat-film-2026",
