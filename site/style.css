@@ -287,6 +287,19 @@ code { font-size: 13px; background: var(--paper-2); padding: 1px 5px; }
 
 /* ---------- simplified front: how it works, reason swatches ---------- */
 .how { border-bottom: 1px solid var(--hair); padding: 18px 0 20px; }
+.how > summary { display: none; }
+.how-close { display: none; }
+@media (max-width: 720px) {
+  .how { padding: 10px 0; }
+  .how > summary { display: list-item; cursor: pointer; font: 800 12px/1.2 var(--sans); letter-spacing: .08em; text-transform: uppercase; color: var(--ink); padding: 4px 0; }
+  .how[open] > summary { margin-bottom: 10px; }
+  .how-close { display: inline-block; margin-top: 12px; background: none; border: 1px solid var(--hair); color: var(--ink); font: 700 13px/1 var(--sans); padding: 9px 12px; cursor: pointer; }
+}
+.to-top { position: fixed; right: 16px; bottom: 16px; z-index: 50; width: 44px; height: 44px; border-radius: 50%; border: 0;
+  background: var(--ink); color: var(--paper); font: 700 20px/1 var(--sans); cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,.25); }
+.to-top[hidden] { display: none; }
+.to-top:focus-visible { outline: 3px solid var(--red); outline-offset: 2px; }
+@media print { .to-top { display: none; } }
 .how ol { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; counter-reset: step; }
 .how li { counter-increment: step; font-size: 14.5px; line-height: 1.45; color: var(--muted); padding-left: 34px; position: relative; }
 .how li::before { content: counter(step); position: absolute; left: 0; top: -2px; font: 900 24px/1 var(--serif); color: var(--red); }
@@ -311,3 +324,4 @@ code { font-size: 13px; background: var(--paper-2); padding: 1px 5px; }
 .index .s .score-dot { width: 24px; height: 24px; font-size: 11px; margin-right: 2px; }
 .tags .score-dot { width: 26px; height: 26px; font-size: 11.5px; }
 .card-ask { margin-top: 8px; }
+.bigstat .score-dot { color: var(--score-ink); font-weight: 800; }

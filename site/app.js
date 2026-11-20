@@ -556,13 +556,26 @@ window.addEventListener("resize", () => {
 });
 
 // ---------- Today ----------
+// How it works: always open on wide screens. On phones it's one tappable line,
+// open only on someone's first visit (remembered in this browser, if it allows).
+const PHONE = matchMedia("(max-width: 720px)");
+const store = { get: (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } },
+  set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* private mode: fine */ } } };
 function howItWorks() {
-  return h("section", { class: "how", "aria-label": "How The Rallyback works" },
+  // Decided once per page load, so it stays open while a first-time reader moves between pages.
+  if (howItWorks.first == null) { howItWorks.first = !store.get("rb-how-seen"); store.set("rb-how-seen", "1"); }
+  const firstVisit = howItWorks.first;
+  const box = h("details", { class: "how", "aria-label": "How The Rallyback works", open: !PHONE.matches || firstVisit ? "" : null },
+    h("summary", {}, "How it works"),
     h("ol", {},
       h("li", {}, h("b", {}, "We watch."), " Every day we track how much attention older movies, shows, songs, games and books are getting."),
       h("li", {}, h("b", {}, "We spot comebacks."), " When an old favorite suddenly gets far more attention than usual, it's back."),
       h("li", {}, h("b", {}, "We find out why."), " A new release, the news, a death, an anniversary. When we can't tell, it's ", h("i", {}, "Unexplained"), ", and you can tip us off."),
-      h("li", {}, h("b", {}, "We score them."), " The number in the yellow circle ", scoreDot(72), " is the Rallyback Score, 0 to 100: the size of the jump, how many people usually care, confirmation elsewhere and staying power.")));
+      h("li", {}, h("b", {}, "We score them."), " The number in the yellow circle ", scoreDot(72), " is the Rallyback Score, 0 to 100: the size of the jump, how many people usually care, confirmation elsewhere and staying power.")),
+    h("button", { type: "button", class: "how-close", onclick: () => { box.open = false; } }, "Got it ×"));
+  // Rotating a tablet or resizing past the phone width shouldn't leave it folded on a wide screen.
+  PHONE.addEventListener("change", (e) => { if (!e.matches) box.open = true; });
+  return box;
 }
 
 // ---------- one row per cause ----------
@@ -1212,5 +1225,12 @@ function method() {
     h("p", { class: "muted" }, h("b", {}, "Limits. "), "Wikipedia attention isn't sales or streams. Wikidata is volunteer-edited. News and edit lookups are best-effort and sometimes rate-limited. Two-title threads can be coincidence. Headlines are generated from the data. Verify before publishing or acting."));
 }
 
-window.addEventListener("scroll", () => { $("tip").hidden = true; }, { passive: true });
+// Floating "back to top": shows once the reader is well down the page.
+const toTop = h("button", { type: "button", class: "to-top", "aria-label": "Back to top", title: "Back to top", hidden: "",
+  onclick: () => window.scrollTo({ top: 0, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }) }, "↑");
+document.body.append(toTop);
+window.addEventListener("scroll", () => {
+  $("tip").hidden = true;
+  toTop.hidden = window.scrollY < window.innerHeight * 1.5;
+}, { passive: true });
 init();
