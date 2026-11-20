@@ -972,7 +972,7 @@ function comingPage() {
     h("td", { class: "nowrap" }, fmtDate(c.date))));
   const aRows = (cu.anniversaries || []).map((a) => h("tr", {},
     h("td", { class: "nowrap" }, fmtDate(a.date)),
-    h("td", {}, h("b", {}, a.label), h("div", { class: "small muted" }, `${a.kind}, ${a.release.slice(0, 4)}`)),
+    h("td", {}, h("b", {}, plain(a.label)), h("div", { class: "small muted" }, `${a.kind}, ${a.release.slice(0, 4)}`)),
     h("td", { class: "num" }, `${a.years}th`),
     h("td", { class: "num" }, a.audience ? fmt(a.audience) : "–")));
   return [
@@ -987,7 +987,10 @@ function comingPage() {
 }
 function table(head, rows) {
   if (!rows.length) return h("p", { class: "muted" }, "Nothing here yet. This fills in once the daily run has built its watchlist.");
-  return h("div", { class: "tablewrap" }, h("table", {}, h("thead", {}, h("tr", {}, head.map((x) => h("th", {}, x)))), h("tbody", {}, rows)));
+  // A heading lines up with its column: numeric columns (every cell .num) get right-aligned headings.
+  const numeric = head.map((_, i) => rows.length && rows.every((tr) => tr.children[i] && tr.children[i].classList.contains("num")));
+  return h("div", { class: "tablewrap" }, h("table", {},
+    h("thead", {}, h("tr", {}, head.map((x, i) => h("th", { class: numeric[i] ? "num" : null }, x)))), h("tbody", {}, rows)));
 }
 
 // ---------- Track Record ----------

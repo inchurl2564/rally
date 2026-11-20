@@ -194,7 +194,7 @@ details.more-info[open] > summary::after { content: " −"; }
 table { border-collapse: collapse; width: 100%; font-size: 14.5px; }
 th { text-align: left; font: 800 11px var(--sans); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); padding: 8px; border-bottom: 2px solid var(--rule); }
 td { padding: 10px 8px; border-bottom: 1px solid var(--hair); vertical-align: top; }
-td.num { text-align: right; font-variant-numeric: tabular-nums; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 .nowrap { white-space: nowrap; }
 .block { margin: 8px 0 28px; }
 .block h3 { font: 800 22px var(--serif); margin: 0 0 6px; }
