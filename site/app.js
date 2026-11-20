@@ -528,12 +528,16 @@ function drawStream(chart, tip, dates, series) {
     layer.forEach((d, j) => { const t = y(d[0]) - y(d[1]); if (t > bt) { bt = t; bi = j; } });
     if (bt < 15) continue;
     const text = s.label.length > 28 ? s.label.slice(0, 26) + "…" : s.label;
-    const w = text.length * 6.6, cx = Math.min(Math.max(x(bi), M.l + w / 2), W - M.r - w / 2);
+    // A label that would run off either edge lines up with that edge, so edge labels form a tidy column.
+    const w = text.length * 6.6, right = x(bi) + w / 2 > W - M.r - 4, left = x(bi) - w / 2 < M.l + 4;
+    const anchor = right ? "end" : left ? "start" : "middle";
+    const tx = right ? W - M.r - 4 : left ? M.l + 4 : x(bi);
+    const x0 = anchor === "end" ? tx - w : anchor === "start" ? tx : tx - w / 2;
     const cy = (y(layer[bi][0]) + y(layer[bi][1])) / 2;
-    const box = [cx - w / 2 - 4, cy - 9, cx + w / 2 + 4, cy + 9];
+    const box = [x0 - 4, cy - 9, x0 + w + 4, cy + 9];
     if (placed.some((b) => !(box[2] < b[0] || box[0] > b[2] || box[3] < b[1] || box[1] > b[3]))) continue;
     placed.push(box);
-    lg.append("text").attr("class", "lbl").attr("x", cx).attr("y", cy + 4).attr("text-anchor", "middle").text(text);
+    lg.append("text").attr("class", "lbl").attr("x", tx).attr("y", cy + 4).attr("text-anchor", anchor).text(text);
   }
   const xhair = svg.append("line").attr("class", "xhair").attr("y1", M.t).attr("y2", H - M.b).attr("visibility", "hidden");
   const hide = () => { bands.classed("dim", false); xhair.attr("visibility", "hidden"); tip.hidden = true; };
