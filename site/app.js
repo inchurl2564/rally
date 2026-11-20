@@ -109,8 +109,10 @@ function storyText(r) {
     }
     case "common thread": {
       const who = t.text.split(" (")[0], k = (t.text.match(/credited on (\d+)/) || [])[1];
-      return { kicker: "Six Degrees", hed: `${w} is one of ${k} ${who} titles spiking at once`,
-        dek: `They all started rising around ${short(t.date)}. Something is going on with ${who}, but we can't say what yet.` };
+      // If its group is explained (an editor's note, the person's own spike, a likely cause), say so.
+      const grp = (state.data.common_threads || []).find((g) => threadExplained(g) && g.works.some((x) => x.qid === r.qid));
+      return { kicker: "Six Degrees", hed: `${w} is one of ${k} ${who} titles back at once`,
+        dek: grp ? threadStory(grp).dek : `They all started rising around ${short(t.date)}. Something is going on with ${who}, but we can't say what yet.` };
     }
     case "ripple": {
       const rp = r.ripple;
@@ -309,6 +311,8 @@ async function loadRun(id) {
   try { state.data = await getJSON(`data/runs/${encodeURIComponent(id)}.json`); }
   catch (e) { return fail(`Couldn't load the edition for ${id}.`); }
   state.byQid = Object.fromEntries(state.data.results.map((r) => [r.qid, r]));
+  // Works in an explained "same person, same time" group are in the news, not unexplained.
+  state.explainedByThread = new Set((state.data.common_threads || []).filter(threadExplained).flatMap((t) => t.works.map((w) => w.qid)));
   applyPreset();
   render();
   syncURL();
@@ -393,7 +397,9 @@ const STREAM_TYPES = [
 ];
 const SET_ASIDE = { seasonal: "Seasonal", "automated?": "Likely bots", "front page": "Wikipedia feature" };
 const OTHER = { key: "other", label: "Set aside", color: "var(--s-other)" };
-const typeOf = (r) => STREAM_TYPES.find((t) => t.verdicts.includes(r.verdict)) || OTHER;
+const threadExplained = (t) => !!(t.editor_note || t.person_jump || t.cause);
+const typeOf = (r) => (r.verdict === "common thread" && state.explainedByThread && state.explainedByThread.has(r.qid)
+  ? STREAM_TYPES[0] : STREAM_TYPES.find((t) => t.verdicts.includes(r.verdict)) || OTHER);
 const reasonOf = typeOf;
 const kickerEl = (reason, label) => h("span", { class: "kicker" },
   h("i", { class: "sw", style: `background:${reason.color}`, "aria-hidden": "true" }), label || reason.label);
@@ -679,15 +685,17 @@ function annMini(a) {
 
 // ---------- Mysteries ----------
 function mysteriesPage() {
-  const L = live().filter((r) => MYSTERY.has(r.verdict) || ["coverage", "common thread", "ripple", "editor"].includes(r.verdict))
+  // Only what we can't explain: no named cause, no likely cause, no explained group.
+  const threads = (state.data.common_threads || []).filter((t) => !threadExplained(t));
+  const inThreads = new Set(threads.flatMap((t) => t.works.map((w) => w.qid)));
+  const L = live().filter((r) => reasonOf(r).key === "unexplained" && !inThreads.has(r.qid))
     .sort((a, b) => b.spike_start.localeCompare(a.spike_start) || b.score - a.score);
-  const threads = state.data.common_threads || [];
   return [
-    h("p", { class: "intro" }, "Old favorites that are suddenly back, where the reason isn't clear yet. Know why? Tell us."),
-    threads.length ? sectionHead("Linked by one person", "Several titles with the same person, all rising at the same time.") : null,
+    h("p", { class: "intro" }, "Old favorites that are suddenly back, and we can't tell why yet. Know why? Tell us."),
+    threads.length ? sectionHead("Linked by one person", "Several titles with the same person, all rising at the same time, for no reason we can find.") : null,
     threads.length ? h("div", {}, threads.map(threadFeature)) : null,
-    sectionHead("Open cases", "Newest first. Some have a likely cause; most don't, yet."),
-    h("div", { class: "grid" }, L.filter((r) => r.verdict !== "common thread").map(storyCard)),
+    sectionHead("Open cases", "Newest first."),
+    h("div", { class: "grid" }, L.map(storyCard)),
   ].filter(Boolean);
 }
 
