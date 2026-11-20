@@ -611,7 +611,10 @@ function buildCauseGroups() {
     });
   }
   const bySize = (xs, n) => [...xs].sort((a, b) => n(b) - n(a));
-  bySize(D.shared_triggers || [], (t) => t.works.length).forEach((t, i) =>
+  // A title goes to the group that tells its own story first: A Christmas Carol (1999) is back because
+  // Patrick Stewart died, so that group claims it before the one about a new Ebenezer film.
+  const own = (t) => t.works.filter((q) => R[q] && R[q].verdict === t.type).length;
+  [...(D.shared_triggers || [])].sort((a, b) => own(b) - own(a) || b.works.length - a.works.length).forEach((t, i) =>
     claim(`shared-${i}`, t.works, (free) => ({ story: sharedStory({ ...t, works: free }), sources: () => [] })));
   bySize((D.common_threads || []).filter(threadExplained), (t) => t.works.length).forEach((t, i) =>
     claim(`thread-${i}`, t.works.map((w) => w.qid), (free) => {
@@ -726,7 +729,7 @@ function todayPage() {
   };
   section("news", "In the news", "Old favorites riding news about a star, a story or a franchise.");
   section("release", "New releases", "A sequel, remake or new work sends fans back to the original.");
-  section("memoriam", "In memoriam", "A death sends people back to the work.", null, 3);
+  section("memoriam", "In memoriam", "A death sends people back to the work.");
   section("unexplained", "Unexplained", "Big comebacks we can't explain yet. Know why? Tell us.", ["All unexplained", "mysteries"]);
   const cu = state.data.coming_up || {};
   if ((cu.derivatives || []).length || (cu.anniversaries || []).length) {
