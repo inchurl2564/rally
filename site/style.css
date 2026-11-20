@@ -466,3 +466,4 @@ p, li, .dek, .about .mission { text-wrap: pretty; }
 .cal-month li a:hover { text-decoration: underline; }
 .cal-dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 4px; }
 .cal-more { margin: 4px 0 0 18px; }
+.mm-solved { fill: var(--paper); fill-opacity: .01; stroke: var(--muted); stroke-width: 1.75; cursor: pointer; pointer-events: all; }
