@@ -48,7 +48,7 @@ img { display: block; max-width: 100%; }
 .run-pick select { font: 600 12px var(--sans); text-transform: uppercase; letter-spacing: .04em; color: var(--ink);
   background: transparent; border: 0; padding: 4px 0; cursor: pointer; max-width: 60vw; }
 .mast-title { text-align: center; padding-top: 22px; padding-bottom: 14px; }
-.mast-title h1 { font: 900 clamp(60px, 13vw, 124px)/.9 var(--serif); letter-spacing: -.035em; margin: 0;
+.mast-title h1 { font: 900 clamp(44px, 13vw, 124px)/.9 var(--serif); letter-spacing: -.035em; margin: 0;
   padding-bottom: .2em; /* room for the y descender above the tagline */ }
 .mast-title h1 a:hover { text-decoration: none; }
 .tag { font: italic 700 clamp(15px, 2.2vw, 19px)/1.3 var(--serif); margin: 4px 0 0; color: var(--muted); }
@@ -94,7 +94,7 @@ img { display: block; max-width: 100%; }
 .index .t { font: 700 16.5px/1.25 var(--serif); }
 .index .s { font-size: 13px; color: var(--muted); margin-top: 3px; }
 
-.bigstat { display: flex; align-items: center; gap: 14px; margin-top: 16px; }
+.bigstat { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin-top: 16px; }
 .bigstat b { font: 900 46px/0.9 var(--serif); color: var(--red); letter-spacing: -.03em; white-space: nowrap; }
 .bigstat > span { font-size: 13px; line-height: 1.35; color: var(--muted); max-width: 20ch; }
 .bigstat .spark { flex: 1; min-width: 110px; margin: 0; }
