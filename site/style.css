@@ -1,34 +1,31 @@
 :root {
-  --paper: #ffffff;
-  --paper-2: #f6f5f2;
-  --ink: #111111;
-  --muted: #666660;
-  --rule: #111111;
-  --hair: #e3e1dc;
-  --red: #e3120b;
-  --red-ink: #ffffff;
-  --tint: rgba(227, 18, 11, .08);
-  --ok: #1d7a4c;
+  /* Warm ivory paper, soft ink, persimmon accent. */
+  --paper: #faf8f4; --paper-2: #f2eee7; --ink: #1b1a1f; --muted: #6e6a64; --rule: #1b1a1f; --hair: #e5e0d7;
+  --red: #c2401e; --red-ink: #ffffff; --tint: rgba(194, 64, 30, .07); --ok: #2f7d55;
   --serif: "Playfair Display", Georgia, "Times New Roman", serif;
   --sans: "Libre Franklin", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --t-film: #1f2937; --t-tv: #4338ca; --t-song: #be123c; --t-album: #9d174d; --t-game: #047857;
   --t-book: #92400e; --t-comic: #b45309; --t-musical: #6d28d9;
-  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s5: #e87ba4; --s6: #008300; --s-other: #d9d6ce;
+  /* Series: cobalt, terracotta, sea teal, saffron, orchid, moss — validated
+     (scripts/validate_palette.js, light, surface #faf8f4; low-contrast slots are direct-labelled + table view) */
+  --s1: #3e63c9; --s2: #e07a4f; --s3: #2f9e8f; --s4: #d9a43a; --s5: #b86ca8; --s6: #5e8f3e; --s-other: #dcd6cb;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --paper: #121211; --paper-2: #1b1b19; --ink: #f1f0ec; --muted: #a3a29b; --rule: #f1f0ec; --hair: #33322e;
-    --red: #ff4b3a; --red-ink: #121211; --tint: rgba(255, 75, 58, .12); --ok: #6fcf9f;
-    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #0ca30c; --s-other: #3d3c38;
+    --paper: #141317; --paper-2: #1d1c21; --ink: #efece6; --muted: #a29d96; --rule: #efece6; --hair: #2e2c32;
+    --red: #ff7a52; --red-ink: #141317; --tint: rgba(255, 122, 82, .12); --ok: #74c79a;
+    /* Series: validated (scripts/validate_palette.js, dark, surface #141317) */
+    --s1: #5274d8; --s2: #d4704a; --s3: #16a08c; --s4: #bb8a22; --s5: #b06aa2; --s6: #5f9142; --s-other: #39373d;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --paper: #121211; --paper-2: #1b1b19; --ink: #f1f0ec; --muted: #a3a29b; --rule: #f1f0ec; --hair: #33322e;
-  --red: #ff4b3a; --red-ink: #121211; --tint: rgba(255, 75, 58, .12); --ok: #6fcf9f;
-  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #0ca30c; --s-other: #3d3c38;
-  color-scheme: dark;
+    --paper: #141317; --paper-2: #1d1c21; --ink: #efece6; --muted: #a29d96; --rule: #efece6; --hair: #2e2c32;
+    --red: #ff7a52; --red-ink: #141317; --tint: rgba(255, 122, 82, .12); --ok: #74c79a;
+    /* Series: validated (scripts/validate_palette.js, dark, surface #141317) */
+    --s1: #5274d8; --s2: #d4704a; --s3: #16a08c; --s4: #bb8a22; --s5: #b06aa2; --s6: #5f9142; --s-other: #39373d;
+    color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
@@ -105,7 +102,8 @@ img { display: block; max-width: 100%; }
 .media { position: relative; overflow: hidden; background: var(--paper-2); }
 .media img { width: 100%; height: 100%; object-fit: cover; }
 .media > a:first-child { display: block; height: 100%; }
-.media .credit { position: absolute; right: 0; bottom: 0; font-size: 10px; background: rgba(0,0,0,.6); color: #fff; padding: 2px 6px; }
+.media .credit { position: absolute; right: 0; bottom: 0; max-width: 100%; font-size: 10px; background: rgba(0,0,0,.6); color: #fff; padding: 2px 6px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* ---------- story grid ---------- */
 .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px 24px; }
 .story .media { aspect-ratio: 3 / 2; margin-bottom: 12px; }
@@ -248,7 +246,7 @@ code { font-size: 13px; background: var(--paper-2); padding: 1px 5px; }
 .stream-chart { position: relative; overflow: visible; }
 .stream { overflow-x: clip; }
 .stream-chart svg { display: block; width: 100%; overflow: visible; }
-.stream-chart .band { stroke: var(--paper); stroke-width: 2; cursor: pointer; transition: opacity .15s; }
+.stream-chart .band { stroke: var(--paper); stroke-width: 1.25; cursor: pointer; transition: opacity .15s; }
 .stream-chart .band.dim { opacity: .28; }
 .stream-chart .lbl { font: 600 12px var(--sans); fill: var(--ink); paint-order: stroke; stroke: var(--paper); stroke-width: 3px;
   stroke-linejoin: round; pointer-events: none; }

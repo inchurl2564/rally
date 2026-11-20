@@ -779,6 +779,46 @@ def fetch_images(qids: set[str], batch: int = 150) -> dict[str, str]:
     return out
 
 
+PEOPLE_IMAGE_PROPS = ["P175", "P50", "P57", "P170", "P178", "P86", "P162", "P58"]  # performer, author, director, creator, developer, composer, producer, writer
+
+
+def fetch_people_images(qids: set[str], batch: int = 80) -> dict[str, tuple[str, str]]:
+    """For works with no free image of their own: a free photo of the person (or studio logo)
+    behind them — performer, author, director, creator, developer. {work qid: (file, name)}."""
+    out: dict[str, tuple[str, str]] = {}
+    qids = [q for q in qids if q]
+    rank = {p: i for i, p in enumerate(PEOPLE_IMAGE_PROPS)}
+    for i in range(0, len(qids), batch):
+        values = " ".join(f"wd:{q}" for q in qids[i:i + batch])
+        props = " ".join(f"wdt:{p}" for p in PEOPLE_IMAGE_PROPS)
+        q = f"""SELECT ?item ?p ?who ?whoLabel ?img ?links WHERE {{
+          VALUES ?item {{ {values} }}
+          VALUES ?p {{ {props} }}
+          ?item ?p ?who .
+          VALUES ?t {{ wd:Q5 wd:Q215380 wd:Q5741069 wd:Q210167 wd:Q4830453 wd:Q1762059 wd:Q2088357 wd:Q105543609 }}
+          ?who wdt:P31 ?t .
+          ?who wdt:P18 ?img .
+          ?who wikibase:sitelinks ?links .
+          SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en,mul". }}
+        }}"""
+        try:
+            rows = sparql(q)
+        except Exception as e:
+            print(f"      people-image lookup failed for a batch: {e}", file=sys.stderr)
+            continue
+        best: dict[str, tuple] = {}
+        for row in rows:
+            item, prop = qid(v(row, "item")), qid(v(row, "p"))
+            name = urllib.parse.unquote(v(row, "img").rsplit("/", 1)[-1])
+            if not name.lower().endswith((".jpg", ".jpeg", ".png", ".webp", ".tif", ".tiff")):
+                continue
+            key = (rank[prop], -int(v(row, "links") or 0))
+            if item not in best or key < best[item][0]:
+                best[item] = (key, name, v(row, "whoLabel"))
+        out.update({k: (f, who) for k, (_, f, who) in best.items()})
+    return out
+
+
 def write_site_data(site: str, results, meta, clusters, threads, keep_runs: int,
                     coming_up: dict | None = None) -> dict:
     """latest.json + an archive of runs + an index of runs, for the static site."""
@@ -787,7 +827,7 @@ def write_site_data(site: str, results, meta, clusters, threads, keep_runs: int,
             "qid", "title", "label", "kind", "age", "verdict", "lift", "peak_lift", "baseline",
             "recent_mean", "peak", "score", "still_elevated", "last_year_lift", "desktop_share",
             "days_in_top", "best_rank", "lift3", "stage", "early", "early_ratio", "cause", "evidence",
-            "edit_burst", "corroborated", "image", "ripple", "editor_note")}
+            "edit_burst", "corroborated", "image", "image_of", "ripple", "editor_note")}
         out.update(release=r["release"].isoformat(), release_year=r["release"].year,
                    spike_start=r["spike_start"].isoformat(), peak_day=r["peak_day"].isoformat(),
                    spark_start=(r["spark_start"] + dt.timedelta(days=len(r["spark"]) - 365)).isoformat(),
@@ -800,13 +840,24 @@ def write_site_data(site: str, results, meta, clusters, threads, keep_runs: int,
            {g["trigger"].get("qid") for g in clusters} | \
            {c[k] for c in (coming_up or {}).get("derivatives", []) for k in ("new", "old")} | \
            {a["qid"] for a in (coming_up or {}).get("anniversaries", [])}
+    want |= {(r.get("ripple") or {}).get("qid") for r in results}
     images = fetch_images(want)
     for r in results:
-        r["image"] = images.get(r["qid"])
+        r["image"], r["image_of"] = images.get(r["qid"]), None
+        rp = r.get("ripple") or {}
+        if not r["image"] and images.get(rp.get("qid")):
+            r["image"], r["image_of"] = images[rp["qid"]], rp.get("name")
+    people = fetch_people_images({r["qid"] for r in results if not r["image"]} |
+                                 {a["qid"] for a in (coming_up or {}).get("anniversaries", []) if not images.get(a["qid"])})
+    for r in results:
+        if not r["image"] and r["qid"] in people:
+            r["image"], r["image_of"] = people[r["qid"]]
     for c in (coming_up or {}).get("derivatives", []):
         c["new_image"], c["old_image"] = images.get(c["new"]), images.get(c["old"])
     for a in (coming_up or {}).get("anniversaries", []):
-        a["image"] = images.get(a["qid"])
+        a["image"], a["image_of"] = images.get(a["qid"]), None
+        if not a["image"] and a["qid"] in people:
+            a["image"], a["image_of"] = people[a["qid"]]
     data = {
         "meta": meta,
         "results": [work(r) for r in results],

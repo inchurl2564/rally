@@ -170,12 +170,14 @@ function threadStory(t) {
 // ---------- photos: only real, freely licensed Wikimedia Commons images ----------
 // No photo → no image slot at all; the story runs as text. If a photo fails to load,
 // its slot is removed and the layout falls back to text-only.
-function pic(href, image, alt, width = 640) {
+// `of` names who is pictured when the photo is of a person behind the work (no free image of the work itself).
+function pic(href, image, alt, width = 640, of = null) {
   if (!image) return null;
   const img = h("img", { src: `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(image)}?width=${width}`,
-    alt: alt || "", loading: "lazy", decoding: "async" });
+    alt: of || alt || "", loading: "lazy", decoding: "async" });
   const box = h("div", { class: "media" }, ext(href, img),
-    ext(`https://commons.wikimedia.org/wiki/File:${encodeURIComponent(image)}`, h("span", { class: "credit" }, "Photo: Wikimedia Commons")));
+    ext(`https://commons.wikimedia.org/wiki/File:${encodeURIComponent(image)}`,
+      h("span", { class: "credit" }, of ? `Pictured: ${of}` : "Photo: Wikimedia Commons")));
   img.addEventListener("error", () => { box.closest(".has-media")?.classList.remove("has-media"); box.remove(); });
   return box;
 }
@@ -409,7 +411,13 @@ function drawStream(chart, tip, dates, series) {
   });
   const bands = svg.append("g").selectAll("path").data(stack).join("path")
     .attr("class", "band").attr("d", area)
-    .attr("fill", (l) => series[l.index].type.color)
+    // Each title gets its own tint of its story type's hue (full, then lighter), so neighbours read apart.
+    .attr("fill", (l) => {
+      const x = series[l.index];
+      const k = series.filter((o, j) => j < l.index && o.type === x.type).length;
+      const mix = [100, 78, 90, 68, 84, 60][k % 6];
+      return mix === 100 ? x.type.color : `color-mix(in oklab, ${x.type.color} ${mix}%, var(--paper))`;
+    })
     .on("click", (e, l) => { const r = series[l.index].r; if (r) focusCard(r.qid); });
   // Direct labels at each band's thickest point, skipping collisions.
   const placed = [];
@@ -470,7 +478,7 @@ function todayPage() {
   const out = [
     streamSection(),
     h("section", { class: "front" },
-      withPic("article", "lead", pic(wikipedia(lead.title), lead.image, lead.label, 1200),
+      withPic("article", "lead", pic(wikipedia(lead.title), lead.image, lead.label, 1200, lead.image_of),
         h("span", { class: "kicker" }, st.kicker),
         h("h2", { class: "hed" }, link(lead, st.hed)),
         h("p", { class: "dek" }, st.dek),
@@ -490,7 +498,7 @@ function todayPage() {
       const sst = sharedStory(t), first = state.byQid[t.works[0]];
       return withPic("article", "feature",
         t.image ? pic(wikidata(t.qid), t.image, t.text.split(": ").pop().split(" (")[0], 300)
-          : first ? pic(wikipedia(first.title), first.image, first.label, 300) : null,
+          : first ? pic(wikipedia(first.title), first.image, first.label, 300, first.image_of) : null,
         h("div", {}, h("span", { class: "kicker" }, sst.kicker), h("h3", { class: "hed" }, sst.hed), h("p", { class: "dek" }, sst.dek),
           h("div", { class: "chips" }, t.works.map((q) => state.byQid[q]).filter(Boolean).map((w) =>
             h("a", { class: "chip", href: `#w-${w.qid}`, onclick: (e) => { e.preventDefault(); focusCard(w.qid); } }, `${w.label} (${w.release_year})`)))));
@@ -536,7 +544,7 @@ function threadFeature(t) {
 
 function storyCard(r) {
   const st = story(r);
-  return withPic("article", "story", pic(wikipedia(r.title), r.image, r.label),
+  return withPic("article", "story", pic(wikipedia(r.title), r.image, r.label, 640, r.image_of),
     h("span", { class: "kicker" }, st.kicker),
     h("h3", { class: "hed" }, link(r, st.hed)),
     h("p", { class: "dek" }, st.dek),
@@ -553,7 +561,7 @@ function derivMini(c) {
     h("p", { class: "dek" }, `${c.rel[0].toUpperCase()}${c.rel.slice(1)} `, ext(wikipedia(c.old_title), c.old_label), ` (${c.old_release.slice(0, 4)}). Expect a comeback.`));
 }
 function annMini(a) {
-  return withPic("article", "mini", pic(wikipedia(a.title), a.image, a.label, 480),
+  return withPic("article", "mini", pic(wikipedia(a.title), a.image, a.label, 480, a.image_of),
     h("div", { class: "when" }, short(a.date)),
     h("h3", { class: "hed" }, `${a.label} turns ${a.years}`),
     h("p", { class: "dek" }, `${noun(a.kind)[0].toUpperCase()}${noun(a.kind).slice(1)}, ${a.release.slice(0, 4)}${a.audience ? ` · ${fmt(a.audience)} readers on a normal day` : ""}`));
@@ -707,7 +715,7 @@ function card(r, open) {
   if (r.corroborated === false) add(h("span", { class: "warn" }, "Evidence doesn't mention this trigger"));
   if (r.edit_burst && r.edit_burst.burst) add(`${r.edit_burst.edits} Wikipedia edits around the spike (usually ~${r.edit_burst.usual_per_5_days})`);
   add(correctionLink(r));
-  const photo = pic(wikipedia(r.title), r.image, r.label, 240);
+  const photo = pic(wikipedia(r.title), r.image, r.label, 240, r.image_of);
   return h("article", { class: `card${photo ? " has-media" : ""}`, id: `w-${r.qid}` },
     photo,
     h("div", {},
