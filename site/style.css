@@ -228,6 +228,13 @@ code { font-size: 13px; background: var(--paper-2); padding: 1px 5px; }
 .foot-brand { font: 900 28px var(--serif); letter-spacing: -.02em; }
 .foot p { max-width: 75ch; color: var(--muted); font-size: 14px; }
 .foot a { text-decoration: underline; text-underline-offset: 3px; }
+.foot .foot-about { color: var(--ink); font-size: 15px; line-height: 1.5; margin-top: 6px; }
+.foot-sources { margin: 12px 0; }
+.foot-sources > summary { cursor: pointer; font: 800 12px/1.2 var(--sans); letter-spacing: .08em; text-transform: uppercase; color: var(--ink); list-style: none; }
+.foot-sources > summary::-webkit-details-marker { display: none; }
+.foot-sources > summary::after { content: " +"; color: var(--muted); }
+.foot-sources[open] > summary::after { content: " –"; }
+.foot-sources > p { margin-top: 8px; }
 
 /* ---------- responsive ---------- */
 @media (max-width: 960px) {
