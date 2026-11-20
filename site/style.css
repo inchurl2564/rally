@@ -447,3 +447,17 @@ p, li, .dek, .about .mission { text-wrap: pretty; }
 .mm-solved { fill: var(--paper); fill-opacity: .01; stroke: var(--muted); stroke-width: 1.75; cursor: pointer; pointer-events: all; }
 /* A thin rule between the score key and the mystery map */
 .score-key + .page-chart { border-top: 1px solid var(--hair); padding-top: 16px; margin-top: 14px; }
+
+/* Phones: small square thumbnails beside the headline instead of full-width photos; no year panels.
+   The lead story at the top of Today keeps its big photo. */
+@media (max-width: 600px) {
+  .story.has-media { display: grid; grid-template-columns: 72px minmax(0, 1fr); column-gap: 12px; align-content: start; }
+  .story.has-media > .media { grid-column: 1; grid-row: 1 / span 3; aspect-ratio: 1; margin: 2px 0 0; align-self: start; }
+  .story.has-media > :not(.media) { grid-column: 2; }
+  .story.has-media > .story-foot, .story.has-media > div:not(.media):not(.story-foot) { grid-column: 1 / -1; }
+  .story.has-media > .kicker, .story.has-media > .when, .story.has-media > .hed, .story.has-media > .dek, .story.has-media > .outlook { grid-column: 2; }
+  .story .media .credit { display: none; }
+  .story > .media.panel { display: none; }
+  .story.has-media:has(> .media.panel) { display: flex; }
+  .story .hed { font-size: 19px; }
+}
