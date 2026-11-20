@@ -890,7 +890,10 @@ def write_site_data(site: str, results, meta, clusters, threads, keep_runs: int,
            {g["trigger"].get("qid") for g in clusters} | \
            {c[k] for c in (coming_up or {}).get("derivatives", []) for k in ("new", "old")} | \
            {a["qid"] for a in (coming_up or {}).get("anniversaries", [])} | \
-           {a["qid"] for a in (coming_up or {}).get("seasonal", [])}
+           {a["qid"] for a in (coming_up or {}).get("seasonal", [])} | \
+           {a["qid"] for a in (coming_up or {}).get("warming", [])} | \
+           {s["who"] for s in (coming_up or {}).get("subjects", [])} | \
+           {w["qid"] for s in (coming_up or {}).get("subjects", []) for w in s["works"]}
     want |= {(r.get("ripple") or {}).get("qid") for r in results}
     images = fetch_images(want)
     for r in results:
@@ -909,8 +912,12 @@ def write_site_data(site: str, results, meta, clusters, threads, keep_runs: int,
         c["new_image"], c["old_image"], c["old_image_of"] = images.get(c["new"]), images.get(c["old"]), None
         if not c["old_image"] and c["old"] in people:
             c["old_image"], c["old_image_of"] = people[c["old"]]
-    for a in (coming_up or {}).get("anniversaries", []) + (coming_up or {}).get("seasonal", []):
+    for a in (coming_up or {}).get("anniversaries", []) + (coming_up or {}).get("seasonal", []) + (coming_up or {}).get("warming", []):
         a["image"], a["image_of"] = images.get(a["qid"]), None
+    for s_ in (coming_up or {}).get("subjects", []):
+        s_["image"] = images.get(s_["who"])
+        for w_ in s_["works"]:
+            w_["image"] = images.get(w_["qid"])
         if not a["image"] and a["qid"] in people:
             a["image"], a["image_of"] = people[a["qid"]]
     data = {
@@ -1184,6 +1191,13 @@ def main():
                                                        budget_s=3 * 60)
         except Exception as e:
             log(f"      predictions failed: {e}")
+        # Titles on a steady climb, and documentaries / biopics about people with older work.
+        try:
+            import outlook
+            coming_up["warming"] = outlook.warming(watch, {r["title"] for r in results}, end.isoformat())
+            coming_up["subjects"] = outlook.subjects(watch)
+        except Exception as e:
+            log(f"      warming up / documentaries failed: {e}")
     for r in results:
         r["label"] = nice_label(r["label"], r["title"])
         for t in r["triggers"]:
@@ -1236,6 +1250,11 @@ def main():
             enrich.record(args.site, results, end.isoformat())     # permanent daily history
         except Exception as e:
             log(f"      history record failed: {e}")
+        try:
+            import measures     # measures that publish themselves once they have enough examples
+            data["measures_new"] = measures.build(args.site)
+        except Exception as e:
+            log(f"      measures failed: {e}")
         import feeds
         import evaluate
         new = feeds.write(args.site, data, prev, args.site_url, VERDICT_LABEL)

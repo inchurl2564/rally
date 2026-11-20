@@ -435,3 +435,5 @@ p, li, .dek, .about .mission { text-wrap: pretty; }
 @media (max-width: 720px) { .bar-row { grid-template-columns: 52px 1fr 92px; } }
 .contents select { font: 600 13px var(--sans); margin-left: 4px; }
 .code { white-space: pre-wrap; word-break: break-all; font: 12px/1.5 ui-monospace, Menlo, monospace; background: var(--paper-2); padding: 10px 12px; border: 1px solid var(--hair); }
+.measure-soon { display: grid; grid-template-columns: 1fr; gap: 4px; padding: 10px 0; border-top: 1px solid var(--hair); max-width: 720px; }
+.measure-soon .bar { height: 8px; }

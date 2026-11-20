@@ -78,6 +78,19 @@ def _entries_for_run(data: dict, prev: dict | None, site_url: str, labels: dict)
                     "title": f"{re.sub(r' [(][^)]*[)]$', '', c['old_label'])} ({c['old_release'][:4]}) is due for a comeback",
                     "summary": f"{c['new_label']}, {c['rel']} it, arrives {c['date']}.",
                     "link": f"{site_url}?run={run}&tab=coming"})
+    for s_ in data.get("coming_up", {}).get("subjects", []):
+        if s_["new"] in {x.get("new") for x in (prev or {}).get("coming_up", {}).get("subjects", [])}:
+            continue
+        works = ", ".join(w["label"] for w in s_["works"][:3])
+        out.append({"id": f"subject-{s_['new']}-{s_['who']}", "kind_of": "forecast", "verdict": "forecast", "date": run,
+                    "title": f"{s_['who_label']}'s work is due for a comeback: {s_['new_label']} arrives {s_['date']}",
+                    "summary": f"A new film or series about {s_['who_label']}. Their best-known older work: {works}.",
+                    "link": f"{site_url}?run={run}&tab=coming"})
+    for m in data.get("measures_new", []):
+        out.append({"id": f"measure-{m['key']}", "kind_of": "measure", "verdict": "measure", "date": run,
+                    "title": f"New on The Rallyback: {m['title']}",
+                    "summary": "We now have enough comebacks on record to publish this. See the Track record page.",
+                    "link": f"{site_url}?tab=accuracy"})
     return out
 
 

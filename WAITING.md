@@ -13,9 +13,6 @@ Updated as items move. Last updated: 2026-11-20 (prediction backfill done: 10,41
 | Reader tips going to a form instead of GitHub | A Google Form (or Formspree) link | Set `TIPS_FORM` in `site/app.js`; tips stop opening GitHub issues |
 | A contact address on About us | Choosing an address you're happy to publish | Add it to About us and the footer |
 | Email digest | Turning it back on (paused by choice: feeds only) | Add the `EMAIL_DIGEST = true` repository variable |
-| Automatic "measures go live when ready" (staying power, lead time, star power, calibrated forecasts) | Your go-ahead on the setup I proposed (with or without "coming soon" progress lines) | Nightly calculation; each section appears on its own once it has enough examples |
-| Documentaries and biopics in Coming up ("a new documentary about Queen…") | Your go-ahead | New Coming up list |
-| "Warming up": titles climbing toward a comeback | Your go-ahead | New Coming up list |
 | Leftover GitHub branches (`simplify`, `preview-template`, `predictions`) | Deleting them on GitHub (it won't let me) | Repo → Branches → delete |
 
 ## Waiting on the business plan
@@ -35,11 +32,13 @@ Updated as items move. Last updated: 2026-11-20 (prediction backfill done: 10,41
 | --- | --- |
 | "Recently due" on Coming up and "How our predictions did" on This week | From late November, about a week after the first predicted dates |
 | "Biggest this year" on This week | Once the record covers more than one month (December) |
-| Staying power by cause | About February 2027 (20+ finished comebacks per cause) |
+| Staying power by cause (publishes itself on Track record) | About February 2027 (20+ finished comebacks per cause) |
 | Expected bump from our own forecasts (on top of the backfill) | February – March 2027 |
-| Lead time (Wikipedia vs. charts) | Spring 2027 |
-| Calibrated forecasts from our own record | May – June 2027 |
-| Star power | Second half of 2027 |
+| Lead time (Wikipedia vs. charts; publishes itself) | Spring 2027 |
+| Calibrated forecasts from our own record (publishes itself) | May – June 2027 |
+| Star power (publishes itself) | Second half of 2027 |
+| "Warming up" filled in on the live site | Tonight's run (needs the 28 days of daily counts the nightly job keeps) |
+| Predictions for documentaries and biopics | Once enough of them have been checked |
 | Full refresh of the prediction backfill | Once a year (run "Backfill predictions" in Actions) |
 
 ## Waiting on outside services

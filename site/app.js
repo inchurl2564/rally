@@ -406,7 +406,8 @@ const live = () => state.data.results.filter((r) => !FILTERED.has(r.verdict)).so
 const SECTION_COLOR = { "In the news": "var(--s1)", "New releases": "var(--s2)", "Unexplained": "var(--s3)",
   "In memoriam": "var(--s4)", "Coming up": "var(--s5)", "Linked by one person": "var(--s3)", "Open cases": "var(--s3)",
   "Due for a comeback": "var(--s5)", "Big anniversaries": "var(--s5)",
-  "Back every year": "var(--s5)", "Recently due": "var(--s5)" };
+  "Back every year": "var(--s5)", "Recently due": "var(--s5)",
+  "Documentaries and biopics": "var(--s5)", "Warming up": "var(--s5)" };
 function sectionHead(title, sub, moreLabel, moreView) {
   return h("div", { class: "section-head", style: SECTION_COLOR[title] ? `--sec:${SECTION_COLOR[title]}` : null },
     h("div", {}, h("h2", {}, title), sub ? h("p", {}, sub) : null),
@@ -924,7 +925,7 @@ const workCell = (r, label, sub) => h("td", {}, h("b", { class: "t" }, label), h
 const scoreCell = (n) => h("td", { class: "num" }, scoreDot(n));
 
 // Outlook: how big a comeback to expect and how likely it is, learned from past cases like it.
-const fmtX = (x) => `${x >= 10 ? Math.round(x) : x}×`;
+const fmtX = (x) => `${x >= 10 ? Math.round(x) : Math.round(x * 10) / 10}×`;
 const OUTLOOK_HELP = "Chance = how often similar past cases reached at least 2× their usual interest within a week of the date.";
 const outlookEl = (p) => (p ? h("p", { class: "outlook", title: `${p.basis}. ${OUTLOOK_HELP}` },
   h("b", {}, `Expect about ${fmtX(p.expected)}`), ` its usual interest${p.chance != null ? ` · ${Math.round(p.chance * 100)}% chance` : p.record ? ` · back ${p.record}` : ""}`) : null);
@@ -945,6 +946,24 @@ function annCard(a) {
     h("h3", { class: "hed" }, hedLink(state.byQid[a.qid], `${plain(a.label)} turns ${a.years}`)),
     h("p", { class: "dek" }, `${noun(a.kind)[0].toUpperCase()}${noun(a.kind).slice(1)}, ${a.release.slice(0, 4)}${a.audience ? ` · ${fmt(a.audience)} views on a normal day` : ""}`),
     outlookEl(a.prediction));
+}
+function subjectCard(sj) {
+  const top = sj.works[0];
+  return withPic("article", "story", photoOrPanel(sj.image || (top && top.image), sj.who_label, sj.image ? sj.who_label : null,
+    sj.date.slice(0, 4), "documentary or biopic"),
+    h("div", { class: "when" }, `Arrives ${short(sj.date)}`),
+    h("h3", { class: "hed" }, `${sj.who_label}'s work is due for a comeback`),
+    h("p", { class: "dek" }, `${sj.new_label}, a new film or series about ${sj.who_label}, arrives ${fmtDate(sj.date)}. Their best-known older work: `,
+      ...sj.works.flatMap((w, i) => [i ? ", " : "", titleLink(w.qid, plain(w.label))]), sj.more ? ` and ${sj.more} more.` : "."));
+}
+function warmCard(w) {
+  const r = { spark: w.trend, baseline: w.usual, spark_start: addDays(w.date, -20), spike_start: addDays(w.date, -6),
+    peak: Math.max(...w.trend), peak_day: w.date, label: w.label };
+  return withPic("article", "story", photoOrPanel(w.image, w.label, w.image_of, w.release.slice(0, 4), w.kind),
+    h("div", { class: "when" }, "Climbing"),
+    h("h3", { class: "hed" }, titleLink(w.qid, plain(w.label)), ` (${w.release.slice(0, 4)})`),
+    h("p", { class: "dek" }, `The ${noun(w.kind)} is at ${fmtX(w.ratio)} its usual interest this week, up every day, and higher than the week before. Not a comeback yet.`),
+    h("div", { class: "story-foot" }, sparkline(r, true)));
 }
 function seasonCard(a) {
   return withPic("article", "story", photoOrPanel(a.image, a.label, a.image_of, a.release.slice(0, 4), a.kind),
@@ -1357,6 +1376,13 @@ function comingPage() {
     workCell(state.byQid[a.qid], plain(a.label), `${a.kind}, ${a.release.slice(0, 4)}${a.holiday ? ` · ${a.holiday}` : ""}`),
     outlookCell(a.prediction));
   const dAll = byDate(cu.derivatives || []), aAll = byDate(cu.anniversaries || []), sAll = byDate(cu.seasonal || []);
+  const jAll = byDate(cu.subjects || []), wAll = cu.warming || [];
+  const jRow = (sj) => h("tr", {}, h("td", { class: "nowrap" }, fmtDate(sj.date)),
+    h("td", {}, h("b", {}, sj.who_label), h("div", { class: "small muted" }, sj.new_label)),
+    h("td", {}, ...sj.works.flatMap((w, i) => [i ? ", " : "", titleLink(w.qid, plain(w.label))]), sj.more ? ` +${sj.more}` : ""));
+  const wRow = (w) => h("tr", {}, workCell(null, plain(w.label), `${w.kind}, ${w.release.slice(0, 4)}`),
+    h("td", { class: "num nowrap" }, fmtX(w.ratio)), h("td", { class: "num nowrap" }, `+${Math.round((w.week_ratio - 1) * 100)}%`),
+    h("td", { class: "num" }, fmt(w.usual)));
   const sCards = [...sAll].sort((a, b) => (b.audience || 0) - (a.audience || 0)).slice(0, 6);
   // How the last few weeks' predictions turned out (checked about a week after each date).
   const since = addDays(new Date().toISOString().slice(0, 10), -45);
@@ -1372,6 +1398,8 @@ function comingPage() {
     contentsLine([{ n: (cu.derivatives || []).length, label: "due for a comeback", title: "Due for a comeback" },
       { n: (cu.anniversaries || []).length, label: "big anniversaries", title: "Big anniversaries" },
       { n: sAll.length, label: "back every year", title: "Back every year" },
+      { n: jAll.length, label: "documentaries and biopics", title: "Documentaries and biopics" },
+      { n: wAll.length, label: "warming up", title: "Warming up" },
       { n: due.length, label: "recently due", title: "Recently due" }]),
     [...dAll, ...aAll].some((x) => x.prediction) ? h("p", { class: "small muted outlook-key" }, h("b", {}, "Expect about 3× · 70% chance"),
       " is our prediction, learned from over 10,000 past sequels, adaptations, series entries and anniversaries since 2016: the usual size of the comeback, and how often similar cases reached at least 2× their usual interest.") : null,
@@ -1381,6 +1409,10 @@ function comingPage() {
       { cards: aCards, rest: aAll.filter((a) => !aCards.includes(a)), all: aAll, card: annCard, row: aRow }, ["Date", "Work", "Turns", "Views on a normal day", "Outlook"], "anniversaries"),
     ...pageSection("Back every year", "Old favorites that come back around the same date every year: holidays, seasons, school terms.",
       { cards: sCards, rest: sAll.filter((a) => !sCards.includes(a)), all: sAll, card: seasonCard, row: sRow }, ["When", "Work", "Outlook"], "regulars"),
+    ...pageSection("Documentaries and biopics", "A new film or series about someone sends people back to their own work.",
+      { cards: jAll.slice(0, 6), rest: jAll.slice(6), all: jAll, card: subjectCard, row: jRow }, ["Arrives", "About", "Their older work"], "on the way"),
+    ...pageSection("Warming up", "Climbing steadily but not a comeback yet: these may break next. We check two weeks later whether they did.",
+      { cards: wAll.slice(0, 6), rest: wAll.slice(6), all: wAll, card: warmCard, row: wRow }, ["Title", "Now", "Vs. last week", "Usual views a day"], "climbing"),
     ...(due.length ? [Object.assign(sectionHead("Recently due", "How our predictions turned out, checked about a week after each date."), { id: secId("Recently due") }),
       table(["Date", "Prediction", "Predicted", "What happened", ""], due.map(dueRow), 12, "results")] : []),
     (cu.derivatives || []).length || (cu.anniversaries || []).length ? null : table([], []),
@@ -1445,6 +1477,8 @@ function accuracyPage() {
     h("p", {}, "Every story has a ", h("b", {}, "Report a correction"), " link. Reports become GitHub issues; once reviewed and labelled ",
       h("code", {}, "verified-correct"), " or ", h("code", {}, "verified-wrong"), ", they count above. ",
       ext(`https://github.com/${REPO}/issues?q=label%3Afeedback`, h("b", {}, "See all reports →"))),
+    sectionHead("What we're learning", "Measures only our record can answer. Each one appears here by itself once it has enough examples."),
+    measuresBox(),
     sectionHead("Corrections", "When we get something wrong, we fix it and say so here."),
     correctionsList(),
   ];
@@ -1693,6 +1727,33 @@ function weekPage() {
         ...f.top.flatMap((x, i) => [i ? ", " : "", titleLink(x.qid, plain(x.label))])))) : null);
   }).catch(() => box.replaceChildren(h("p", { class: "status" }, "This week's roundup isn't ready yet. It's built with each morning's edition.")));
   return [box];
+}
+
+// ---------- measures that publish themselves when ready (site/data/measures.json) ----------
+function measuresBox() {
+  const box = h("div", {}, h("p", { class: "muted" }, "Loading…"));
+  loadOnce("data/measures.json").then((M) => {
+    const parts = [];
+    for (const key of ["staying", "lead", "star", "calibration"]) {
+      const m = M[key];
+      if (!m) continue;
+      if (!m.ready) {
+        parts.push(h("div", { class: "measure-soon" }, h("b", {}, m.title), h("span", { class: "small muted" }, `Coming soon: ${fmt(m.have)} of ${fmt(m.need)} ${m.unit} so far.`),
+          h("span", { class: "bar" }, h("i", { style: `width:${Math.min(100, 100 * m.have / m.need).toFixed(1)}%` }))));
+        continue;
+      }
+      parts.push(h("h3", { class: "rail-head" }, m.title));
+      if (key === "staying") parts.push(table(["Cause", "Typical comeback lasts", "Long ones last", "Comebacks"], m.result.map((x) => h("tr", {},
+        h("td", {}, x.cause), h("td", { class: "num" }, `${x.median_days} days`), h("td", { class: "num" }, `${x.long} days`), h("td", { class: "num" }, fmt(x.n))))));
+      if (key === "lead") parts.push(h("p", {}, `Of ${m.result.n} comebacks that also reached a chart, Wikipedia moved first ${Math.round(m.result.wiki_first * 100)}% of the time, typically by ${Math.abs(m.result.median_days)} days.`));
+      if (key === "star") parts.push(table(["Person", "Separate comebacks", "Typical size", "Titles"], m.result.map((x) => h("tr", {},
+        h("td", {}, h("b", {}, x.name || x.qid)), h("td", { class: "num" }, String(x.moments)), h("td", { class: "num" }, fmtX(x.median_lift)), h("td", { class: "num" }, String(x.titles)))), 10, "people"));
+      if (key === "calibration") parts.push(table(["We said", "Forecasts", "It happened"], m.result.map((x) => h("tr", {},
+        h("td", {}, x.said), h("td", { class: "num" }, fmt(x.n)), h("td", { class: "num" }, `${Math.round(x.happened * 100)}%`)))));
+    }
+    box.replaceChildren(...parts);
+  }).catch(() => box.replaceChildren(h("p", { class: "muted" }, "These start building with each morning's edition.")));
+  return box;
 }
 
 // ---------- corrections log (site/data/corrections.json, edited by hand) ----------

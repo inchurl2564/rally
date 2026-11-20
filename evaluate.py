@@ -31,6 +31,27 @@ def _load(path, default):
         return default
 
 
+def warming_checks(site: str, checks: dict) -> None:
+    """'Warming up' picks: did the title become a comeback within two weeks of being listed?"""
+    rdir = os.path.join(site, "data", "runs")
+    runs = sorted(f[:-5] for f in os.listdir(rdir) if f.endswith(".json")) if os.path.isdir(rdir) else []
+    on_list = {}
+    for r in runs:
+        for x in _load(os.path.join(rdir, f"{r}.json"), {}).get("results", []):
+            on_list.setdefault(x["qid"], []).append(r)
+    today = dt.date.today()
+    for r in runs:
+        for w in _load(os.path.join(rdir, f"{r}.json"), {}).get("coming_up", {}).get("warming", []):
+            key = f"warming|{w['title']}|{r}"
+            d = dt.date.fromisoformat(r)
+            if key in checks or today - d < dt.timedelta(days=15):
+                continue
+            later = [x for x in on_list.get(w["qid"], []) if r < x <= (d + dt.timedelta(days=14)).isoformat()]
+            checks[key] = {"kind": "warming", "title": w["title"], "date": r, "label": w["label"], "hit": bool(later),
+                           "ratio": w["ratio"], "detail": "warming up" + (f": a comeback from {later[0]}" if later else ""),
+                           "old": w["qid"], "old_kind": w["kind"], "predicted": None}
+
+
 def check_forecasts(site: str, project: str) -> dict:
     ddir = os.path.join(site, "data")
     path = os.path.join(ddir, "forecast_checks.json")
@@ -49,6 +70,17 @@ def check_forecasts(site: str, project: str) -> dict:
                 d = dt.date.fromisoformat(it["date"])
                 if key not in checks and today - dt.timedelta(days=60) <= d <= today - dt.timedelta(days=8):
                     pending[key] = (kind, title, d, it)
+    # Documentaries and biopics: each of the person's older works is checked like a release forecast.
+    for f in sorted(os.listdir(rdir)) if os.path.isdir(rdir) else []:
+        for sj in _load(os.path.join(rdir, f), {}).get("coming_up", {}).get("subjects", []):
+            for w in sj.get("works", []):
+                key = f"subject|{w['title']}|{sj['date']}"
+                d = dt.date.fromisoformat(sj["date"])
+                if key not in checks and today - dt.timedelta(days=60) <= d <= today - dt.timedelta(days=8):
+                    pending[key] = ("subject", w["title"], d, {"label": w["label"], "old": w["qid"], "old_kind": w["kind"],
+                                                              "old_release": w.get("release"), "rel": "documentary or biopic",
+                                                              "new_label": sj["new_label"], "new": sj["new"]})
+    warming_checks(site, checks)
     for key, (kind, title, d, it) in list(pending.items())[:MAX_CHECKS_PER_RUN]:
         series = radar.daily_views(project, title, d - dt.timedelta(days=60), d + dt.timedelta(days=7))
         if series is None:
@@ -60,7 +92,7 @@ def check_forecasts(site: str, project: str) -> dict:
         ratio = round(best3 / med, 1)
         checks[key] = {"kind": kind, "title": title, "date": d.isoformat(), "ratio": ratio,
                        "hit": ratio >= 2.0, "label": it.get("old_label") or it.get("label"),
-                       "detail": (f"{it['rel']} {it['new_label']}" if kind == "derivative"
+                       "detail": (f"{it['rel']} {it['new_label']}" if kind in ("derivative", "subject")
                                   else f"{it['years']}th anniversary" if kind == "anniversary"
                                   else "back every year"),
                        # Kept for "expected bump" research: what kind of release, how old the original,
@@ -90,6 +122,8 @@ def summarize(site: str, project: str) -> dict:
                  "derivative": rate([x for x in fc if x["kind"] == "derivative"]),
                  "anniversary": rate([x for x in fc if x["kind"] == "anniversary"]),
                  "seasonal": rate([x for x in fc if x["kind"] == "seasonal"]),
+                 "subject": rate([x for x in fc if x["kind"] == "subject"]),
+                 "warming": rate([x for x in fc if x["kind"] == "warming"]),
                  "recent": sorted(fc, key=lambda x: x["date"], reverse=True)[:30]}
 
     # Corroboration and persistence from the archive of runs.
