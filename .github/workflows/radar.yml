@@ -2,7 +2,11 @@ name: Update Rally
 
 on:
   schedule:
-    - cron: "23 4 * * *"   # daily, after Wikimedia publishes the previous day's pageviews
+    # Daily at 2 a.m. Pacific. GitHub schedules run on UTC, and 2 a.m. Pacific is 09:00 UTC
+    # in daylight saving time and 10:00 UTC otherwise, so both are scheduled and the gate
+    # job below lets only the one that lands at 2 a.m. in Los Angeles do the work.
+    - cron: "0 9 * * *"
+    - cron: "0 10 * * *"
   workflow_dispatch:        # "Run workflow" button in the Actions tab
   push:
     branches: [main]
@@ -20,7 +24,26 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  gate:
+    runs-on: ubuntu-latest
+    outputs:
+      run: ${{ steps.check.outputs.run }}
+    steps:
+      - id: check
+        # Decide by which schedule fired, not the clock, so a delayed start can't run twice.
+        run: |
+          offset=$(TZ=America/Los_Angeles date +%z)          # -0700 in daylight time, -0800 otherwise
+          want=$([ "$offset" = "-0700" ] && echo "0 9 * * *" || echo "0 10 * * *")
+          if [ "${{ github.event_name }}" != "schedule" ] || [ "${{ github.event.schedule }}" = "$want" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "This schedule isn't 2 a.m. Pacific today (Los Angeles is at UTC$offset); the other one runs."
+          fi
+
   build:
+    needs: gate
+    if: needs.gate.outputs.run == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 180    # the very first run downloads ~4 weeks of bulk files
     steps:

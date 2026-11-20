@@ -81,7 +81,7 @@ Every card has a **Report a correction** link that opens a pre-filled issue labe
 
 1. **Settings → Pages → Build and deployment → Source: GitHub Actions.**
 2. **Actions → Update Rally → Run workflow** to run it immediately.
-   After that it runs daily at 04:23 UTC.
+   After that it runs daily at 2 a.m. Pacific (09:00 or 10:00 UTC, depending on daylight saving time).
 
 The first run takes longer (up to ~1 hour) because it builds the watchlist and downloads about 4 weeks of bulk pageview files. Early detection switches on once 8 days of bulk data exist. Later runs reuse the cache and take a few minutes.
 
