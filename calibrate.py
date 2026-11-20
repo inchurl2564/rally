@@ -22,6 +22,7 @@ Also builds "Back every year": works whose views peak around the same date year 
 
 from __future__ import annotations
 
+import concurrent.futures as cf
 import datetime as dt
 import json
 import os
@@ -181,23 +182,31 @@ def update(site: str, project: str, watch: dict[str, dict], audience: dict[str, 
     todo = [("derivative", c) for c in past_derivatives(watch, lookup_budget_s)] + [("anniversary", c) for c in past_anniversaries(watch, audience)]
     added = skipped = 0
     t0 = time.time()
-    for kind, c in todo:
-        if time.time() - t0 > budget_s:
-            break
-        key = f"{kind}|{c['old']}|{c['date']}" + (f"|{c['new']}" if kind == "derivative" else "")
-        if key in cases:
-            continue
-        m = measure(project, c["title"], dt.date.fromisoformat(c["date"]))
-        if m is None:
-            cases[key] = None                           # remembered, so it isn't fetched again
-            skipped += 1
-            continue
-        ratio, usual = m
-        cases[key] = {"kind": kind, "date": c["date"], "old": c["old"], "old_kind": c["old_kind"],
-                      "old_year": c.get("old_year"), "ratio": ratio, "usual": usual,
-                      **({"rel": c["rel"], "new_kind": c["new_kind"], "new": c["new"]} if kind == "derivative"
-                         else {"years": c["years"]})}
-        added += 1
+    keyf = lambda kind, c: f"{kind}|{c['old']}|{c['date']}" + (f"|{c['new']}" if kind == "derivative" else "")
+    # Best-known first, so the model is useful long before the backlog is done.
+    pending = [(kind, c) for kind, c in todo if keyf(kind, c) not in cases]
+    pending.sort(key=lambda kc: -audience.get(kc[1]["title"], 0))
+
+    def one(kc):
+        kind, c = kc
+        return kc, measure(project, c["title"], dt.date.fromisoformat(c["date"]))
+
+    with cf.ThreadPoolExecutor(6) as pool:           # a few requests at once, well within Wikimedia's limits
+        for i in range(0, len(pending), 60):
+            if time.time() - t0 > budget_s:
+                break
+            for (kind, c), m in pool.map(one, pending[i:i + 60]):
+                key = keyf(kind, c)
+                if m is None:
+                    cases[key] = None                   # remembered, so it isn't fetched again
+                    skipped += 1
+                    continue
+                ratio, usual = m
+                cases[key] = {"kind": kind, "date": c["date"], "old": c["old"], "old_kind": c["old_kind"],
+                              "old_year": c.get("old_year"), "ratio": ratio, "usual": usual,
+                              **({"rel": c["rel"], "new_kind": c["new_kind"], "new": c["new"]} if kind == "derivative"
+                                 else {"years": c["years"]})}
+                added += 1
     left = sum(1 for kind, c in todo
                if (f"{kind}|{c['old']}|{c['date']}" + (f"|{c['new']}" if kind == "derivative" else "")) not in cases)
     _save(os.path.join(cdir, "cases.json"), cases)
