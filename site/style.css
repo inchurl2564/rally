@@ -319,6 +319,7 @@ code { font-size: 13px; background: var(--paper-2); padding: 1px 5px; }
 .kicker .sw, .chip .sw { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 6px; vertical-align: 0; }
 .rail-head { font: 700 13px var(--sans); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 18px 0 10px; }
 .show-all { display: block; margin: 20px auto 8px; }
+.cards > .show-all { grid-column: 1 / -1; justify-self: center; }
 .chip.more-chip { border-style: dashed; color: var(--muted); cursor: default; }
 .pro-head { margin-top: 28px; }
 .pro-head .chips { margin-top: 4px; }
