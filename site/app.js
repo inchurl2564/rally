@@ -903,6 +903,49 @@ function annCard(a) {
     h("p", { class: "dek" }, `${noun(a.kind)[0].toUpperCase()}${noun(a.kind).slice(1)}, ${a.release.slice(0, 4)}${a.audience ? ` · ${fmt(a.audience)} views on a normal day` : ""}`));
 }
 
+// ---------- Case closed ----------
+// Mysteries from the past week that the nightly run (or an editor, often thanks to a reader tip) has now explained.
+function causeLine(r) {
+  if (r.editor_note) return r.editor_note.text;
+  const st = story(r);
+  const keep = st.dek.split(/(?<=\.)\s+/).filter((x) => !/^They all started rising|its usual interest|far more interest than usual/.test(x));
+  return keep.length ? keep.join(" ") : st.hed;
+}
+function caseClosed() {
+  const solved = (state.data.solved || []).map((x) => ({ ...x, r: state.byQid[x.qid] })).filter((x) => x.r);
+  if (!solved.length) return null;
+  const items = solved.map(({ r, via }) => {
+    const li = h("li", {});
+    const a = h("a", { href: "#", class: "row-open", "aria-expanded": "false" }, plain(r.label));
+    a.addEventListener("click", (e) => {
+      e.preventDefault();
+      const open = a.getAttribute("aria-expanded") === "true";
+      li.parentNode.querySelectorAll(".closed-card").forEach((x) => x.remove());
+      li.parentNode.querySelectorAll('a.row-open[aria-expanded="true"]').forEach((x) => x.setAttribute("aria-expanded", "false"));
+      if (open) return;
+      const c = noKicker(storyCard(r));
+      c.querySelectorAll(".hed a").forEach((x) => x.replaceWith(x.textContent));
+      li.append(h("div", { class: "closed-card" }, c));
+      a.setAttribute("aria-expanded", "true");
+    });
+    const reason = reasonOf(r);
+    li.append(h("b", {}, a), ` (${r.release_year}) `,
+      h("span", { class: "closed-reason" }, h("i", { class: "sw", style: `background:${reason.color}`, "aria-hidden": "true" }), reason.label),
+      h("div", { class: "closed-why" }, causeLine(r), via ? h("span", { class: "closed-via" }, ` Solved thanks to a ${via}.`) : null));
+    return li;
+  });
+  const cap = 6, list = h("ul", { class: "closed-list" }, items);
+  items.slice(cap).forEach((li) => { li.hidden = true; });
+  const more = items.length > cap ? h("button", { type: "button", class: "btn ghost show-all", "aria-expanded": "false",
+    onclick: (e) => { const open = e.target.getAttribute("aria-expanded") !== "true";
+      items.slice(cap).forEach((li) => { li.hidden = !open; }); e.target.setAttribute("aria-expanded", String(open));
+      e.target.textContent = open ? "Show fewer" : `Show all ${items.length} solved`; } }, `Show all ${items.length} solved`) : null;
+  return h("section", { class: "case-closed", "aria-label": "Mysteries solved this week" },
+    h("h2", {}, "Case closed"),
+    h("p", { class: "small muted" }, "Mysteries from the past week that we've now explained. They've moved to their sections on Today."),
+    list, more);
+}
+
 // ---------- Mysteries ----------
 // On a page that is all one reason, the reason label on each card would only repeat the page title.
 const noKicker = (el) => { el.querySelector(".kicker")?.remove(); return el; };
@@ -932,6 +975,7 @@ function mysteriesPage() {
   return [
     h("p", { class: "intro" }, "Old favorites that are suddenly back, and we can't tell why yet. Know why? Tell us."),
     contentsLine([{ n: L.length, label: "open cases", title: "Open cases" }, { n: groups.length, label: "linked by one person", title: "Linked by one person" }]),
+    caseClosed(),
     scoreKey(),
     ...pageSection("Open cases", "Comebacks we can't explain yet, newest first.",
       { cards: L.slice(0, 6), rest: L.slice(6), all: L, card: storyCard, row: caseRow }, ["Started", "Work", "× usual", "Score", ""], "open cases"),

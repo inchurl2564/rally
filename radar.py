@@ -821,6 +821,53 @@ def fetch_people_images(qids: set[str], batch: int = 80) -> dict[str, tuple[str,
     return out
 
 
+UNEXPLAINED_VERDICTS = {"unexplained", "weak link", "lookup failed", "common thread"}
+SET_ASIDE_VERDICTS = {"seasonal", "automated?", "front page"}
+
+
+def _open_cases(d: dict) -> set[str]:
+    """Qids an edition listed as Unexplained (same rule as the site: a 'same person' group
+    with a known cause counts as news, not a mystery)."""
+    explained = {w["qid"] for t in d.get("common_threads", [])
+                 if t.get("editor_note") or t.get("person_jump") or t.get("cause") for w in t["works"]}
+    return {r["qid"] for r in d.get("results", []) if r["verdict"] in UNEXPLAINED_VERDICTS and r["qid"] not in explained}
+
+
+def solved_cases(rdir: str, data: dict, run_id: str, days: int = 7) -> list[dict]:
+    """Mysteries from the last week's editions that today's edition can explain: 'Case closed'."""
+    start = (dt.date.fromisoformat(run_id) - dt.timedelta(days=days)).isoformat()
+    editions = []
+    for f in sorted(os.listdir(rdir)) if os.path.isdir(rdir) else []:
+        rid = f[:-5]
+        if f.endswith(".json") and start <= rid < run_id:
+            try:
+                with open(os.path.join(rdir, f)) as fh:
+                    editions.append((rid, json.load(fh)))
+            except (OSError, json.JSONDecodeError):
+                continue
+    editions.append((run_id, data))
+    now_open = _open_cases(data)
+    explained_now = {r["qid"]: r for r in data["results"]
+                     if r["qid"] not in now_open and r["verdict"] not in SET_ASIDE_VERDICTS}
+    out, last_open, solved_on = [], {}, {}
+    for rid, d in editions:
+        opened = _open_cases(d)
+        present = {r["qid"] for r in d.get("results", [])}
+        for q in opened:
+            last_open[q] = rid
+            solved_on.pop(q, None)
+        for q in present - opened:
+            if q in last_open and q not in solved_on:
+                solved_on[q] = rid
+    for q, day in solved_on.items():
+        if q in explained_now:
+            r = explained_now[q]
+            out.append({"qid": q, "solved_on": day, "open_since": min(rid for rid, d in editions if q in _open_cases(d)),
+                        "via": (r.get("editor_note") or {}).get("via")})
+    out.sort(key=lambda x: (x["solved_on"], explained_now[x["qid"]].get("score", 0)), reverse=True)
+    return out
+
+
 def write_site_data(site: str, results, meta, clusters, threads, keep_runs: int,
                     coming_up: dict | None = None) -> dict:
     """latest.json + an archive of runs + an index of runs, for the static site."""
@@ -884,6 +931,11 @@ def write_site_data(site: str, results, meta, clusters, threads, keep_runs: int,
     rdir = os.path.join(ddir, "runs")
     os.makedirs(rdir, exist_ok=True)
     run_id = meta["window_end"]
+    try:
+        data["solved"] = solved_cases(rdir, json.loads(json.dumps(data, default=str)), str(run_id))
+    except Exception as e:
+        print(f"      solved-cases check failed: {e}", file=sys.stderr)
+        data["solved"] = []
     for path in (os.path.join(ddir, "latest.json"), os.path.join(rdir, f"{run_id}.json")):
         with open(path, "w") as f:
             json.dump(data, f, separators=(",", ":"), default=str)

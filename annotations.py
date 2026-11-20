@@ -165,6 +165,8 @@ def apply(results: list[dict], threads: list[dict]) -> None:
         names = {x.lower() for x in (n.get("entity_name"), n.get("entity_title", "").replace("_", " "),
                                       *n.get("related", [])) if x}
         note = {"text": n["note"], "source": n["source"], "id": n["id"]}
+        if n.get("via"):            # e.g. "reader tip": credited when the mystery is marked solved
+            note["via"] = n["via"]
         for r in results:
             if not lo <= r["spike_start"] <= hi:
                 continue

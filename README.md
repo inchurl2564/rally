@@ -77,6 +77,10 @@ Each mystery has a **Know why? Tell us** link that opens a short form (what's br
 
 Until `action` is set, the link opens a pre-filled GitHub issue instead.
 
+When a tip checks out, add an editor's note to `annotations.json` with a `source` link and `"via": "reader tip"`.
+The next nightly run moves the title out of Unexplained, and the **Case closed** strip on the Unexplained page
+lists it for a week with "Solved thanks to a reader tip."
+
 ## Reader corrections
 
 Every card has a **Report a correction** link that opens a pre-filled issue labelled `feedback`. Label reviewed reports `verified-correct` or `verified-wrong`, and the Accuracy tab counts them on the next run.
