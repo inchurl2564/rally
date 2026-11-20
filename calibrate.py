@@ -289,7 +289,9 @@ BASIS = {"adaptation of": "adaptations", "sequel to": "sequels", "remake of": "r
 
 
 def predict(model: dict, c: dict) -> dict | None:
-    for k in _keys(c):
+    # Fall back from specific to broader groups, but never past the kind of release or anniversary:
+    # a sequel (about 10x) must not borrow the all-releases average (under 2x).
+    for k in _keys(c)[:-1]:
         g = model.get("groups", {}).get(k)
         if g and g["n"] >= MIN_CASES:
             what = (f"{BASIS.get(c['rel'], 'new releases')}" if c["kind"] == "derivative"
@@ -415,7 +417,8 @@ def seasonal(site: str, project: str, watch: dict[str, dict], audience: dict[str
         out.append({"title": title, "label": title.replace("_", " "), "qid": w["qid"], "kind": w["kind"],
                     "release": w.get("release", ""), "date": nxt.isoformat(), "holiday": hol.get(title),
                     "audience": round(audience.get(title, 0)),
-                    "prediction": {"expected": rec["expected"], "chance": round(rec["hits"] / max(rec["years"], 1), 2),
+                    # Three years is too few for a % chance, so it says how many years it came back instead.
+                    "prediction": {"expected": rec["expected"], "chance": None, "record": f"{rec['hits']} of {rec['years']} years",
                                    "n": rec["years"], "basis": f"Back {rec['hits']} of the last {rec['years']} years"}})
     out.sort(key=lambda x: (x["date"], -x["audience"]))
     log(f"      back every year: {len(out)} regulars due in the next {horizon} days ({len(titles)} candidates)")

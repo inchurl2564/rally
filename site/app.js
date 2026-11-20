@@ -912,9 +912,9 @@ const scoreCell = (n) => h("td", { class: "num" }, scoreDot(n));
 const fmtX = (x) => `${x >= 10 ? Math.round(x) : x}×`;
 const OUTLOOK_HELP = "Chance = how often similar past cases reached at least 2× their usual interest within a week of the date.";
 const outlookEl = (p) => (p ? h("p", { class: "outlook", title: `${p.basis}. ${OUTLOOK_HELP}` },
-  h("b", {}, `Expect about ${fmtX(p.expected)}`), ` its usual interest${p.chance != null ? ` · ${Math.round(p.chance * 100)}% chance` : ""}`) : null);
+  h("b", {}, `Expect about ${fmtX(p.expected)}`), ` its usual interest${p.chance != null ? ` · ${Math.round(p.chance * 100)}% chance` : p.record ? ` · back ${p.record}` : ""}`) : null);
 const outlookCell = (p) => h("td", { class: "num nowrap", title: p ? `${p.basis}. ${OUTLOOK_HELP}` : null },
-  p ? `${fmtX(p.expected)}${p.chance != null ? ` · ${Math.round(p.chance * 100)}%` : ""}` : "–");
+  p ? `${fmtX(p.expected)}${p.chance != null ? ` · ${Math.round(p.chance * 100)}%` : p.record ? ` · ${p.record}` : ""}` : "–");
 
 function derivCard(c) {
   const old = state.byQid[c.old];
@@ -935,7 +935,7 @@ function seasonCard(a) {
   return withPic("article", "story", photoOrPanel(a.image, a.label, a.image_of, a.release.slice(0, 4), a.kind),
     h("div", { class: "when" }, `Back around ${short(a.date)}`),
     h("h3", { class: "hed" }, hedLink(state.byQid[a.qid], plain(a.label)), ` (${a.release.slice(0, 4)})`),
-    h("p", { class: "dek" }, `${a.holiday ? `A ${a.holiday} favorite: ` : ""}people come back to this ${noun(a.kind)} around the same time every year. ${a.prediction.basis}.`),
+    h("p", { class: "dek" }, `${a.holiday ? `A ${a.holiday} favorite: ` : ""}people come back to this ${noun(a.kind)} around the same time every year.`),
     outlookEl(a.prediction));
 }
 
