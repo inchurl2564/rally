@@ -537,13 +537,18 @@ function drawStream(chart, tip, dates, series) {
     .on("click", (e, l) => { const r = series[l.index].r; if (r) focusCard(r.qid); });
   // Direct labels at each band's thickest point, skipping collisions.
   const placed = [];
-  const labelled = series.map((s, i) => ({ s, i })).filter((o) => o.s.r).sort((a, b) => b.s.total - a.s.total).slice(0, narrow ? 5 : 12);
+  // Phones label what's big right now, at the right edge; wider screens label each band at its thickest point.
+  const lastI = dates.length - 1;
+  const endThick = (i) => y(stack[i][lastI][0]) - y(stack[i][lastI][1]);
+  const labelled = series.map((s, i) => ({ s, i })).filter((o) => o.s.r)
+    .sort((a, b) => (narrow ? endThick(b.i) - endThick(a.i) : b.s.total - a.s.total)).slice(0, narrow ? 6 : 12);
   const lg = svg.append("g");
   for (const { s, i } of labelled) {
     const layer = stack[i];
     let bi = 0, bt = 0;
-    layer.forEach((d, j) => { const t = y(d[0]) - y(d[1]); if (t > bt) { bt = t; bi = j; } });
-    if (bt < 15) continue;
+    if (narrow) { bi = lastI; bt = endThick(i); }
+    else layer.forEach((d, j) => { const t = y(d[0]) - y(d[1]); if (t > bt) { bt = t; bi = j; } });
+    if (bt < (narrow ? 10 : 15)) continue;
     const text = s.label.length > 28 ? s.label.slice(0, 26) + "…" : s.label;
     // A label that would run off either edge lines up with that edge, so edge labels form a tidy column.
     const w = text.length * 6.6, right = x(bi) + w / 2 > W - M.r - 4, left = x(bi) - w / 2 < M.l + 4;
