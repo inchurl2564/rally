@@ -13,6 +13,9 @@ It runs every day on GitHub Actions and publishes a static site to GitHub Pages.
 | [Wikidata](https://www.wikidata.org/) (CC0) | What each work is, release dates, credits, sequels and adaptations |
 | Wikipedia edit history | Edit bursts and edit summaries from the days a spike began |
 | [GDELT](https://www.gdeltproject.org/) news API | Headlines from the days a spike began (best-effort) |
+| [Steam](https://partner.steamgames.com/doc/webapi/ISteamUserStats#GetNumberOfCurrentPlayers) current players | Older games people are playing again (recorded daily) |
+| [iTunes charts](https://itunes.apple.com/us/rss/topmovies/limit=200/json) (songs, albums, movies) | Older works back on the charts (recorded daily) |
+| [Open Library](https://openlibrary.org/trending/daily) trending | Older books people are reading again (recorded daily) |
 
 ## Who it's for
 
@@ -29,11 +32,12 @@ There are also **Coming up** (forecasts), **Accuracy** (how often it's right) an
 ## What it does
 
 1. **Watch:** each day, read the bulk pageview file and track notable older works, i.e. those with 10+ language editions released 10+ years ago. It also scans English Wikipedia's daily top 1,000.
-2. **Measure:** compare the last 3 and 14 days with the median of the previous ~11 months. 3× over 14 days, or 2.5× over 3 days, counts as a revival. Each revival gets a stage: *emerging*, *peaking*, *sustained* or *fading*.
-3. **Explain:** look in Wikidata for deaths of credited people, sequels, adaptations, remakes, new series entries, new work by the same creator, or anniversaries. For spikes Wikidata can't explain, read edit summaries, edit bursts and news headlines from the same days.
-4. **Connect:** group spikes by a shared event, and group unexplained spikes by a shared person with the same timing.
-5. **Filter:** set aside seasonal items (also up this time last year), spikes that are almost all desktop traffic (likely bots), and one-day surges from a feature on Wikipedia's front page (Today's featured article, Did you know, On this day).
-6. **Forecast and check:** list upcoming sequels, adaptations and anniversaries for older works, then later check whether attention actually rose. The site publishes the hit rate, how often explanations are backed by independent evidence, and reader corrections.
+2. **Second opinions:** record Steam player counts, iTunes chart positions and Open Library trending each day (`site/data/signals.json`), matched to works through Wikidata IDs. A jump (2× usual players, a new chart entry, a big climb) adds the work as a candidate and raises its rank; any signal is shown in the card's *Numbers & sources*.
+3. **Measure:** compare the last 3 and 14 days with the median of the previous ~11 months. 3× over 14 days, or 2.5× over 3 days, counts as a revival. Each revival gets a stage: *emerging*, *peaking*, *sustained* or *fading*.
+4. **Explain:** look in Wikidata for deaths of credited people, sequels, adaptations, remakes, new series entries, new work by the same creator, or anniversaries. For spikes Wikidata can't explain, read edit summaries, edit bursts and news headlines from the same days.
+5. **Connect:** group spikes by a shared event, and group unexplained spikes by a shared person with the same timing.
+6. **Filter:** set aside seasonal items (also up this time last year), spikes that are almost all desktop traffic (likely bots), and one-day surges from a feature on Wikipedia's front page (Today's featured article, Did you know, On this day).
+7. **Forecast and check:** list upcoming sequels, adaptations and anniversaries for older works, then later check whether attention actually rose. The site publishes the hit rate, how often explanations are backed by independent evidence, and reader corrections.
 
 These are leads, not conclusions. Wikidata is volunteer-edited, and news and edit lookups are best-effort. Verify before publishing or acting.
 
@@ -94,6 +98,7 @@ Set `RADAR_CONTACT` to a URL or address so Wikimedia can identify your client, a
 ```
 radar.py      pipeline: discover, measure, explain (Wikidata), write site data
 early.py      watchlist + bulk pageview files → early risers
+signals.py    Steam, iTunes charts, Open Library → second opinions
 explain.py    edit bursts, edit summaries, news → likely cause; corroboration
 forecast.py   upcoming sequels/adaptations/remakes, anniversaries
 evaluate.py   forecast checks, corroboration, persistence, reader reports

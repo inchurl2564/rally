@@ -829,7 +829,7 @@ def write_site_data(site: str, results, meta, clusters, threads, keep_runs: int,
             "qid", "title", "label", "kind", "age", "verdict", "lift", "peak_lift", "baseline",
             "recent_mean", "peak", "score", "still_elevated", "last_year_lift", "desktop_share",
             "days_in_top", "best_rank", "lift3", "stage", "early", "early_ratio", "cause", "evidence",
-            "edit_burst", "corroborated", "image", "image_of", "ripple", "editor_note", "front_page")}
+            "edit_burst", "corroborated", "image", "image_of", "ripple", "editor_note", "front_page", "signals")}
         out.update(release=r["release"].isoformat(), release_year=r["release"].year,
                    spike_start=r["spike_start"].isoformat(), peak_day=r["peak_day"].isoformat(),
                    spark_start=(r["spark_start"] + dt.timedelta(days=len(r["spark"]) - 365)).isoformat(),
@@ -961,6 +961,24 @@ def main():
                 seen[t] = {"days_in_top": 0, "best_rank": None, "early": True,
                            "early_ratio": info["early_ratio"]}
 
+    # Second opinions from outside Wikipedia: Steam players, iTunes charts, Open Library trending.
+    sig, strong = {}, set()
+    if watch:
+        import signals
+        log("      other signals (Steam, iTunes charts, Open Library)")
+        try:
+            store = signals.collect(args.site or args.out, watch, today)
+            sig = signals.read(store, today)
+        except Exception as e:  # never let the optional stage sink the run
+            log(f"      signals failed: {e}")
+        strong = {q for q, ss in sig.items() if any(x["strong"] for x in ss)}
+        q2t = {w["qid"]: t for t, w in watch.items()}
+        for q in strong:
+            t = q2t.get(q)
+            if t and t not in seen:
+                seen[t] = {"days_in_top": 0, "best_rank": None, "early": False}
+        log(f"      {len(strong)} works with a strong signal elsewhere")
+
     log("[2/5] Classifying via Wikidata")
     works = classify(args.project, list(seen), args.min_age, today)
     log(f"      {len(works)} creative works at least {args.min_age} years old")
@@ -976,7 +994,9 @@ def main():
     results = []
     with cf.ThreadPoolExecutor(max_workers=2) as ex:
         for w, m in ex.map(job, works):
-            if m and (m["lift"] >= args.min_lift or m["lift3"] >= args.early_lift):
+            # Backed by a strong signal elsewhere, a smaller Wikipedia rise is enough.
+            backed = w["qid"] in strong and m and max(m["lift"], m["lift3"]) >= 1.5
+            if m and (m["lift"] >= args.min_lift or m["lift3"] >= args.early_lift or backed):
                 w.update(m)
                 w["age"] = today.year - w["release"].year
                 w.update(seen[w["title"]])
@@ -1095,8 +1115,11 @@ def main():
             t["text"] = t["text"].replace(t.get("qid") or "@@", "a new work") if t.get("qid") and t["qid"] in t["text"] else t["text"]
 
     # Rank: lift, damped by scale so tiny pages with noisy baselines don't dominate.
+    # Each strong signal from another source raises the rank: seen in more places, more credible.
     for r in results:
-        r["score"] = round(r.pop("score_hint"), 2)
+        r["signals"] = sig.get(r["qid"], [])
+        n = sum(1 for x in r["signals"] if x["strong"])
+        r["score"] = round(r.pop("score_hint") * (1 + 0.25 * n), 2)
         r["early"] = bool(r.get("early"))
     results.sort(key=lambda r: -r["score"])
 

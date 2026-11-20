@@ -85,27 +85,27 @@ function storyText(r) {
     case "death": {
       const who = t.text.split(" (")[0], role = (t.text.match(/\(([^)]+)\)/) || [])[1];
       return { kicker: "In Memoriam", hed: `${w} is back as fans remember ${who}`,
-        dek: `The ${yr} ${n} has drawn ${x} its usual audience since ${who}${role ? `, its ${role},` : ""} died on ${fmtDate(t.date)}.` };
+        dek: `The ${yr} ${n} has drawn ${x} its usual interest since ${who}${role ? `, its ${role},` : ""} died on ${fmtDate(t.date)}.` };
     }
     case "derivative": {
       const [rel, ...rest] = t.text.split(": "), nw = strip(rest.join(": "));
       const what = REL[rel] || "a new release";
       return upcoming
         ? { kicker: "Homework", hed: `${w} is back, just ahead of ${nw}`,
-            dek: `The ${yr} ${n} is already at ${x} its usual audience, with ${what}, ${nw}, due ${fmtDate(t.date)}.` }
+            dek: `The ${yr} ${n} is already at ${x} its usual interest, with ${what}, ${nw}, due ${fmtDate(t.date)}.` }
         : { kicker: "The Sequel Effect", hed: `${w} is back, thanks to ${nw}`,
-            dek: `The ${yr} ${n} is drawing ${x} its usual audience since ${what}, ${nw}, came out ${fmtDate(t.date)}.` };
+            dek: `The ${yr} ${n} is drawing ${x} its usual interest since ${what}, ${nw}, came out ${fmtDate(t.date)}.` };
     }
     case "same-creator": {
       const m = t.text.match(/^new work by (.+?): (.+)$/) || [];
       const who = m[1] || "Its creator", nw = strip(m[2] || "a new release");
       return { kicker: "Back Catalog", hed: upcoming ? `${w} is back as ${who}'s next release nears` : `${w} is back after ${who}'s new release`,
-        dek: `The ${yr} ${n} is drawing ${x} its usual audience. ${who}'s ${nw} ${upcoming ? `is due ${fmtDate(t.date)}` : `came out ${fmtDate(t.date)}`}.` };
+        dek: `The ${yr} ${n} is drawing ${x} its usual interest. ${who}'s ${nw} ${upcoming ? `is due ${fmtDate(t.date)}` : `came out ${fmtDate(t.date)}`}.` };
     }
     case "anniversary": {
       const yrs = (t.text.match(/^(\d+)/) || [])[1];
       return { kicker: "Happy Birthday", hed: `${w} turns ${yrs}`,
-        dek: `The ${n} came out on ${fmtDate(r.release)}, and people are marking the occasion: ${x} its usual audience.` };
+        dek: `The ${n} came out on ${fmtDate(r.release)}, and people are marking the occasion: ${x} its usual interest.` };
     }
     case "common thread": {
       const who = t.text.split(" (")[0], k = (t.text.match(/credited on (\d+)/) || [])[1];
@@ -117,21 +117,21 @@ function storyText(r) {
       const hed = rp.relation === "sequel or adaptation" ? `${w} is back as ${rp.name} draws crowds`
         : ["franchise", "series", "character"].includes(rp.relation) ? `${w} rides the ${rp.name} wave`
         : rp.relation === "source material" ? (rp.name === w ? `The ${yr} ${n} of ${w} is back as the original makes news` : `${w} is back as ${rp.name} makes news`)
-        : `${w} draws readers amid news about ${rp.name}`;
+        : `${w} draws new interest amid news about ${rp.name}`;
       return { kicker: "The Ripple Effect", hed,
-        dek: `Interest in the ${yr} ${n} took off right as ${rp.name}'s own Wikipedia page jumped ${rp.ratio}× on ${short(rp.date)} (${fmt(rp.peak)} readers in a day).${["franchise", "series", "character", "sequel or adaptation", "source material"].includes(rp.relation) ? "" : ` Something happened involving ${rp.name}.`}` };
+        dek: `Interest in the ${yr} ${n} took off right as interest in ${rp.name} jumped ${rp.ratio}× on ${short(rp.date)}.${["franchise", "series", "character", "sequel or adaptation", "source material"].includes(rp.relation) ? "" : ` Something happened involving ${rp.name}.`}` };
     }
     case "editor":
-      return { kicker: "Explained", hed: `Why readers are looking up ${w}`, dek: `${r.editor_note.text} The ${yr} ${n} is drawing ${x} its usual audience.` };
+      return { kicker: "Explained", hed: `Why interest in ${w} is up`, dek: `${r.editor_note.text} The ${yr} ${n} is drawing ${x} its usual interest.` };
     case "coverage":
       return { kicker: "Explained", hed: `Why ${w} is suddenly everywhere`,
-        dek: `${causeSentence(r.cause)}, based on news and Wikipedia edits from the days interest jumped. The ${yr} ${n} is at ${x} its usual audience.` };
+        dek: `${causeSentence(r.cause)}. The ${yr} ${n} is at ${x} its usual interest.` };
     case "seasonal":
       return { kicker: "Right on Schedule", hed: `It's that time of year for ${w}`,
         dek: `Interest in the ${yr} ${n} jumps around now every year. Same weeks last year: ${r.last_year_lift}× usual.` };
     case "front page":
       return { kicker: "Wikipedia's Doing", hed: `${w} was on Wikipedia's front page`,
-        dek: `The ${yr} ${n} was ${r.front_page.kind === "Today's featured article" ? "Today's Featured Article" : `in “${r.front_page.kind}”`} on ${fmtDate(r.front_page.date)}, which sends tens of thousands of readers to a page for a day. Not a comeback.` };
+        dek: `The ${yr} ${n} was ${r.front_page.kind === "Today's featured article" ? "Today's Featured Article" : `in “${r.front_page.kind}”`} on ${fmtDate(r.front_page.date)}, which brings a one-day flood of visitors. Not a comeback.` };
     case "automated?":
       return { kicker: "Probably Bots", hed: `${w}'s spike looks automated`,
         dek: `Almost all of the extra traffic comes from desktop computers, a typical sign of bots rather than people.` };
@@ -143,7 +143,7 @@ function storyText(r) {
         `The internet rediscovered ${w}, and we can't figure out why`,
       ];
       return { kicker: "Mystery", hed: heds[hash(r.qid) % heds.length],
-        dek: `The ${yr} ${n} has drawn ${x} its usual audience ${since}, with no sequel, death, anniversary or news story we can find.` };
+        dek: `The ${yr} ${n} has drawn ${x} its usual interest ${since}, with no sequel, death, anniversary or news story we can find.` };
     }
   }
 }
@@ -168,14 +168,39 @@ function sharedStory(t) {
   if (t.type === "death") {
     const who = t.text.split(" (")[0];
     return { reason: STREAM_TYPES[3], kicker: "In memoriam", hed: `${names} ${works.length === 1 ? "is" : "are"} back as fans remember ${who}`,
-      dek: `${works.length} older titles are drawing far more readers than usual since ${who} died on ${fmtDate(t.date)}.` };
+      dek: `${works.length} older titles are getting far more interest than usual since ${who} died on ${fmtDate(t.date)}.` };
   }
   const nw = t.text.split(": ").slice(1).join(": ").replace(/ \((upcoming|attention rose before release)\)$/, "") || t.text;
   const up = /\(upcoming\)$/.test(t.text);
   const are = works.length === 1 ? "is" : "are";
   return { reason: STREAM_TYPES[1], kicker: "New release",
     hed: up ? `${names} ${are} back, just ahead of ${nw}` : `${names} ${are} back, thanks to ${nw}`,
-    dek: `${works.length} older titles are drawing far more readers than usual. ${nw} ${up ? `is due ${fmtDate(t.date)}` : `came out ${fmtDate(t.date)}`}.` };
+    dek: `${works.length} older titles are getting far more interest than usual. ${nw} ${up ? `is due ${fmtDate(t.date)}` : `came out ${fmtDate(t.date)}`}.` };
+}
+
+// Where a story's information comes from. Never in headlines or subheads; one tap away instead.
+function sourcesFor(r) {
+  const out = [];
+  if (r.editor_note) out.push(sourceLine(r.editor_note));
+  const rp = r.ripple;
+  if (rp) out.push(h("p", { class: "small" }, `${rp.name}'s Wikipedia page jumped ${rp.ratio}× on ${short(rp.date)} (${fmt(rp.peak)} views in a day), as interest in this ${noun(r.kind)} took off.`));
+  if (r.verdict === "coverage" && r.cause) out.push(h("p", { class: "small" }, "Likely cause read from news headlines and Wikipedia edits from the days interest jumped."));
+  if ((r.signals || []).length) out.push(h("ul", { class: "evidence" }, r.signals.map((x) => h("li", {}, h("span", { class: "src" }, x.source), x.text))));
+  if ((r.evidence || []).length) out.push(evidenceList(r.evidence, 4));
+  out.push(h("p", { class: "small muted" }, `Interest is measured from daily Wikipedia views: usually ${fmt(r.baseline)} a day for this ${noun(r.kind)}.`));
+  return out;
+}
+function threadSources(t) {
+  const out = [];
+  if (t.editor_note) out.push(sourceLine(t.editor_note));
+  if (t.person_jump) out.push(h("p", { class: "small" }, `${t.name}'s Wikipedia page jumped ${t.person_jump.ratio}× on ${short(t.person_jump.date)} (${fmt(t.person_jump.peak)} views in a day).`));
+  if (t.cause) out.push(h("p", { class: "small" }, "Likely cause read from news headlines and Wikipedia edits."));
+  if ((t.evidence || []).length) out.push(evidenceList(t.evidence, 3));
+  return out;
+}
+function sourcesBox(nodes) {
+  nodes = (nodes || []).filter(Boolean);
+  return nodes.length ? h("details", { class: "more-info sources" }, h("summary", {}, "Sources"), ...nodes) : null;
 }
 
 function sourceLine(note) {
@@ -192,8 +217,8 @@ function threadStory(t) {
     : roles.length === 1 && roles[0] === "performer" ? "by" : "featuring";
   const pj = t.person_jump;
   const cause = t.editor_note ? t.editor_note.text
-    : pj ? `${t.name}'s own Wikipedia page jumped ${pj.ratio}× on ${short(pj.date)} (${fmt(pj.peak)} readers in a day), so this is about ${t.name}.${t.cause ? ` ${causeSentence(t.cause)}.` : ""}`
-    : t.cause ? `${causeSentence(t.cause)}, based on news and Wikipedia edits.` : "Wikidata doesn't record why. Maybe you know?";
+    : pj ? `Interest in ${t.name} jumped ${pj.ratio}× on ${short(pj.date)}, so this is about ${t.name}.${t.cause ? ` ${causeSentence(t.cause)}.` : ""}`
+    : t.cause ? `${causeSentence(t.cause)}.` : "We don't know why yet. Maybe you know?";
   const works = t.works.map((w) => state.byQid[w.qid]).filter(Boolean);
   const known = !!(t.editor_note || pj || t.cause);
   return { reason: known ? STREAM_TYPES[0] : STREAM_TYPES[2], kicker: known ? "In the news" : "Unexplained",
@@ -348,7 +373,7 @@ function sectionHead(title, sub, moreLabel, moreView) {
 
 function bigstat(r, withSpark = true) {
   return h("div", { class: "bigstat" }, h("b", {}, mult(r)),
-    h("span", {}, `the usual number of readers · ${STAGES[r.stage] ? STAGES[r.stage].toLowerCase() : `since ${short(r.spike_start)}`}`),
+    h("span", {}, `its usual interest · ${STAGES[r.stage] ? STAGES[r.stage].toLowerCase() : `since ${short(r.spike_start)}`}`),
     withSpark ? sparkline(r, true) : null);
 }
 
@@ -406,7 +431,7 @@ function streamSection() {
   const present = STREAM_TYPES.filter((t) => series.some((x) => x.type === t));
   if (series.some((x) => x.type === OTHER)) present.push(OTHER);
   const table = h("table", {},
-    h("thead", {}, h("tr", {}, ["Title", "Story", "Biggest day", "Extra readers that day", "Extra readers, 45 days"].map((x) => h("th", {}, x)))),
+    h("thead", {}, h("tr", {}, ["Title", "Story", "Biggest day", "Extra views that day", "Extra views, 45 days"].map((x) => h("th", {}, x)))),
     h("tbody", {}, series.map((x) => {
       const i = x.extra.indexOf(Math.max(...x.extra));
       return h("tr", {}, h("td", {}, x.r ? link(x.r, x.label) : x.label), h("td", {}, x.type.label),
@@ -415,12 +440,12 @@ function streamSection() {
   const sec = h("section", { class: "stream", "aria-label": "The Month in Comebacks" },
     h("div", { class: "stream-head" }, h("div", {},
       h("h2", {}, "The month in comebacks"),
-      h("p", {}, "Each band is an old favorite drawing extra readers. The thicker the band, the bigger the comeback; the color says why it's back.",
-        best ? [" Biggest so far: ", h("b", {}, best.x.label), `, with ${fmt(best.v)} extra readers on ${fmtDate(dates[best.i])}.`] : null))),
+      h("p", {}, "Each band is an old favorite getting extra interest. The thicker the band, the bigger the comeback; the color says why it's back.",
+        best ? [" Biggest so far: ", h("b", {}, best.x.label), `, with ${fmt(best.v)} extra views on ${fmtDate(dates[best.i])}.`] : null))),
     h("div", { class: "legend", role: "list" }, present.map((t) =>
       h("span", { role: "listitem" }, h("i", { style: `background:${t.color}` }), t.label))),
     chart,
-    h("p", { class: "stream-note" }, `The ${series.length} biggest comebacks of the last 45 days${omitted ? ` (${omitted} smaller ones not shown)` : ""}. Band thickness = extra daily Wikipedia readers above each title's usual level. Hover or tap for numbers; click to read the story.`),
+    h("p", { class: "stream-note" }, `The ${series.length} biggest comebacks of the last 45 days${omitted ? ` (${omitted} smaller ones not shown)` : ""}. Band thickness = extra daily Wikipedia views above each title's usual level. Hover or tap for numbers; click to read the story.`),
     h("details", {}, h("summary", {}, "View as table"), h("div", { class: "tablewrap" }, table)));
   requestAnimationFrame(() => drawStream(chart, tip, dates, series));
   return sec;
@@ -437,7 +462,7 @@ function drawStream(chart, tip, dates, series) {
   const area = d3.area().x((d, i) => x(i)).y0((d) => y(d[0])).y1((d) => y(d[1])).curve(d3.curveBasis);
   chart.querySelector("svg")?.remove();
   const svg = d3.create("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("height", H).attr("role", "img")
-    .attr("aria-label", `Streamgraph of extra daily Wikipedia readers for the ${series.length} biggest comebacks over the last ${dates.length} days. A table view follows.`);
+    .attr("aria-label", `Streamgraph of extra daily Wikipedia views for the ${series.length} biggest comebacks over the last ${dates.length} days. A table view follows.`);
   // weekly ticks
   const ax = svg.append("g");
   ax.append("line").attr("class", "axis-line").attr("x1", M.l).attr("x2", W - M.r).attr("y1", H - M.b + 0.5).attr("y2", H - M.b + 0.5);
@@ -485,7 +510,7 @@ function drawStream(chart, tip, dates, series) {
     if (li < 0) { bands.classed("dim", false); tip.hidden = true; return; }
     const s = series[li];
     bands.classed("dim", (l) => l.index !== li);
-    tip.replaceChildren(h("b", {}, s.label), ` · ${short(dates[i])}: ${fmt(s.extra[i])} extra readers`,
+    tip.replaceChildren(h("b", {}, s.label), ` · ${short(dates[i])}: ${fmt(s.extra[i])} extra views`,
       h("small", {}, s.r ? `${s.type.label} · ${story(s.r).hed}` : "Smaller comebacks, combined"));
     tip.hidden = false;
     const tw = tip.offsetWidth;
@@ -505,8 +530,8 @@ window.addEventListener("resize", () => {
 function howItWorks() {
   return h("section", { class: "how", "aria-label": "How Rally works" },
     h("ol", {},
-      h("li", {}, h("b", {}, "We watch."), " Every day we count how many people read about older movies, shows, songs, games and books."),
-      h("li", {}, h("b", {}, "We spot comebacks."), " When an old favorite suddenly draws far more readers than usual, it's back."),
+      h("li", {}, h("b", {}, "We watch."), " Every day we track how much attention older movies, shows, songs, games and books are getting."),
+      h("li", {}, h("b", {}, "We spot comebacks."), " When an old favorite suddenly gets far more attention than usual, it's back."),
       h("li", {}, h("b", {}, "We find out why."), " A new release, the news, a death, an anniversary. When we can't tell, it's ", h("i", {}, "Unexplained"), ", and you can tip us off.")));
 }
 
@@ -527,7 +552,7 @@ function noteFeature(group) {
     h("div", {}, kickerEl(STREAM_TYPES[0]),
       h("h3", { class: "hed" }, `${oldNames(works)} are back`),
       h("p", { class: "dek" }, `${note.text} ${works.length} older titles connected to the story started rising together.`),
-      workChips(works), sourceLine(note)));
+      workChips(works), sourcesBox([sourceLine(note)])));
 }
 
 function sharedFeature(t) {
@@ -563,14 +588,14 @@ function todayPage() {
         kickerEl(st.reason, st.kicker),
         h("h2", { class: "hed" }, link(lead, st.hed)),
         h("p", { class: "dek" }, st.dek),
-        sourceLine(lead.editor_note),
-        bigstat(lead)),
+        bigstat(lead),
+        sourcesBox(sourcesFor(lead))),
       h("aside", { class: "index" },
         h("h2", {}, "Top 10 comebacks"),
-        h("p", {}, "Biggest jumps in readers, this edition"),
+        h("p", {}, "Biggest jumps in interest, this edition"),
         h("ol", {}, rest.slice(0, 10).map((r) => h("li", {}, h("div", {},
           h("div", { class: "t" }, link(r, r.label)),
-          h("div", { class: "s" }, `${mult(r)} the usual readers · `, story(r).kicker))))))),
+          h("div", { class: "s" }, `${mult(r)} usual interest · `, story(r).kicker))))))),
   ];
   // Works already shown in a group feature aren't repeated as cards.
   const inGroups = new Set([...shared.flatMap((t) => t.works), ...threads.flatMap((t) => t.works.map((w) => w.qid))]);
@@ -612,7 +637,7 @@ function threadFeature(t) {
       : pic(wikidata(t.qid), t.image, t.name, 300, t.name),
     h("div", {}, kickerEl(st.reason, st.kicker), h("h3", { class: "hed" }, st.hed), h("p", { class: "dek" }, st.dek),
       workChips(t.works.map((w) => state.byQid[w.qid]).filter(Boolean)),
-      sourceLine(t.editor_note), evidenceList(t.evidence, 3)));
+      sourcesBox(threadSources(t))));
 }
 
 function storyCard(r) {
@@ -621,8 +646,8 @@ function storyCard(r) {
     kickerEl(st.reason, st.kicker),
     h("h3", { class: "hed" }, link(r, st.hed)),
     h("p", { class: "dek" }, st.dek),
-    sourceLine(r.editor_note),
     bigstat(r),
+    sourcesBox(sourcesFor(r)),
     MYSTERY.has(r.verdict) ? h("div", {}, tipLink(r)) : null);
 }
 
@@ -643,7 +668,7 @@ function annMini(a) {
   return withPic("article", "mini", pic(wikipedia(a.title), a.image, a.label, 480, a.image_of),
     h("div", { class: "when" }, short(a.date)),
     h("h3", { class: "hed" }, `${a.label} turns ${a.years}`),
-    h("p", { class: "dek" }, `${noun(a.kind)[0].toUpperCase()}${noun(a.kind).slice(1)}, ${a.release.slice(0, 4)}${a.audience ? ` · ${fmt(a.audience)} readers on a normal day` : ""}`));
+    h("p", { class: "dek" }, `${noun(a.kind)[0].toUpperCase()}${noun(a.kind).slice(1)}, ${a.release.slice(0, 4)}${a.audience ? ` · ${fmt(a.audience)} views on a normal day` : ""}`));
 }
 
 // ---------- Mysteries ----------
@@ -655,7 +680,7 @@ function mysteriesPage() {
     h("p", { class: "intro" }, "Old favorites that are suddenly back, where the reason isn't clear yet. Know why? Tell us."),
     threads.length ? sectionHead("Linked by one person", "Several titles with the same person, all rising at the same time.") : null,
     threads.length ? h("div", {}, threads.map(threadFeature)) : null,
-    sectionHead("Open cases", "Newest first. Some have a likely cause from news and Wikipedia edits; most don't, yet."),
+    sectionHead("Open cases", "Newest first. Some have a likely cause; most don't, yet."),
     h("div", { class: "grid" }, L.filter((r) => r.verdict !== "common thread").map(storyCard)),
   ].filter(Boolean);
 }
@@ -716,7 +741,7 @@ function listSection() {
     Object.entries(STAGES).map(([k, v]) => h("option", { value: k, selected: state.stages.size === 1 && state.stages.has(k) ? "" : null }, v)));
   stageSel.addEventListener("change", (e) => { state.stages = new Set(e.target.value ? [e.target.value] : []); renderList(); });
   const sortSel = h("select", { "aria-label": "Sort" },
-    [["score", "Biggest comeback"], ["lift", "Biggest jump"], ["recent", "Most readers now"], ["start", "Newest"], ["age", "Oldest work"]]
+    [["score", "Biggest comeback"], ["lift", "Biggest jump"], ["recent", "Most interest now"], ["start", "Newest"], ["age", "Oldest work"]]
       .map(([k, l]) => h("option", { value: k, selected: state.sort === k ? "" : null }, `Sort: ${l}`)));
   sortSel.addEventListener("change", (e) => { state.sort = e.target.value; renderList(); });
   const q = h("input", { id: "q", type: "search", placeholder: "Search titles, people, causes…", "aria-label": "Search" });
@@ -804,7 +829,7 @@ function openTip(r) {
   const form = h("form", { method: "dialog" },
     h("span", { class: "kicker" }, "Tip the desk"),
     h("h2", { class: "hed" }, `Why is ${r.label} back?`),
-    h("p", { class: "small muted" }, `The ${r.release_year} ${noun(r.kind)} is drawing ${mult(r)} its usual audience and we can't find the reason.`),
+    h("p", { class: "small muted" }, `The ${r.release_year} ${noun(r.kind)} is drawing ${mult(r)} its usual interest and we can't find the reason.`),
     h("label", {}, h("span", {}, "What's bringing it back?"), why),
     h("label", {}, h("span", {}, "A link, if you have one ", h("i", { class: "muted" }, "(optional)")), link),
     h("label", {}, h("span", {}, "Your email, if we may follow up ", h("i", { class: "muted" }, "(optional)")), email),
@@ -862,12 +887,11 @@ function card(r, open) {
       kickerEl(st.reason, st.kicker),
       h("h3", { class: "hed" }, ext(wikipedia(r.title), st.hed)),
       h("p", { class: "dek" }, st.dek),
-      sourceLine(r.editor_note),
       h("div", { class: "tags" },
         h("span", { class: "tagx" }, `${r.label} · ${r.release_year}`),
         r.stage === "emerging" ? h("span", { class: "tagx hot" }, "Just starting") : r.stage ? h("span", { class: "tagx" }, STAGES[r.stage]) : null,
         r.early ? h("span", { class: "tagx", title: "Spotted by our watchlist before it reached Wikipedia's top 1,000" }, "Caught early") : null),
-      h("details", { class: "more-info", open: open ? "" : null }, h("summary", {}, "The numbers"),
+      h("details", { class: "more-info", open: open ? "" : null }, h("summary", {}, "Numbers & sources"),
         sparkline(r),
         h("dl", { class: "nums" },
           h("div", {}, h("dt", {}, "14-day lift"), h("dd", {}, `${r.lift}×`)),
@@ -876,6 +900,8 @@ function card(r, open) {
           h("div", {}, h("dt", {}, "Began"), h("dd", {}, short(r.spike_start)))),
         r.triggers.length ? h("ul", { class: "triggers" }, r.triggers.map((t) =>
           h("li", {}, t.qid ? ext(wikidata(t.qid), t.text) : t.text, h("span", { class: "d" }, short(t.date))))) : null,
+        r.editor_note ? sourceLine(r.editor_note) : null,
+        (r.signals || []).length ? h("ul", { class: "evidence" }, r.signals.map((x) => h("li", {}, h("span", { class: "src" }, x.source), x.text))) : null,
         evidenceList(r.evidence, 8),
         h("p", { class: "checks" }, checks))));
 }
@@ -901,12 +927,12 @@ function sparkline(r, compact) {
     const box = svg.getBoundingClientRect();
     const i = Math.max(0, Math.min(n - 1, Math.round(((e.clientX - box.left) / box.width) * W)));
     cursor.setAttribute("x1", i); cursor.setAttribute("x2", i); cursor.setAttribute("visibility", "visible");
-    tip.textContent = `${fmtDate(addDays(r.spark_start, i))} · ${fmt(vals[i])} readers`;
+    tip.textContent = `${fmtDate(addDays(r.spark_start, i))} · ${fmt(vals[i])} views`;
     tip.style.left = `${box.left + (i / W) * box.width}px`; tip.style.top = `${box.top}px`; tip.hidden = false;
   };
   const leave = () => { cursor.setAttribute("visibility", "hidden"); tip.hidden = true; };
   svg.addEventListener("pointermove", move); svg.addEventListener("pointerdown", move); svg.addEventListener("pointerleave", leave);
-  return h("div", { class: "spark" }, svg, compact ? null : h("div", { class: "spark-legend" }, h("span", {}, "Daily readers, last 12 months"), h("span", {}, "dashed line = usual")));
+  return h("div", { class: "spark" }, svg, compact ? null : h("div", { class: "spark-legend" }, h("span", {}, "Daily Wikipedia views, last 12 months"), h("span", {}, "dashed line = usual")));
 }
 
 function focusCard(qid) {
@@ -944,7 +970,7 @@ function comingPage() {
     table(["The original", "What's bringing it back", "Due"], dRows),
     sectionHead("Big anniversaries", "Round-number anniversaries in the next 60 days, ranked by how many people normally read about them."),
     (cu.anniversaries || []).length ? h("div", { class: "rail" }, cu.anniversaries.slice(0, 12).map(annMini)) : null,
-    table(["Date", "Work", "Turns", "Readers on a normal day"], aRows),
+    table(["Date", "Work", "Turns", "Views on a normal day"], aRows),
   ].filter(Boolean);
 }
 function table(head, rows) {
@@ -971,7 +997,7 @@ function accuracyPage() {
       stat(pct(c.all?.rate), "of explanations backed by news or edits", `${c.all?.agree ?? 0} of ${c.all?.checked ?? 0} with evidence`),
       stat(p.median_days == null ? "–" : `${p.median_days}d`, "a typical revival lasts", p.share_over_7_days == null ? "" : `${pct(p.share_over_7_days)} last over a week`),
       stat(`${rr.correct ?? 0}/${rr.wrong ?? 0}`, "reader reports: right / wrong", `${rr.open ?? 0} awaiting review`)),
-    sectionHead("Did the Prediction Come True?", "A prediction counts if the older work hit 2× its usual readers within a week of the date."),
+    sectionHead("Did the Prediction Come True?", "A prediction counts if the older work hit 2× its usual interest within a week of the date."),
     table(["Date", "Work", "We predicted", "Peak vs usual", "Result"], recent),
     sectionHead("Do Our Explanations Hold Up?", "For explained spikes: did news or Wikipedia edits from the same days mention the same cause?"),
     table(["Story type", "Checked", "Backed by evidence"], corrRows),
