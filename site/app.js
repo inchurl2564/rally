@@ -912,9 +912,9 @@ const scoreCell = (n) => h("td", { class: "num" }, scoreDot(n));
 const fmtX = (x) => `${x >= 10 ? Math.round(x) : x}×`;
 const OUTLOOK_HELP = "Chance = how often similar past cases reached at least 2× their usual interest within a week of the date.";
 const outlookEl = (p) => (p ? h("p", { class: "outlook", title: `${p.basis}. ${OUTLOOK_HELP}` },
-  h("b", {}, `Expect about ${fmtX(p.expected)}`), ` its usual interest · ${Math.round(p.chance * 100)}% chance`) : null);
+  h("b", {}, `Expect about ${fmtX(p.expected)}`), ` its usual interest${p.chance != null ? ` · ${Math.round(p.chance * 100)}% chance` : ""}`) : null);
 const outlookCell = (p) => h("td", { class: "num nowrap", title: p ? `${p.basis}. ${OUTLOOK_HELP}` : null },
-  p ? `${fmtX(p.expected)} · ${Math.round(p.chance * 100)}%` : "–");
+  p ? `${fmtX(p.expected)}${p.chance != null ? ` · ${Math.round(p.chance * 100)}%` : ""}` : "–");
 
 function derivCard(c) {
   const old = state.byQid[c.old];
@@ -1349,7 +1349,7 @@ function comingPage() {
   const dueRow = (x) => h("tr", {},
     h("td", { class: "nowrap" }, fmtDate(x.date)),
     h("td", {}, h("b", {}, x.label), h("div", { class: "small muted" }, x.detail)),
-    h("td", { class: "num nowrap" }, x.predicted && x.predicted.expected != null ? `${fmtX(x.predicted.expected)} · ${Math.round(x.predicted.chance * 100)}%` : "–"),
+    h("td", { class: "num nowrap" }, x.predicted && x.predicted.expected != null ? `${fmtX(x.predicted.expected)}${x.predicted.chance != null ? ` · ${Math.round(x.predicted.chance * 100)}%` : ""}` : "–"),
     h("td", { class: "num nowrap" }, fmtX(x.ratio)),
     h("td", { class: "nowrap" }, x.hit ? h("span", { class: "ok" }, "✓ Came true") : h("span", { class: "muted" }, "No bump")));
   return [

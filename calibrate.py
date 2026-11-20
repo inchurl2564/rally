@@ -34,7 +34,8 @@ import radar
 import forecast
 
 HIT = 2.0                 # a comeback is 2x the usual interest (same as the Track record)
-MIN_CASES = 20            # a prediction is shown only when it rests on at least this many past cases
+MIN_CASES = 50            # an expected size is shown only when it rests on at least this many past cases
+MIN_CASES_CHANCE = 100    # the "% chance" needs more: with fewer, it could be off by 15+ points
 BACKFILL_FROM = dt.date(2016, 1, 1)
 PAST_DERIV_CACHE = os.path.join(radar.CACHE, "calibration_past_derivatives.json")
 
@@ -256,7 +257,8 @@ def predict(model: dict, c: dict) -> dict | None:
             what = (f"{BASIS.get(c['rel'], 'new releases')}" if c["kind"] == "derivative"
                     else f"{c['years']}th anniversaries" if years_bucket(c["years"]) == "10" or c["years"] >= 50
                     else "anniversaries like this")
-            return {"expected": g["expected"], "chance": g["chance"], "n": g["n"], "low": g["low"], "high": g["high"],
+            return {"expected": g["expected"], "chance": g["chance"] if g["n"] >= MIN_CASES_CHANCE else None,
+                    "n": g["n"], "low": g["low"], "high": g["high"],
                     "basis": f"Based on {g['n']} past {what}"}
     return None
 
