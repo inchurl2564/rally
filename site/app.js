@@ -307,7 +307,7 @@ async function init() {
   try { state.index = await getJSON("data/index.json"); }
   catch (e) { return fail("No data yet. The first daily run hasn't finished."); }
   state.labels = state.index.verdict_labels || {};
-  getJSON("data/accuracy.json").then((a) => { state.accuracy = a; if (state.view === "accuracy") render(); }).catch(() => {});
+  getJSON("data/accuracy.json").then((a) => { state.accuracy = a; if (state.view === "accuracy" || state.view === "coming") render(); }).catch(() => {});
   const runs = state.index.runs || [];
   const sel = $("run");
   runs.forEach((r, i) => sel.append(h("option", { value: r.id }, i === 0 ? `Latest edition · ${short(r.id)}` : `Edition of ${fmtDate(r.id)}`)));
@@ -390,7 +390,8 @@ const live = () => state.data.results.filter((r) => !FILTERED.has(r.verdict)).so
 // Today's sections wear the color of their reason, matching the chart and the story labels.
 const SECTION_COLOR = { "In the news": "var(--s1)", "New releases": "var(--s2)", "Unexplained": "var(--s3)",
   "In memoriam": "var(--s4)", "Coming up": "var(--s5)", "Linked by one person": "var(--s3)", "Open cases": "var(--s3)",
-  "Due for a comeback": "var(--s5)", "Big anniversaries": "var(--s5)" };
+  "Due for a comeback": "var(--s5)", "Big anniversaries": "var(--s5)",
+  "Back every year": "var(--s5)", "Recently due": "var(--s5)" };
 function sectionHead(title, sub, moreLabel, moreView) {
   return h("div", { class: "section-head", style: SECTION_COLOR[title] ? `--sec:${SECTION_COLOR[title]}` : null },
     h("div", {}, h("h2", {}, title), sub ? h("p", {}, sub) : null),
@@ -831,13 +832,15 @@ function derivMini(c) {
     : c.new_image ? pic(null, c.new_image, c.new_label, 480, c.new_label) : null,
     h("div", { class: "when" }, `Comeback due ${short(c.date)}`),
     h("h3", { class: "hed" }, hedLink(state.byQid[c.old], plain(c.old_label)), ` (${c.old_release.slice(0, 4)})`),
-    h("p", { class: "dek" }, `${NEWREL[c.rel] ? NEWREL[c.rel][0].toUpperCase() + NEWREL[c.rel].slice(1) : "A new release"}, ${c.new_label}, arrives ${fmtDate(c.date)}.`));
+    h("p", { class: "dek" }, `${NEWREL[c.rel] ? NEWREL[c.rel][0].toUpperCase() + NEWREL[c.rel].slice(1) : "A new release"}, ${c.new_label}, arrives ${fmtDate(c.date)}.`),
+    outlookEl(c.prediction));
 }
 function annMini(a) {
   return withPic("article", "mini", pic(null, a.image, a.label, 480, a.image_of),
     h("div", { class: "when" }, short(a.date)),
     h("h3", { class: "hed" }, hedLink(state.byQid[a.qid], `${plain(a.label)} turns ${a.years}`)),
-    h("p", { class: "dek" }, `${noun(a.kind)[0].toUpperCase()}${noun(a.kind).slice(1)}, ${a.release.slice(0, 4)}${a.audience ? ` · ${fmt(a.audience)} views on a normal day` : ""}`));
+    h("p", { class: "dek" }, `${noun(a.kind)[0].toUpperCase()}${noun(a.kind).slice(1)}, ${a.release.slice(0, 4)}${a.audience ? ` · ${fmt(a.audience)} views on a normal day` : ""}`),
+    outlookEl(a.prediction));
 }
 
 // ---------- section pages (Unexplained, Coming up) ----------
@@ -896,18 +899,35 @@ function pageSection(title, sub, { cards, rest, all, card, row: plainRow }, colu
 const workCell = (r, label, sub) => h("td", {}, h("b", { class: "t" }, label), h("div", { class: "small muted" }, sub));
 const scoreCell = (n) => h("td", { class: "num" }, scoreDot(n));
 
+// Outlook: how big a comeback to expect and how likely it is, learned from past cases like it.
+const fmtX = (x) => `${x >= 10 ? Math.round(x) : x}×`;
+const OUTLOOK_HELP = "Chance = how often similar past cases reached at least 2× their usual interest within a week of the date.";
+const outlookEl = (p) => (p ? h("p", { class: "outlook", title: `${p.basis}. ${OUTLOOK_HELP}` },
+  h("b", {}, `Expect about ${fmtX(p.expected)}`), ` its usual interest · ${Math.round(p.chance * 100)}% chance`) : null);
+const outlookCell = (p) => h("td", { class: "num nowrap", title: p ? `${p.basis}. ${OUTLOOK_HELP}` : null },
+  p ? `${fmtX(p.expected)} · ${Math.round(p.chance * 100)}%` : "–");
+
 function derivCard(c) {
   const old = state.byQid[c.old];
   return withPic("article", "story", photoOrPanel(c.old_image || c.new_image, c.old_label, c.old_image ? c.old_image_of : c.new_label, c.old_release.slice(0, 4), c.old_kind),
     h("div", { class: "when" }, `Comeback due ${short(c.date)}`),
     h("h3", { class: "hed" }, hedLink(old, plain(c.old_label)), ` (${c.old_release.slice(0, 4)})`),
-    h("p", { class: "dek" }, `${NEWREL[c.rel] ? NEWREL[c.rel][0].toUpperCase() + NEWREL[c.rel].slice(1) : "A new release"}, ${c.new_label}, arrives ${fmtDate(c.date)}.`));
+    h("p", { class: "dek" }, `${NEWREL[c.rel] ? NEWREL[c.rel][0].toUpperCase() + NEWREL[c.rel].slice(1) : "A new release"}, ${c.new_label}, arrives ${fmtDate(c.date)}.`),
+    outlookEl(c.prediction));
 }
 function annCard(a) {
   return withPic("article", "story", photoOrPanel(a.image, a.label, a.image_of, a.release.slice(0, 4), a.kind),
     h("div", { class: "when" }, short(a.date)),
     h("h3", { class: "hed" }, hedLink(state.byQid[a.qid], `${plain(a.label)} turns ${a.years}`)),
-    h("p", { class: "dek" }, `${noun(a.kind)[0].toUpperCase()}${noun(a.kind).slice(1)}, ${a.release.slice(0, 4)}${a.audience ? ` · ${fmt(a.audience)} views on a normal day` : ""}`));
+    h("p", { class: "dek" }, `${noun(a.kind)[0].toUpperCase()}${noun(a.kind).slice(1)}, ${a.release.slice(0, 4)}${a.audience ? ` · ${fmt(a.audience)} views on a normal day` : ""}`),
+    outlookEl(a.prediction));
+}
+function seasonCard(a) {
+  return withPic("article", "story", photoOrPanel(a.image, a.label, a.image_of, a.release.slice(0, 4), a.kind),
+    h("div", { class: "when" }, `Back around ${short(a.date)}`),
+    h("h3", { class: "hed" }, hedLink(state.byQid[a.qid], plain(a.label)), ` (${a.release.slice(0, 4)})`),
+    h("p", { class: "dek" }, `${a.holiday ? `A ${a.holiday} favorite: ` : ""}people come back to this ${noun(a.kind)} around the same time every year. ${a.prediction.basis}.`),
+    outlookEl(a.prediction));
 }
 
 // ---------- Case closed ----------
@@ -1300,21 +1320,45 @@ function comingPage() {
   const dRow = (c) => h("tr", {},
     h("td", { class: "nowrap" }, fmtDate(c.date)),
     workCell(state.byQid[c.old], plain(c.old_label), `${c.old_kind}, ${c.old_release.slice(0, 4)}`),
-    h("td", {}, c.new_label, h("div", { class: "small muted" }, NEWREL[c.rel] || c.rel)));
+    h("td", {}, c.new_label, h("div", { class: "small muted" }, NEWREL[c.rel] || c.rel)),
+    outlookCell(c.prediction));
   const aRow = (a) => h("tr", {},
     h("td", { class: "nowrap" }, fmtDate(a.date)),
     workCell(state.byQid[a.qid], plain(a.label), `${a.kind}, ${a.release.slice(0, 4)}`),
     h("td", { class: "num" }, `${a.years}th`),
-    h("td", { class: "num" }, a.audience ? fmt(a.audience) : "–"));
-  const dAll = byDate(cu.derivatives || []), aAll = byDate(cu.anniversaries || []);
+    h("td", { class: "num" }, a.audience ? fmt(a.audience) : "–"),
+    outlookCell(a.prediction));
+  const sRow = (a) => h("tr", {},
+    h("td", { class: "nowrap" }, `Around ${short(a.date)}`),
+    workCell(state.byQid[a.qid], plain(a.label), `${a.kind}, ${a.release.slice(0, 4)}${a.holiday ? ` · ${a.holiday}` : ""}`),
+    outlookCell(a.prediction));
+  const dAll = byDate(cu.derivatives || []), aAll = byDate(cu.anniversaries || []), sAll = byDate(cu.seasonal || []);
+  const sCards = [...sAll].sort((a, b) => (b.audience || 0) - (a.audience || 0)).slice(0, 6);
+  // How the last few weeks' predictions turned out (checked about a week after each date).
+  const since = addDays(new Date().toISOString().slice(0, 10), -45);
+  const due = (((state.accuracy || {}).forecasts || {}).recent || []).filter((x) => x.date >= since);
+  const dueRow = (x) => h("tr", {},
+    h("td", { class: "nowrap" }, fmtDate(x.date)),
+    h("td", {}, h("b", {}, x.label), h("div", { class: "small muted" }, x.detail)),
+    h("td", { class: "num nowrap" }, x.predicted && x.predicted.expected != null ? `${fmtX(x.predicted.expected)} · ${Math.round(x.predicted.chance * 100)}%` : "–"),
+    h("td", { class: "num nowrap" }, fmtX(x.ratio)),
+    h("td", { class: "nowrap" }, x.hit ? h("span", { class: "ok" }, "✓ Came true") : h("span", { class: "muted" }, "No bump")));
   return [
     h("p", { class: "intro" }, "What's about to bring old favorites back over the next six months: sequels, remakes and adaptations on the way, plus the big birthdays. We check later whether we were right."),
     contentsLine([{ n: (cu.derivatives || []).length, label: "due for a comeback", title: "Due for a comeback" },
-      { n: (cu.anniversaries || []).length, label: "big anniversaries", title: "Big anniversaries" }]),
+      { n: (cu.anniversaries || []).length, label: "big anniversaries", title: "Big anniversaries" },
+      { n: sAll.length, label: "back every year", title: "Back every year" },
+      { n: due.length, label: "recently due", title: "Recently due" }]),
+    [...dAll, ...aAll].some((x) => x.prediction) ? h("p", { class: "small muted outlook-key" }, h("b", {}, "Expect about 3× · 70% chance"),
+      " is our prediction, learned from hundreds of past sequels, remakes and anniversaries: the usual size of the comeback, and how often similar cases reached at least 2× their usual interest.") : null,
     ...pageSection("Due for a comeback", "A sequel, remake or adaptation is on the way. Release dates can slip.",
-      { cards: dCards, rest: dAll.filter((c) => !dCards.includes(c)), all: dAll, card: derivCard, row: dRow }, ["Due", "The original", "What's bringing it back"], "comebacks due"),
+      { cards: dCards, rest: dAll.filter((c) => !dCards.includes(c)), all: dAll, card: derivCard, row: dRow }, ["Due", "The original", "What's bringing it back", "Outlook"], "comebacks due"),
     ...pageSection("Big anniversaries", "Round-number birthdays of well-known older works.",
-      { cards: aCards, rest: aAll.filter((a) => !aCards.includes(a)), all: aAll, card: annCard, row: aRow }, ["Date", "Work", "Turns", "Views on a normal day"], "anniversaries"),
+      { cards: aCards, rest: aAll.filter((a) => !aCards.includes(a)), all: aAll, card: annCard, row: aRow }, ["Date", "Work", "Turns", "Views on a normal day", "Outlook"], "anniversaries"),
+    ...pageSection("Back every year", "Old favorites that come back around the same date every year: holidays, seasons, school terms.",
+      { cards: sCards, rest: sAll.filter((a) => !sCards.includes(a)), all: sAll, card: seasonCard, row: sRow }, ["When", "Work", "Outlook"], "regulars"),
+    ...(due.length ? [Object.assign(sectionHead("Recently due", "How our predictions turned out, checked about a week after each date."), { id: secId("Recently due") }),
+      table(["Date", "Prediction", "Predicted", "What happened", ""], due.map(dueRow), 12, "results")] : []),
     (cu.derivatives || []).length || (cu.anniversaries || []).length ? null : table([], []),
   ].filter(Boolean);
 }
