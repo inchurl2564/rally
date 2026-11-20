@@ -389,7 +389,7 @@ function render() {
   const v = VIEWS[state.view];
   const page = { today: todayPage, mysteries: mysteriesPage, coming: comingPage, accuracy: accuracyPage, about: aboutPage,
     week: weekPage, work: workPage, search: searchPage, following: followingPage }[v.page];
-  $("view").replaceChildren(...(page ? page() : proPage(v)));
+  $("view").replaceChildren(...(page ? page() : proPage(v)).filter((x) => x != null && x !== false));   // never print an empty slot as "null"
   if ($("cards")) renderList();
   const { meta } = state.data, health = meta.health || {};
   const issues = [];
@@ -1706,7 +1706,7 @@ function weekPage() {
       h("div", { class: "small muted" }, `${x.kind}, ${x.year}`)), h("td", { class: "nowrap" }, fmtDate(x.start)),
       h("td", { class: "num nowrap" }, fmtX(x.peak_lift)), h("td", { class: "num" }, scoreDot(x.score)));
     const maxShare = Math.max(...L.decades.map((d) => d.share), 0.01);
-    box.replaceChildren(
+    box.replaceChildren(...[
       h("p", { class: "intro" }, `This week in comebacks: ${fmtDate(W.from).replace(/, \d{4}/, "")} to ${fmtDate(W.to)}.`),
       h("p", { class: "contents" }, h("b", {}, fmt(W.comebacks)), " comebacks so far this week · ", pickWeek),
       sectionHead("The 5 biggest", "One per story, by Rallyback Score."),
@@ -1735,7 +1735,7 @@ function weekPage() {
         h("span", { class: "bar-val" }, `${Math.round(d.share * 100)}%${d.usual_share != null ? ` (usually ${Math.round(d.usual_share * 100)}%)` : ""}`)))),
       L.franchises.length ? sectionHead("Franchises this week", "Series with more than one title back at once.") : null,
       L.franchises.length ? h("ul", { class: "plain related" }, L.franchises.map((f) => h("li", {}, h("b", {}, f.name), ` · ${f.titles} titles: `,
-        ...f.top.flatMap((x, i) => [i ? ", " : "", titleLink(x.qid, plain(x.label))])))) : null);
+        ...f.top.flatMap((x, i) => [i ? ", " : "", titleLink(x.qid, plain(x.label))])))) : null].filter(Boolean));
   }).catch(() => box.replaceChildren(h("p", { class: "status" }, "This week's roundup isn't ready yet. It's built with each morning's edition.")));
   return [box];
 }
