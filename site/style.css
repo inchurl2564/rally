@@ -113,7 +113,14 @@ img { display: block; max-width: 100%; }
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* ---------- story grid ---------- */
 .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px 24px; }
+.story { display: flex; flex-direction: column; }
 .story .media { aspect-ratio: 3 / 2; margin-bottom: 12px; }
+.story-foot { margin-top: auto; padding-top: 4px; }
+/* No photo: a quiet panel in the section's color with the year, so every card has the same picture slot. */
+.media.panel { display: flex; flex-direction: column; justify-content: flex-end; padding: 14px 16px;
+  background: color-mix(in srgb, var(--sec, var(--muted)) 16%, var(--paper)); border-left: 4px solid var(--sec, var(--muted)); }
+.media.panel b { font: 900 44px/1 var(--serif); letter-spacing: -.02em; color: var(--ink); }
+.media.panel span { font: 800 11px/1.2 var(--sans); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-top: 6px; }
 .story .hed { font-size: 21px; }
 .story .dek { font-size: 14.5px; }
 .story .bigstat b { font-size: 30px; }

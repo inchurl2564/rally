@@ -249,14 +249,17 @@ function threadStory(t) {
 // No photo → no image slot at all; the story runs as text. If a photo fails to load,
 // its slot is removed and the layout falls back to text-only.
 // `of` names who is pictured when the photo is of a person behind the work (no free image of the work itself).
-function pic(href, image, alt, width = 640, of = null) {
+function pic(href, image, alt, width = 640, of = null, fallback = null) {
   if (!image) return null;
   const img = h("img", { src: `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(image)}?width=${width}`,
     alt: of || alt || "", loading: "lazy", decoding: "async" });
   const box = h("div", { class: "media" }, href ? ext(href, img) : img,
     ext(`https://commons.wikimedia.org/wiki/File:${encodeURIComponent(image)}`,
       h("span", { class: "credit" }, of ? `Pictured: ${of}` : "Photo: Wikimedia Commons")));
-  img.addEventListener("error", () => { box.closest(".has-media")?.classList.remove("has-media"); box.remove(); });
+  img.addEventListener("error", () => {
+    if (fallback) { box.replaceWith(fallback()); return; }
+    box.closest(".has-media")?.classList.remove("has-media"); box.remove();
+  });
   return box;
 }
 // An article that gets a .has-media class only when it actually has a photo.
@@ -665,28 +668,6 @@ function workChips(works, cap = 12) {
     ws.length > cap ? h("span", { class: "chip more-chip" }, `+${ws.length - cap} more`) : null);
 }
 
-// Several "same person" groups explained by one editor's note (e.g. the Bond films and Pattinson's films)
-// read as one story: everything that came back because of it.
-function noteFeature(group) {
-  const works = [...new Map(group.flatMap((t) => t.works.map((w) => state.byQid[w.qid])).filter(Boolean).map((w) => [w.qid, w])).values()];
-  const top = topPictured(works), note = group[0].editor_note;
-  return withPic("article", "feature", top ? pic(null, top.image, top.label, 300, top.image_of) : null,
-    h("div", {}, kickerEl(STREAM_TYPES[0]),
-      h("h3", { class: "hed" }, hedLink(topOf(works), `${oldNames(works)} are back`)),
-      h("p", { class: "dek" }, `${note.text} ${works.length} older titles connected to the story started rising together.`),
-      workChips(works), sourcesBox([sourceLine(note)])));
-}
-
-function sharedFeature(t) {
-  const sst = sharedStory(t), top = topPictured(t.works.map((q) => state.byQid[q]).filter(Boolean));
-  return withPic("article", "feature",
-    top ? pic(null, top.image, top.label, 300, top.image_of)
-      : t.image ? pic(null, t.image, t.text.split(": ").pop().split(" (")[0], 300) : null,
-    h("div", {}, kickerEl(sst.reason, sst.kicker),
-      h("h3", { class: "hed" }, hedLink(topOf(t.works.map((q) => state.byQid[q]).filter(Boolean)), sst.hed)), h("p", { class: "dek" }, sst.dek),
-      workChips(t.works.map((q) => state.byQid[q]).filter(Boolean))));
-}
-
 function todayPage() {
   const L = live();
   if (!L.length) return [howItWorks(), h("p", { class: "status" }, "A quiet day: no comebacks in this edition.")];
@@ -699,7 +680,6 @@ function todayPage() {
   const rest = L.filter((r) => r !== lead);
   const st = story(lead);
   const is = (key) => (r) => reasonOf(r).key === key;
-  const shared = state.data.shared_triggers || [];
   const threads = state.data.common_threads || [];
   const newsThreads = threads.filter((t) => t.editor_note || t.person_jump || t.cause);
   const openThreads = threads.filter((t) => !newsThreads.includes(t));
@@ -722,29 +702,32 @@ function todayPage() {
           h("div", { class: "s" }, scoreDot(r.rally_score), " ",
             g ? `${g.works.length} titles · ${g.story.kicker}` : `${mult(r)} usual interest · ${story(r).kicker}`))))))),
   ];
-  // Works already shown in a group feature aren't repeated as cards.
-  const inGroups = new Set([...shared.flatMap((t) => t.works), ...threads.flatMap((t) => t.works.map((w) => w.qid))]);
-  const section = (title, sub, features, cards, more) => {
-    cards = cards.filter((r) => !inGroups.has(r.qid)).map(storyCard);
-    if (!features.length && !cards.length) return;
+  // Each section is one grid of same-shaped cards: stories about several titles (one per cause)
+  // and stories about one title, biggest first. The lead's own story isn't repeated.
+  const leadGroup = state.groupOf && state.groupOf.get(lead.qid);
+  const causeGroups = [...new Set(state.groupOf ? state.groupOf.values() : [])].filter((g) => g !== leadGroup);
+  // Unexplained "same person" groups aren't causes, so they're shown here as their own stories.
+  const openGroups = openThreads.map((t) => {
+    const ws = t.works.map((w) => state.byQid[w.qid]).filter((w) => w && !(state.groupOf && state.groupOf.has(w.qid)));
+    return ws.length >= 2 ? { works: ws.sort((a, b) => b.score - a.score), story: threadStory({ ...t, works: t.works.filter((w) => ws.includes(state.byQid[w.qid])) }), sources: () => threadSources(t) } : null;
+  }).filter(Boolean);
+  const inOpen = new Set(openGroups.flatMap((g) => g.works.map((w) => w.qid)));
+  const best = (x) => (x.works ? x.works[0].score : x.score);
+  const section = (key, title, sub, more, cap = 6) => {
+    const groups = (key === "unexplained" ? openGroups : causeGroups.filter((g) => g.story.reason && g.story.reason.key === key));
+    const singles = rest.filter(is(key)).filter((r) => !(state.groupOf && state.groupOf.has(r.qid)) && !inOpen.has(r.qid));
+    const items = [...groups, ...singles].sort((a, b) => best(b) - best(a)).slice(0, cap)
+      .map((x) => (x.works ? groupStoryCard(x) : storyCard(x)));
+    if (!items.length) return;
     // The section title already says why they're back; the label on each story would repeat it.
-    [...features, ...cards].forEach((el) => el.querySelector(".kicker")?.remove());
+    items.forEach((el) => el.querySelector(".kicker")?.remove());
     out.push(sectionHead(title, sub, more && more[0], more && more[1]));
-    if (features.length) out.push(h("div", {}, features));
-    if (cards.length) out.push(h("div", { class: "grid" }, cards));
+    out.push(h("div", { class: "grid", style: SECTION_COLOR[title] ? `--sec:${SECTION_COLOR[title]}` : null }, items));
   };
-  const byNote = new Map();
-  for (const t of newsThreads) { const k = t.editor_note ? t.editor_note.id : t.qid; byNote.set(k, [...(byNote.get(k) || []), t]); }
-  const newsFeatures = [...byNote.values()].map((g) => (g.length > 1 ? noteFeature(g) : threadFeature(g[0])));
-  section("In the news", "Old favorites riding news about a star, a story or a franchise.",
-    newsFeatures.slice(0, 3), rest.filter(is("news")).filter((r) => !inGroups.has(r.qid)).slice(0, 6));
-  section("New releases", "A sequel, remake or new work sends fans back to the original.",
-    shared.filter((t) => t.type !== "death").slice(0, 5).map(sharedFeature),
-    shared.some((t) => t.type !== "death") ? [] : rest.filter(is("release")).slice(0, 6));
-  section("In memoriam", "A death sends people back to the work.",
-    shared.filter((t) => t.type === "death").map(sharedFeature), rest.filter(is("memoriam")).filter((r) => !inGroups.has(r.qid)).slice(0, 3));
-  section("Unexplained", "Big comebacks we can't explain yet. Know why? Tell us.",
-    openThreads.slice(0, 2).map(threadFeature), rest.filter(is("unexplained")).filter((r) => !inGroups.has(r.qid)).slice(0, 6), ["All unexplained", "mysteries"]);
+  section("news", "In the news", "Old favorites riding news about a star, a story or a franchise.");
+  section("release", "New releases", "A sequel, remake or new work sends fans back to the original.");
+  section("memoriam", "In memoriam", "A death sends people back to the work.", null, 3);
+  section("unexplained", "Unexplained", "Big comebacks we can't explain yet. Know why? Tell us.", ["All unexplained", "mysteries"]);
   const cu = state.data.coming_up || {};
   if ((cu.derivatives || []).length || (cu.anniversaries || []).length) {
     out.push(sectionHead("Coming up", "Comebacks we expect: originals with a sequel or remake on the way, and big anniversaries.", "Full calendar", "coming"));
@@ -781,15 +764,53 @@ function threadFeature(t) {
       sourcesBox(threadSources(t))));
 }
 
+// Every story card has the same shape: picture slot, headline, short text, then a footer
+// (score, numbers, sources) pinned to the bottom so footers line up across a row.
+// No photo, or one that fails to load → a plain panel with the year, so the slot is never empty.
+function photoOrPanel(image, alt, of, year, kind) {
+  const panel = () => h("div", { class: "media panel", "aria-hidden": "true" }, h("b", {}, year || ""), h("span", {}, kind || ""));
+  return pic(null, image, alt, 640, of, panel) || panel();
+}
 function storyCard(r) {
   const st = story(r);
-  return withPic("article", "story", pic(null, r.image, r.label, 640, r.image_of),
+  return withPic("article", "story", photoOrPanel(r.image, r.label, r.image_of, r.release_year, noun(r.kind)),
     kickerEl(st.reason, st.kicker),
     h("h3", { class: "hed" }, link(r, st.hed)),
     h("p", { class: "dek" }, st.dek),
-    bigstat(r),
-    sourcesBox(sourcesFor(r)),
-    isOpen(r) ? h("div", {}, tipLink(r)) : null);
+    h("div", { class: "story-foot" },
+      bigstat(r),
+      sourcesBox(sourcesFor(r)),
+      isOpen(r) ? h("div", {}, tipLink(r)) : null));
+}
+
+// Several titles back for one reason, in the same card shape as a single title.
+// Its chart is their combined interest; the titles are one tap away.
+function combinedSpark(ws) {
+  const n = ws[0].spark.length;
+  if (!ws.every((w) => w.spark && w.spark.length === n && w.spark_start === ws[0].spark_start)) return null;
+  const vals = ws[0].spark.map((_, i) => ws.reduce((t, w) => t + w.spark[i], 0));
+  const peak = Math.max(...vals), pi = vals.indexOf(peak);
+  const start = ws.map((w) => w.spike_start).sort()[0];
+  return sparkline({ spark: vals, baseline: ws.reduce((t, w) => t + w.baseline, 0), spark_start: ws[0].spark_start,
+    spike_start: start, peak, peak_day: addDays(ws[0].spark_start, pi), label: `these ${ws.length} titles combined` }, true);
+}
+function groupStoryCard(g) {
+  const ws = g.works, top = topPictured(ws) || null, best = topOf(ws);
+  const scores = ws.map((w) => w.rally_score).filter((x) => x != null);
+  const years = ws.map((w) => +w.release_year).filter(Boolean);
+  const span = years.length ? (Math.min(...years) === Math.max(...years) ? `${years[0]}` : `${Math.min(...years)}–${Math.max(...years)}`) : "";
+  const headLink = g.id
+    ? h("a", { href: `#${g.id}`, onclick: (e) => { e.preventDefault(); focusGroup(g); } }, g.story.hed) : hedLink(best, g.story.hed);
+  const open = g.story.reason && g.story.reason.key === "unexplained";
+  return withPic("article", "story", photoOrPanel(top && top.image, top && top.label, top && top.image_of, span, `${ws.length} titles`),
+    kickerEl(g.story.reason, g.story.kicker),
+    h("h3", { class: "hed" }, headLink),
+    h("p", { class: "dek" }, g.story.dek),
+    h("div", { class: "story-foot" },
+      h("div", { class: "bigstat" }, scoreDot(scores.length ? Math.max(...scores) : null, true, "Top Rallyback Score in this group"),
+        h("b", {}, String(ws.length)), h("span", {}, `titles back at once · biggest ${mult(best)}`), combinedSpark(ws)),
+      h("details", { class: "more-info sources" }, h("summary", {}, `The ${ws.length} titles`), workChips(ws), ...(g.sources() || []).filter(Boolean)),
+      open ? h("div", {}, tipLink(best)) : null));
 }
 
 const NEWREL = { "adaptation of": "a new adaptation", "sequel to": "the sequel", "new entry in the series of": "a new entry in the series",
