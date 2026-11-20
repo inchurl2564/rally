@@ -389,7 +389,8 @@ const live = () => state.data.results.filter((r) => !FILTERED.has(r.verdict)).so
 
 // Today's sections wear the color of their reason, matching the chart and the story labels.
 const SECTION_COLOR = { "In the news": "var(--s1)", "New releases": "var(--s2)", "Unexplained": "var(--s3)",
-  "In memoriam": "var(--s4)", "Coming up": "var(--s5)", "Linked by one person": "var(--s3)", "Open cases": "var(--s3)" };
+  "In memoriam": "var(--s4)", "Coming up": "var(--s5)", "Linked by one person": "var(--s3)", "Open cases": "var(--s3)",
+  "Due for a comeback": "var(--s5)", "Big anniversaries": "var(--s5)" };
 function sectionHead(title, sub, moreLabel, moreView) {
   return h("div", { class: "section-head", style: SECTION_COLOR[title] ? `--sec:${SECTION_COLOR[title]}` : null },
     h("div", {}, h("h2", {}, title), sub ? h("p", {}, sub) : null),
@@ -839,6 +840,41 @@ function annMini(a) {
     h("p", { class: "dek" }, `${noun(a.kind)[0].toUpperCase()}${noun(a.kind).slice(1)}, ${a.release.slice(0, 4)}${a.audience ? ` · ${fmt(a.audience)} views on a normal day` : ""}`));
 }
 
+// ---------- section pages (Unexplained, Coming up) ----------
+// One template: an intro, a contents line with counts, then each section as a heading band,
+// the top 6 as cards, and the rest in a table showing 12 rows with Show all / Show fewer.
+const secId = (t) => `sec-${t.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+function contentsLine(parts) {
+  return h("p", { class: "contents" }, parts.filter((x) => x.n).map((x, i) => [i ? h("span", { class: "sep" }, " · ") : null,
+    h("a", { href: `#${secId(x.title)}`, onclick: (e) => { e.preventDefault(); $(secId(x.title))?.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); } },
+      h("b", {}, fmt(x.n)), ` ${x.label}`)]));
+}
+function pageSection(title, sub, cards, rest, columns, noun) {
+  if (!cards.length) return [];
+  const head = sectionHead(title, sub);
+  head.id = secId(title);
+  return [head,
+    h("div", { class: "grid", style: SECTION_COLOR[title] ? `--sec:${SECTION_COLOR[title]}` : null }, cards.map(noKicker)),
+    rest.length ? h("h3", { class: "rail-head table-head" }, `More ${noun}`) : null,
+    rest.length ? table(columns, rest, 12, noun) : null];
+}
+const workCell = (r, label, sub) => h("td", {}, h("b", {}, r ? link(r, label) : label), h("div", { class: "small muted" }, sub));
+const scoreCell = (n) => h("td", { class: "num" }, scoreDot(n));
+
+function derivCard(c) {
+  const old = state.byQid[c.old];
+  return withPic("article", "story", photoOrPanel(c.old_image || c.new_image, c.old_label, c.old_image ? c.old_image_of : c.new_label, c.old_release.slice(0, 4), c.old_kind),
+    h("div", { class: "when" }, `Comeback due ${short(c.date)}`),
+    h("h3", { class: "hed" }, hedLink(old, plain(c.old_label)), ` (${c.old_release.slice(0, 4)})`),
+    h("p", { class: "dek" }, `${NEWREL[c.rel] ? NEWREL[c.rel][0].toUpperCase() + NEWREL[c.rel].slice(1) : "A new release"}, ${c.new_label}, arrives ${fmtDate(c.date)}.`));
+}
+function annCard(a) {
+  return withPic("article", "story", photoOrPanel(a.image, a.label, a.image_of, a.release.slice(0, 4), a.kind),
+    h("div", { class: "when" }, short(a.date)),
+    h("h3", { class: "hed" }, hedLink(state.byQid[a.qid], `${plain(a.label)} turns ${a.years}`)),
+    h("p", { class: "dek" }, `${noun(a.kind)[0].toUpperCase()}${noun(a.kind).slice(1)}, ${a.release.slice(0, 4)}${a.audience ? ` · ${fmt(a.audience)} views on a normal day` : ""}`));
+}
+
 // ---------- Mysteries ----------
 // On a page that is all one reason, the reason label on each card would only repeat the page title.
 const noKicker = (el) => { el.querySelector(".kicker")?.remove(); return el; };
@@ -850,16 +886,27 @@ function mysteriesPage() {
     .sort((a, b) => b.spike_start.localeCompare(a.spike_start) || b.score - a.score);
   const groups = threads.map((t) => {
     const ws = t.works.map((w) => state.byQid[w.qid]).filter(Boolean).sort((a, b) => b.score - a.score);
-    return ws.length >= 2 ? { works: ws, story: threadStory(t), sources: () => threadSources(t) } : null;
+    return ws.length >= 2 ? { t, works: ws, story: threadStory(t), sources: () => threadSources(t) } : null;
   }).filter(Boolean).sort((a, b) => b.works[0].score - a.works[0].score);
+  const caseRow = (r) => h("tr", {},
+    h("td", { class: "nowrap" }, short(r.spike_start)),
+    workCell(r, plain(r.label), `${r.kind}, ${r.release_year}`),
+    h("td", { class: "num" }, mult(r)),
+    scoreCell(r.rally_score),
+    h("td", { class: "nowrap" }, tipLink(r, "Tell us →")));
+  const groupRow = (g) => h("tr", {},
+    h("td", { class: "nowrap" }, short(g.t.around)),
+    workCell(null, g.t.name, oldNames(g.works)),
+    h("td", { class: "num" }, String(g.works.length)),
+    scoreCell(Math.max(...g.works.map((w) => w.rally_score || 0))));
   return [
     h("p", { class: "intro" }, "Old favorites that are suddenly back, and we can't tell why yet. Know why? Tell us."),
+    contentsLine([{ n: L.length, label: "open cases", title: "Open cases" }, { n: groups.length, label: "linked by one person", title: "Linked by one person" }]),
     scoreKey(),
-    // Both sections use the same cards in the same grid as the home page.
-    groups.length ? sectionHead("Linked by one person", "Several titles with the same person, all rising at the same time, for no reason we can find.") : null,
-    groups.length ? h("div", { class: "grid", style: "--sec:var(--s3)" }, groups.map(groupStoryCard).map(noKicker)) : null,
-    sectionHead("Open cases", "Newest first."),
-    h("div", { class: "grid", style: "--sec:var(--s3)" }, L.map(storyCard).map(noKicker)),
+    ...pageSection("Open cases", "Comebacks we can't explain yet, newest first.", L.slice(0, 6).map(storyCard), L.slice(6).map(caseRow),
+      ["Started", "Work", "× usual", "Score", ""], "open cases"),
+    ...pageSection("Linked by one person", "Several titles with the same person, all rising at the same time, for no reason we can find.",
+      groups.slice(0, 6).map(groupStoryCard), groups.slice(6).map(groupRow), ["Started", "Person", "Titles", "Score"], "groups"),
   ].filter(Boolean);
 }
 
@@ -1170,24 +1217,27 @@ const soonBirthdays = (cu) => within(cu.anniversaries, 60);
 
 function comingPage() {
   const cu = state.data.coming_up || { derivatives: [], anniversaries: [] };
-  const dRows = (cu.derivatives || []).map((c) => h("tr", {},
-    h("td", {}, h("b", {}, plain(c.old_label)), h("div", { class: "small muted" }, `${c.old_kind}, ${c.old_release.slice(0, 4)}`)),
-    h("td", {}, c.new_label, h("div", { class: "small muted" }, NEWREL[c.rel] || c.rel)),
-    h("td", { class: "nowrap" }, fmtDate(c.date))));
-  const aRows = byDate(cu.anniversaries || []).map((a) => h("tr", {},
+  // Cards: the best-known, pictured first. Tables: everything else, in date order.
+  const dCards = pictured([...(cu.derivatives || [])].sort((a, b) => (b.old_sitelinks || 0) - (a.old_sitelinks || 0))).slice(0, 6);
+  const aCards = bigAnniversaries(cu.anniversaries || [], 6);
+  const dRest = byDate((cu.derivatives || []).filter((c) => !dCards.includes(c))).map((c) => h("tr", {},
+    h("td", { class: "nowrap" }, fmtDate(c.date)),
+    workCell(state.byQid[c.old], plain(c.old_label), `${c.old_kind}, ${c.old_release.slice(0, 4)}`),
+    h("td", {}, c.new_label, h("div", { class: "small muted" }, NEWREL[c.rel] || c.rel))));
+  const aRest = byDate((cu.anniversaries || []).filter((a) => !aCards.includes(a))).map((a) => h("tr", {},
     h("td", { class: "nowrap" }, fmtDate(a.date)),
-    h("td", {}, h("b", {}, plain(a.label)), h("div", { class: "small muted" }, `${a.kind}, ${a.release.slice(0, 4)}`)),
+    workCell(state.byQid[a.qid], plain(a.label), `${a.kind}, ${a.release.slice(0, 4)}`),
     h("td", { class: "num" }, `${a.years}th`),
     h("td", { class: "num" }, a.audience ? fmt(a.audience) : "–")));
-  // Each list shows the next 12, with a link that opens the rest and closes it again.
   return [
     h("p", { class: "intro" }, "What's about to bring old favorites back over the next six months: sequels, remakes and adaptations on the way, plus the big birthdays. We check later whether we were right."),
-    sectionHead("Due for a comeback", "A sequel, remake or adaptation is on the way. Release dates can slip."),
-    (cu.derivatives || []).length ? h("div", { class: "rail" }, pictured(cu.derivatives).slice(0, 12).map(derivMini)) : null,
-    table(["The original", "What's bringing it back", "Due"], dRows, 12, "releases"),
-    sectionHead("Big anniversaries", "Round-number birthdays, in date order."),
-    (cu.anniversaries || []).length ? h("div", { class: "rail" }, bigAnniversaries(cu.anniversaries, 12).map(annMini)) : null,
-    table(["Date", "Work", "Turns", "Views on a normal day"], aRows, 12, "anniversaries"),
+    contentsLine([{ n: (cu.derivatives || []).length, label: "due for a comeback", title: "Due for a comeback" },
+      { n: (cu.anniversaries || []).length, label: "big anniversaries", title: "Big anniversaries" }]),
+    ...pageSection("Due for a comeback", "A sequel, remake or adaptation is on the way. Release dates can slip.",
+      dCards.map(derivCard), dRest, ["Due", "The original", "What's bringing it back"], "comebacks due"),
+    ...pageSection("Big anniversaries", "Round-number birthdays of well-known older works.",
+      aCards.map(annCard), aRest, ["Date", "Work", "Turns", "Views on a normal day"], "anniversaries"),
+    (cu.derivatives || []).length || (cu.anniversaries || []).length ? null : table([], []),
   ].filter(Boolean);
 }
 // `cap` shows the first rows, with a link that shows the rest and one that folds them away again.

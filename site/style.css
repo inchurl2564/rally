@@ -336,3 +336,13 @@ code { font-size: 13px; background: var(--paper-2); padding: 1px 5px; }
 .tags .score-dot { width: 26px; height: 26px; font-size: 11.5px; }
 .card-ask { margin-top: 8px; }
 .bigstat .score-dot { color: var(--score-ink); font-weight: 800; }
+
+/* Section pages: contents line with counts, and a small label over each section's table */
+.contents { margin: 14px 0 0; font: 600 14px/1.5 var(--sans); }
+.contents a { color: var(--ink); text-decoration: none; border-bottom: 2px solid var(--hair); }
+.contents a:hover { border-color: var(--red); }
+.contents b { font-weight: 800; }
+.contents .sep { color: var(--muted); }
+.table-head { margin-top: 32px; }
+.story .when { font: 800 11px/1.2 var(--sans); letter-spacing: .08em; text-transform: uppercase; color: var(--red); margin-bottom: 6px; }
+td.num .score-dot { width: 26px; height: 26px; font-size: 11.5px; }
