@@ -1404,7 +1404,6 @@ function comingPage() {
       { n: due.length, label: "recently due", title: "Recently due" }]),
     [...dAll, ...aAll].some((x) => x.prediction) ? h("p", { class: "small muted outlook-key" }, h("b", {}, "Expect about 3× · 70% chance"),
       " is our prediction, learned from over 10,000 past sequels, adaptations, series entries and anniversaries since 2016: the usual size of the comeback, and how often similar cases reached at least 2× their usual interest.") : null,
-    comingTimeline(cu),
     ...pageSection("Due for a comeback", "A sequel, remake or adaptation is on the way. Release dates can slip.",
       { cards: dCards, rest: dAll.filter((c) => !dCards.includes(c)), all: dAll, card: derivCard, row: dRow }, ["Due", "The original", "What's bringing it back", "Outlook"], "comebacks due"),
     ...pageSection("Big anniversaries", "Round-number birthdays of well-known older works.",
@@ -1700,7 +1699,6 @@ function weekPage() {
     box.replaceChildren(
       h("p", { class: "intro" }, `This week in comebacks: ${fmtDate(W.from).replace(/, \d{4}/, "")} to ${fmtDate(W.to)}.`),
       h("p", { class: "contents" }, h("b", {}, fmt(W.comebacks)), " comebacks so far this week · ", pickWeek),
-      weekChart(W),
       sectionHead("The 5 biggest", "One per story, by Rallyback Score."),
       h("ol", { class: "ranked" }, W.top.map(rank)),
       W.mystery ? sectionHead("Best mystery", "The biggest comeback we still can't explain. Know why?") : null,
@@ -1786,61 +1784,6 @@ function placeTip(tip, px, py, W) {
   tip.style.transform = `translate(${shift}, calc(-100% - 12px))`;
 }
 
-// ---------- This week: new comebacks each day, by reason ----------
-const REASON_BY_KEY = Object.fromEntries(STREAM_TYPES.map((t) => [t.key, t]));
-function weekChart(W) {
-  const days = W.days || [];
-  if (!days.some((d) => d.counts)) return null;
-  const keys = STREAM_TYPES.map((t) => t.key);
-  const present = STREAM_TYPES.filter((t) => days.some((d) => d.counts && d.counts[t.key]));
-  const total = (d) => (d.counts ? Object.values(d.counts).reduce((a, b) => a + b, 0) : 0);
-  const busiest = days.reduce((a, d) => (total(d) > total(a) ? d : a), days[0]);
-  const rows = days.filter((d) => d.counts).map((d) => h("tr", {}, h("td", { class: "nowrap" }, fmtDate(d.date)),
-    ...present.map((t) => h("td", { class: "num" }, fmt(d.counts[t.key] || 0))), h("td", { class: "num" }, fmt(total(d)))));
-  return chartShell("New comebacks each day this week", "The week at a glance",
-    `New comebacks each day, and why they're back. Busiest so far: ${new Date(busiest.date + "T12:00:00").toLocaleDateString("en-US", { weekday: "long" })}, with ${fmt(total(busiest))}.`,
-    present.map((t) => [t.color, t.label]), "Counts titles that joined the list that day. Hover or tap a bar for the biggest titles.",
-    rows, ["Day", ...present.map((t) => t.label), "All"],
-    (chart, tip) => {
-      const Wd = chart.clientWidth || 800, narrow = Wd < 600;
-      const H = narrow ? 200 : 240, M = { t: 18, r: 4, b: 26, l: 4 };
-      const x = d3.scaleBand().domain(days.map((d) => d.date)).range([M.l, Wd - M.r]).paddingInner(narrow ? 0.25 : 0.35);
-      const y = d3.scaleLinear().domain([0, Math.max(1, d3.max(days, total))]).nice().range([H - M.b, M.t]);
-      const svg = d3.create("svg").attr("viewBox", `0 0 ${Wd} ${H}`).attr("height", H).attr("role", "img")
-        .attr("aria-label", "Stacked bars: new comebacks each day this week, by reason. A table view follows.");
-      svg.append("line").attr("class", "axis-line").attr("x1", M.l).attr("x2", Wd - M.r).attr("y1", H - M.b + 0.5).attr("y2", H - M.b + 0.5);
-      for (const d of days) {
-        const g = svg.append("g");
-        const cx = x(d.date) + x.bandwidth() / 2;
-        g.append("text").attr("class", "wk-day").attr("x", cx).attr("y", H - M.b + 17).attr("text-anchor", "middle")
-          .text(new Date(d.date + "T12:00:00").toLocaleDateString("en-US", { weekday: narrow ? "narrow" : "short" }));
-        if (!d.counts) {
-          g.append("text").attr("class", "wk-none").attr("x", cx).attr("y", H - M.b - 6).attr("text-anchor", "middle")
-            .text(d.first ? "first edition" : d.edition ? "" : "–");
-          continue;
-        }
-        let acc = 0;
-        for (const k of keys) {
-          const n = d.counts[k] || 0;
-          if (!n) continue;
-          const y0 = y(acc), y1 = y(acc + n);
-          acc += n;
-          g.append("rect").attr("class", "wk-seg").attr("x", x(d.date)).attr("width", x.bandwidth())
-            .attr("y", y1).attr("height", Math.max(0, y0 - y1)).attr("fill", REASON_BY_KEY[k].color)
-            .on("pointermove pointerdown", (e) => {
-              const [px, py] = d3.pointer(e, chart);
-              tip.replaceChildren(h("b", {}, `${REASON_BY_KEY[k].label}: ${n} new`), ` · ${fmtDate(d.date)}`,
-                h("small", {}, (d.titles[k] || []).join(", ") + (n > 5 ? ", …" : "")));
-              placeTip(tip, px, py, Wd);
-            }).on("pointerleave", () => { tip.hidden = true; });
-        }
-        g.append("text").attr("class", "wk-total").attr("x", cx).attr("y", y(acc) - 5).attr("text-anchor", "middle").text(fmt(acc));
-      }
-      chart.querySelector("svg")?.remove();
-      chart.append(svg.node());
-    });
-}
-
 // ---------- Unexplained: the mystery map ----------
 function mysteryMap(L) {
   const pts = L.filter((r) => r.baseline > 0).map((r) => ({ r, lift: Math.max(r.lift, r.lift3 || 0), base: r.baseline }));
@@ -1896,70 +1839,6 @@ function mysteryMap(L) {
         placed.push(box);
         svg.append("text").attr("class", "lbl").attr("x", tx).attr("y", ty).attr("text-anchor", right ? "end" : "start").text(t);
       }
-      chart.querySelector("svg")?.remove();
-      chart.append(svg.node());
-    });
-}
-
-// ---------- Coming up: the next six months ----------
-function comingTimeline(cu) {
-  const today = new Date().toISOString().slice(0, 10), end = addDays(today, 183);
-  const lanes = [
-    { key: "release", label: "Sequels, remakes and adaptations", color: "var(--s2)", sec: "Due for a comeback",
-      items: (cu.derivatives || []).map((c) => ({ date: c.date, name: plain(c.old_label), what: `${NEWREL[c.rel] || "a new release"}: ${c.new_label}`, p: c.prediction })) },
-    { key: "subject", label: "Documentaries and biopics", color: "var(--s1)", sec: "Documentaries and biopics",
-      items: (cu.subjects || []).map((sj) => ({ date: sj.date, name: sj.who_label, what: `${sj.new_label}, about ${sj.who_label}`, p: null })) },
-    { key: "anniversary", label: "Big anniversaries", color: "var(--s5)", sec: "Big anniversaries",
-      items: (cu.anniversaries || []).map((a) => ({ date: a.date, name: plain(a.label), what: `turns ${a.years}`, p: a.prediction })) },
-    { key: "seasonal", label: "Back every year", color: "var(--s6)", sec: "Back every year",
-      items: (cu.seasonal || []).map((a) => ({ date: a.date, name: plain(a.label), what: `back every year${a.holiday ? ` (${a.holiday})` : ""}`, p: a.prediction })) },
-  ].map((l) => ({ ...l, items: l.items.filter((i) => i.date >= today && i.date <= end) })).filter((l) => l.items.length);
-  if (!lanes.length) return null;
-  const all = lanes.flatMap((l) => l.items.map((i) => ({ ...i, lane: l })));
-  const byMonth = {};
-  all.forEach((i) => { const m = i.date.slice(0, 7); byMonth[m] = (byMonth[m] || 0) + 1; });
-  const busiest = Object.entries(byMonth).sort((a, b) => b[1] - a[1])[0];
-  const rows = Object.entries(byMonth).sort().map(([m, n]) => h("tr", {}, h("td", {}, new Date(m + "-15T12:00:00").toLocaleDateString("en-US", { month: "long", year: "numeric" })),
-    ...lanes.map((l) => h("td", { class: "num" }, fmt(l.items.filter((i) => i.date.startsWith(m)).length))), h("td", { class: "num" }, fmt(n))));
-  return chartShell("The next six months", "The next six months",
-    `Every comeback we expect, on its date. The bigger the dot, the bigger the comeback we expect. Busiest month: ${new Date(busiest[0] + "-15T12:00:00").toLocaleDateString("en-US", { month: "long" })}, with ${busiest[1]}.`,
-    null, "Small hollow dots have no prediction yet. Hover or tap a dot for details; click to jump to its list.",
-    rows, ["Month", ...lanes.map((l) => l.label), "All"],
-    (chart, tip) => {
-      const Wd = chart.clientWidth || 800, narrow = Wd < 600;
-      const lane = narrow ? 64 : 76, M = { t: 22, r: 10, b: 26, l: 8 };
-      const H = M.t + lanes.length * lane + M.b;
-      const x = d3.scaleTime().domain([new Date(today + "T00:00:00"), new Date(end + "T00:00:00")]).range([M.l + 6, Wd - M.r - 6]);
-      // Size by expected comeback, capped so Christmas regulars (20-90x) don't swamp everything.
-      const rad = d3.scaleSqrt().domain([1, 30]).range([narrow ? 2.5 : 3, narrow ? 7 : 9]).clamp(true);
-      const svg = d3.create("svg").attr("viewBox", `0 0 ${Wd} ${H}`).attr("height", H).attr("role", "img")
-        .attr("aria-label", `Timeline of ${all.length} expected comebacks over the next six months, by kind. A table view follows.`);
-      const months = d3.timeMonth.range(new Date(today + "T00:00:00"), new Date(end + "T00:00:00"));
-      months.forEach((m) => { const mx = x(d3.timeMonth.ceil(m));
-        svg.append("line").attr("class", "tl-month").attr("x1", mx).attr("x2", mx).attr("y1", M.t - 6).attr("y2", H - M.b);
-        svg.append("text").attr("class", "ax").attr("x", mx + 4).attr("y", H - M.b + 16).text(d3.timeMonth.ceil(m).toLocaleDateString("en-US", { month: "short" })); });
-      lanes.forEach((l, li) => {
-        const cy = M.t + li * lane + lane / 2;
-        svg.append("line").attr("class", "tl-lane").attr("x1", M.l).attr("x2", Wd - M.r).attr("y1", cy).attr("y2", cy);
-      });
-      const nodes = all.map((i) => ({ ...i, tx: x(new Date(i.date + "T00:00:00")), ty: M.t + lanes.indexOf(i.lane) * lane + lane / 2 + 6,
-        r: i.p ? rad(i.p.expected) : 3 }));
-      nodes.forEach((n) => { n.x = n.tx; n.y = n.ty; });
-      // Spread out dots that land on the same day, staying close to their date and lane.
-      d3.forceSimulation(nodes).force("x", d3.forceX((n) => n.tx).strength(0.9)).force("y", d3.forceY((n) => n.ty).strength(0.25))
-        .force("c", d3.forceCollide((n) => n.r + 0.75).iterations(3)).stop().tick(220);
-      nodes.forEach((n) => { const top = n.ty - lane / 2 + 12 + n.r, bot = n.ty + lane / 2 - 6 - n.r; n.y = Math.max(top, Math.min(bot, n.y)); });
-      svg.append("g").selectAll("circle").data(nodes).join("circle")
-        .attr("class", (n) => `tl-dot${n.p ? "" : " none"}`).attr("cx", (n) => n.x).attr("cy", (n) => n.y).attr("r", (n) => n.r)
-        .attr("fill", (n) => (n.p ? n.lane.color : "none")).attr("stroke", (n) => (n.p ? "var(--paper)" : n.lane.color))
-        .on("pointermove pointerdown", (e, n) => { const [px, py] = d3.pointer(e, chart);
-          tip.replaceChildren(h("b", {}, n.name), ` · ${fmtDate(n.date)}`, h("small", {}, `${n.what}${n.p ? ` · expect about ${fmtX(n.p.expected)}` : ""}`));
-          placeTip(tip, px, py, Wd); })
-        .on("pointerleave", () => { tip.hidden = true; })
-        .on("click", (e, n) => $(secId(n.lane.sec))?.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }));
-      svg.append("text").attr("class", "ax").attr("x", x(new Date(today + "T00:00:00"))).attr("y", M.t - 8).text("Today");
-      // Lane names on top, with a paper halo, so dots never hide them.
-      lanes.forEach((l, li) => svg.append("text").attr("class", "tl-label").attr("x", M.l).attr("y", M.t + li * lane + 12).text(`${l.label} (${l.items.length})`));
       chart.querySelector("svg")?.remove();
       chart.append(svg.node());
     });
