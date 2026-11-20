@@ -629,7 +629,7 @@ function todayPage() {
   if ((cu.derivatives || []).length || (cu.anniversaries || []).length) {
     out.push(sectionHead("Coming up", "Comebacks we expect: originals with a sequel or remake on the way, and big anniversaries.", "Full calendar", "coming"));
     if ((cu.derivatives || []).length) out.push(h("h3", { class: "rail-head" }, "New releases on the way"), h("div", { class: "rail" }, pictured(cu.derivatives).slice(0, 10).map(derivMini)));
-    if ((cu.anniversaries || []).length) out.push(h("h3", { class: "rail-head" }, "Big anniversaries"), h("div", { class: "rail" }, cu.anniversaries.slice(0, 10).map(annMini)));
+    if ((cu.anniversaries || []).length) out.push(h("h3", { class: "rail-head" }, "Big anniversaries"), h("div", { class: "rail" }, bigAnniversaries(cu.anniversaries, 10).map(annMini)));
   }
   out.push(sectionHead(`All comebacks (${state.data.results.length})`, "Search, filter by reason, and dig into the numbers."));
   out.push(listSection());
@@ -662,6 +662,9 @@ const NEWREL = { "adaptation of": "a new adaptation", "sequel to": "the sequel",
 // Drop Wikipedia's disambiguation tag: "Prince of Persia (1989 video game)" → "Prince of Persia".
 // Rails show pictured items first (stable, so date order holds within each group).
 const pictured = (cs) => [...cs].sort((a, b) => !(a.old_image || a.new_image) - !(b.old_image || b.new_image));
+// Anniversaries in date order. Rails keep the biggest n (by everyday audience), then show them by date.
+const byDate = (xs) => [...xs].sort((a, b) => a.date.localeCompare(b.date));
+const bigAnniversaries = (xs, n) => byDate([...xs].sort((a, b) => (b.audience || 0) - (a.audience || 0)).slice(0, n));
 const plain = (label) => label.replace(/ \((?:\d{4} )?(?:video game|film|album|song|novel|book|TV series|game|musical|play|manga|comics?)\)$/i, "");
 function derivMini(c) {
   return withPic("article", "mini", c.old_image ? pic(null, c.old_image, c.old_label, 480, c.old_image_of)
@@ -673,7 +676,7 @@ function derivMini(c) {
 function annMini(a) {
   return withPic("article", "mini", pic(null, a.image, a.label, 480, a.image_of),
     h("div", { class: "when" }, short(a.date)),
-    h("h3", { class: "hed" }, hedLink(state.byQid[a.qid], `${a.label} turns ${a.years}`)),
+    h("h3", { class: "hed" }, hedLink(state.byQid[a.qid], `${plain(a.label)} turns ${a.years}`)),
     h("p", { class: "dek" }, `${noun(a.kind)[0].toUpperCase()}${noun(a.kind).slice(1)}, ${a.release.slice(0, 4)}${a.audience ? ` · ${fmt(a.audience)} views on a normal day` : ""}`));
 }
 
@@ -714,7 +717,7 @@ function panel(name) {
       h("div", { class: "rail" }, pictured(cu.derivatives).slice(0, 10).map(derivMini)));
   if (name === "anniversaries-mini" && (cu.anniversaries || []).length)
     return h("div", {}, sectionHead("Anniversaries Ahead", "Round-number birthdays in the next 60 days, biggest audiences first.", "Full calendar", "coming"),
-      h("div", { class: "rail" }, cu.anniversaries.slice(0, 10).map(annMini)));
+      h("div", { class: "rail" }, bigAnniversaries(cu.anniversaries, 10).map(annMini)));
   if (name === "downloads") {
     const run = $("run").value;
     return h("div", { class: "block" }, sectionHead("Downloads", "Data is derived from CC0 sources. Please cite as “Rally (open data from Wikimedia and Wikidata)”."),
@@ -970,18 +973,18 @@ function comingPage() {
     h("td", {}, h("b", {}, plain(c.old_label)), h("div", { class: "small muted" }, `${c.old_kind}, ${c.old_release.slice(0, 4)}`)),
     h("td", {}, c.new_label, h("div", { class: "small muted" }, NEWREL[c.rel] || c.rel)),
     h("td", { class: "nowrap" }, fmtDate(c.date))));
-  const aRows = (cu.anniversaries || []).map((a) => h("tr", {},
+  const aRows = byDate(cu.anniversaries || []).map((a) => h("tr", {},
     h("td", { class: "nowrap" }, fmtDate(a.date)),
     h("td", {}, h("b", {}, plain(a.label)), h("div", { class: "small muted" }, `${a.kind}, ${a.release.slice(0, 4)}`)),
     h("td", { class: "num" }, `${a.years}th`),
     h("td", { class: "num" }, a.audience ? fmt(a.audience) : "–")));
   return [
     h("p", { class: "intro" }, "What's about to bring old favorites back: sequels, remakes and adaptations on the way, plus the big birthdays. We check later whether we were right."),
-    sectionHead("Due for a comeback", "Older favorites with a sequel, remake or adaptation due in the next five months. From Wikidata; release dates can slip."),
+    sectionHead("Due for a comeback", "Older favorites with a sequel, remake or adaptation due in the next five months. Release dates can slip."),
     (cu.derivatives || []).length ? h("div", { class: "rail" }, pictured(cu.derivatives).slice(0, 12).map(derivMini)) : null,
     table(["The original", "What's bringing it back", "Due"], dRows),
-    sectionHead("Big anniversaries", "Round-number anniversaries in the next 60 days, ranked by how many people normally read about them."),
-    (cu.anniversaries || []).length ? h("div", { class: "rail" }, cu.anniversaries.slice(0, 12).map(annMini)) : null,
+    sectionHead("Big anniversaries", "Round-number anniversaries in the next 60 days, in date order."),
+    (cu.anniversaries || []).length ? h("div", { class: "rail" }, bigAnniversaries(cu.anniversaries, 12).map(annMini)) : null,
     table(["Date", "Work", "Turns", "Views on a normal day"], aRows),
   ].filter(Boolean);
 }
