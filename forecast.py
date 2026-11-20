@@ -3,9 +3,9 @@
 what rights holders, retailers and programmers need most.
 
   upcoming derivatives  sequels, adaptations, remakes and new series entries due in the
-                        next ~5 months, whose source is a notable older work
+                        next ~6 months, whose source is a notable older work
                         (Wikidata, rebuilt weekly)
-  anniversaries         round-number release anniversaries in the next 60 days for the
+  anniversaries         round-number release anniversaries in the next ~6 months for the
                         ~35k watched works, ranked by their usual daily audience
                         (computed locally; no extra queries)
 
@@ -24,7 +24,9 @@ import time
 
 import radar
 
-FORECAST_CACHE = os.path.join(radar.CACHE, "forecast_derivatives.json")
+# Named for its window, so changing the window starts a fresh cache.
+HORIZON_DAYS = 183   # about six months
+FORECAST_CACHE = os.path.join(radar.CACHE, f"forecast_derivatives_{HORIZON_DAYS}d.json")
 
 NEW_CLASSES = [
     ("film", "wd:Q11424"), ("film", "wd:Q24869"), ("TV series", "wd:Q5398426"),
@@ -42,7 +44,7 @@ def log(*a):
     print(*a, file=sys.stderr, flush=True)
 
 
-def upcoming_derivatives(watch: dict[str, dict], horizon: int = 150, max_age_days: float = 7) -> list[dict]:
+def upcoming_derivatives(watch: dict[str, dict], horizon: int = HORIZON_DAYS, max_age_days: float = 7) -> list[dict]:
     """New works due soon that are based on, follow, remake or continue a watched older work."""
     today = dt.date.today()
     if os.path.exists(FORECAST_CACHE) and time.time() - os.path.getmtime(FORECAST_CACHE) < max_age_days * 86400:
@@ -98,8 +100,8 @@ def upcoming_derivatives(watch: dict[str, dict], horizon: int = 150, max_age_day
     return kept
 
 
-def anniversaries(watch: dict[str, dict], audience: dict[str, float], horizon: int = 60,
-                  top: int = 60) -> list[dict]:
+def anniversaries(watch: dict[str, dict], audience: dict[str, float], horizon: int = HORIZON_DAYS,
+                  top: int = 150) -> list[dict]:
     """Round-number anniversaries coming up. Jan 1 dates are skipped: in Wikidata
     they usually mean only the year is known."""
     today = dt.date.today()

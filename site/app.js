@@ -732,10 +732,10 @@ function todayPage() {
   section("memoriam", "In memoriam", "A death sends people back to the work.");
   section("unexplained", "Unexplained", "Big comebacks we can't explain yet. Know why? Tell us.", ["All unexplained", "mysteries"]);
   const cu = state.data.coming_up || {};
-  if ((cu.derivatives || []).length || (cu.anniversaries || []).length) {
+  if (soonReleases(cu).length || soonBirthdays(cu).length) {
     out.push(sectionHead("Coming up", "Comebacks we expect: originals with a sequel or remake on the way, and big anniversaries.", "Full calendar", "coming"));
-    if ((cu.derivatives || []).length) out.push(h("h3", { class: "rail-head" }, "New releases on the way"), h("div", { class: "rail" }, pictured(cu.derivatives).slice(0, 10).map(derivMini)));
-    if ((cu.anniversaries || []).length) out.push(h("h3", { class: "rail-head" }, "Big anniversaries"), h("div", { class: "rail" }, bigAnniversaries(cu.anniversaries, 10).map(annMini)));
+    if (soonReleases(cu).length) out.push(h("h3", { class: "rail-head" }, "New releases on the way"), h("div", { class: "rail" }, pictured(soonReleases(cu)).slice(0, 10).map(derivMini)));
+    if (soonBirthdays(cu).length) out.push(h("h3", { class: "rail-head" }, "Big anniversaries"), h("div", { class: "rail" }, bigAnniversaries(soonBirthdays(cu), 10).map(annMini)));
   }
   out.push(sectionHead(`All comebacks (${state.data.results.length})`, "Search, filter by reason, and dig into the numbers."));
   out.push(listSection());
@@ -878,12 +878,12 @@ function panel(name) {
     const t = state.data.common_threads || [];
     return t.length ? h("div", {}, sectionHead("Linked by one person", "Several titles with the same person, all rising at the same time."), t.map(threadFeature)) : null;
   }
-  if (name === "coming-mini" && (cu.derivatives || []).length)
+  if (name === "coming-mini" && soonReleases(cu).length)
     return h("div", {}, sectionHead("Coming Soon", "Sequels, adaptations and remakes of older works due soon.", "Full calendar", "coming"),
-      h("div", { class: "rail" }, pictured(cu.derivatives).slice(0, 10).map(derivMini)));
-  if (name === "anniversaries-mini" && (cu.anniversaries || []).length)
+      h("div", { class: "rail" }, pictured(soonReleases(cu)).slice(0, 10).map(derivMini)));
+  if (name === "anniversaries-mini" && soonBirthdays(cu).length)
     return h("div", {}, sectionHead("Anniversaries Ahead", "Round-number birthdays in the next 60 days, biggest audiences first.", "Full calendar", "coming"),
-      h("div", { class: "rail" }, bigAnniversaries(cu.anniversaries, 10).map(annMini)));
+      h("div", { class: "rail" }, bigAnniversaries(soonBirthdays(cu), 10).map(annMini)));
   if (name === "downloads") {
     const run = $("run").value;
     return h("div", { class: "block" }, sectionHead("Downloads", "Data is derived from CC0 sources. Please cite as “The Rallyback (open data from Wikimedia and Wikidata)”."),
@@ -1155,6 +1155,12 @@ function focusCard(qid) {
 }
 
 // ---------- Coming Soon ----------
+// The data now looks six months ahead for the Coming up page. The home page and the
+// quick panels keep their shorter windows: releases in the next 5 months, birthdays in the next 60 days.
+const within = (xs, days) => { const end = addDays(new Date().toISOString().slice(0, 10), days); return (xs || []).filter((x) => x.date <= end); };
+const soonReleases = (cu) => within(cu.derivatives, 150);
+const soonBirthdays = (cu) => within(cu.anniversaries, 60);
+
 function comingPage() {
   const cu = state.data.coming_up || { derivatives: [], anniversaries: [] };
   const dRows = (cu.derivatives || []).map((c) => h("tr", {},
@@ -1166,18 +1172,29 @@ function comingPage() {
     h("td", {}, h("b", {}, plain(a.label)), h("div", { class: "small muted" }, `${a.kind}, ${a.release.slice(0, 4)}`)),
     h("td", { class: "num" }, `${a.years}th`),
     h("td", { class: "num" }, a.audience ? fmt(a.audience) : "–")));
+  // Two lists side by side on wide screens (stacked on phones), each showing the next 10 with a link for the rest.
   return [
-    h("p", { class: "intro" }, "What's about to bring old favorites back: sequels, remakes and adaptations on the way, plus the big birthdays. We check later whether we were right."),
-    sectionHead("Due for a comeback", "Older favorites with a sequel, remake or adaptation due in the next five months. Release dates can slip."),
-    (cu.derivatives || []).length ? h("div", { class: "rail" }, pictured(cu.derivatives).slice(0, 12).map(derivMini)) : null,
-    table(["The original", "What's bringing it back", "Due"], dRows),
-    sectionHead("Big anniversaries", "Round-number anniversaries in the next 60 days, in date order."),
-    (cu.anniversaries || []).length ? h("div", { class: "rail" }, bigAnniversaries(cu.anniversaries, 12).map(annMini)) : null,
-    table(["Date", "Work", "Turns", "Views on a normal day"], aRows),
+    h("p", { class: "intro" }, "What's about to bring old favorites back over the next six months: sequels, remakes and adaptations on the way, plus the big birthdays. We check later whether we were right."),
+    h("div", { class: "cols2" },
+      h("section", {},
+        sectionHead("Due for a comeback", "A sequel, remake or adaptation is on the way. Release dates can slip."),
+        (cu.derivatives || []).length ? h("div", { class: "rail" }, pictured(cu.derivatives).slice(0, 8).map(derivMini)) : null,
+        table(["The original", "What's bringing it back", "Due"], dRows, 10, "releases")),
+      h("section", {},
+        sectionHead("Big anniversaries", "Round-number birthdays, in date order."),
+        (cu.anniversaries || []).length ? h("div", { class: "rail" }, bigAnniversaries(cu.anniversaries, 8).map(annMini)) : null,
+        table(["Date", "Work", "Turns", "Usual views a day"], aRows, 10, "anniversaries"))),
   ].filter(Boolean);
 }
-function table(head, rows) {
+// `cap` shows the first rows with a "Show all" link that extends the list in place.
+function table(head, rows, cap = Infinity, noun = "rows") {
   if (!rows.length) return h("p", { class: "muted" }, "Nothing here yet. This fills in once the daily run has built its watchlist.");
+  if (rows.length > cap) {
+    const t = table(head, rows.slice(0, cap));
+    const more = h("button", { type: "button", class: "btn ghost show-all" }, `Show all ${rows.length} ${noun}`);
+    more.addEventListener("click", () => { t.replaceWith(table(head, rows)); more.remove(); });
+    return h("div", {}, t, more);
+  }
   // A heading lines up with its column: numeric columns (every cell .num) get right-aligned headings.
   const numeric = head.map((_, i) => rows.length && rows.every((tr) => tr.children[i] && tr.children[i].classList.contains("num")));
   return h("div", { class: "tablewrap" }, h("table", {},

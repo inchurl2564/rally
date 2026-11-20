@@ -1106,7 +1106,7 @@ def main():
         import forecast
         log("      forecasting (upcoming sequels/adaptations, anniversaries)")
         try:
-            coming_up["derivatives"] = forecast.upcoming_derivatives(watch)[:80]
+            coming_up["derivatives"] = forecast.upcoming_derivatives(watch)[:200]
         except Exception as e:
             log(f"      derivative forecast failed: {e}")
         coming_up["anniversaries"] = forecast.anniversaries(watch, audience)
