@@ -85,35 +85,59 @@ def measure(project: str, title: str, d: dt.date) -> tuple[float, float] | None:
 
 # ---------- the backlog of past cases ----------
 
-def past_derivatives(watch: dict[str, dict]) -> list[dict]:
-    """Sequels, remakes, adaptations and series entries released 2016 to a month ago,
-    whose original is on the watchlist. Wikidata is asked year by year; cached for 30 days."""
-    rows = _load(PAST_DERIV_CACHE, None)
-    if rows is None or time.time() - os.path.getmtime(PAST_DERIV_CACHE) > 30 * 86400:
-        rows = []
-        last = dt.date.today() - dt.timedelta(days=30)
-        for year in range(BACKFILL_FROM.year, last.year + 1):
-            lo, hi = f"{year}-01-01", min(f"{year + 1}-01-01", last.isoformat())
-            for kind, cls in forecast.NEW_CLASSES:
-                for rel, pat in forecast.RELATIONS:
-                    q = f"""SELECT DISTINCT ?new ?date ?old WHERE {{
-                      ?new wdt:P31 {cls}; wdt:P577 ?date .
-                      FILTER(?date >= "{lo}T00:00:00Z"^^xsd:dateTime && ?date < "{hi}T00:00:00Z"^^xsd:dateTime)
-                      {pat}
-                    }}"""
-                    try:
-                        res = radar.sparql(q)
-                    except Exception as e:
-                        log(f"      past-release query failed ({year}, {kind}, {rel}): {e}")
-                        continue
-                    for r in res:
-                        rows.append({"new": radar.qid(radar.v(r, "new")), "new_kind": kind, "rel": rel,
-                                     "date": radar.v(r, "date")[:10], "old": radar.qid(radar.v(r, "old"))})
-        if rows:
-            _save(PAST_DERIV_CACHE, rows)
+def past_derivatives(watch: dict[str, dict], budget_s: float = 8 * 60, batch: int = 400) -> list[dict]:
+    """Sequels, remakes, adaptations and series entries released 2016 to a month ago, whose
+    original is on the watchlist. Asked about the watched works directly, a batch at a time;
+    each batch's answer is saved as it arrives, so a slow night just resumes the next night.
+    Rebuilt from scratch every 30 days."""
+    store = _load(PAST_DERIV_CACHE, {})
+    if not store or time.time() - store.get("started", 0) > 30 * 86400:
+        store = {"started": time.time(), "batches": {}}
+    lo, hi = BACKFILL_FROM.isoformat(), (dt.date.today() - dt.timedelta(days=30)).isoformat()
+    kinds = {cls.split(":")[1]: kind for kind, cls in forecast.NEW_CLASSES}
+    classes = " ".join(cls for _, cls in forecast.NEW_CLASSES)
+    when = f'FILTER(?date >= "{lo}T00:00:00Z"^^xsd:dateTime && ?date < "{hi}T00:00:00Z"^^xsd:dateTime)'
+    qids = sorted(w["qid"] for w in watch.values() if w.get("qid"))
+    t0, done_now = time.time(), 0
+    for i in range(0, len(qids), batch):
+        key = qids[i]
+        if key in store["batches"]:
+            continue
+        if time.time() - t0 > budget_s:
+            break
+        values = " ".join(f"wd:{q}" for q in qids[i:i + batch])
+        direct = f"""SELECT DISTINCT ?new ?date ?old ?rel ?cls WHERE {{
+          VALUES ?old {{ {values} }}
+          VALUES (?p ?rel) {{ (wdt:P144 "adaptation of") (wdt:P155 "sequel to") (wdt:P5059 "remake of") }}
+          VALUES ?cls {{ {classes} }}
+          ?new ?p ?old ; wdt:P31 ?cls ; wdt:P577 ?date . {when} }}"""
+        series = f"""SELECT DISTINCT ?new ?date ?old ?cls WHERE {{
+          VALUES ?old {{ {values} }}
+          VALUES ?cls {{ {classes} }}
+          ?old wdt:P179 ?s . ?new wdt:P179 ?s ; wdt:P31 ?cls ; wdt:P577 ?date .
+          FILTER(?new != ?old) {when} }}"""
+        rows, ok = [], True
+        for q, fixed_rel in ((direct, None), (series, "new entry in the series of")):
+            try:
+                res = radar.sparql(q)
+            except Exception as e:
+                log(f"      past-release lookup failed for a batch: {e}")
+                ok = False
+                break
+            for r in res:
+                rows.append({"new": radar.qid(radar.v(r, "new")), "new_kind": kinds.get(radar.qid(radar.v(r, "cls")), "film"),
+                             "rel": fixed_rel or radar.v(r, "rel"), "date": radar.v(r, "date")[:10],
+                             "old": radar.qid(radar.v(r, "old"))})
+        if ok:
+            store["batches"][key] = rows
+            done_now += 1
+            _save(PAST_DERIV_CACHE, store)
+    total = -(-len(qids) // batch)
+    log(f"      past releases: {len(store['batches'])} of {total} watchlist batches looked up ({done_now} tonight)")
+    rows = [r for b in store["batches"].values() for r in b]
     by_qid = {w["qid"]: (title, w) for title, w in watch.items()}
     out, per_new, seen = [], {}, set()
-    for r in sorted(rows, key=lambda r: -by_qid.get(r["old"], ("", {}))[1].get("sitelinks", 0) if r["old"] in by_qid else 0):
+    for r in sorted(rows, key=lambda r: -(by_qid[r["old"]][1].get("sitelinks", 0) if r["old"] in by_qid else 0)):
         if r["old"] not in by_qid or (r["new"], r["old"]) in seen:
             continue
         title, w = by_qid[r["old"]]
@@ -150,13 +174,13 @@ def past_anniversaries(watch: dict[str, dict], audience: dict[str, float], top: 
 
 
 def update(site: str, project: str, watch: dict[str, dict], audience: dict[str, float],
-           budget_s: float = 12 * 60) -> dict:
+           budget_s: float = 10 * 60, lookup_budget_s: float = 8 * 60) -> dict:
     """Measure more past cases (as many as fit in the time budget), then rebuild the model."""
     cdir = os.path.join(site, "data", "calibration")
     cases = _load(os.path.join(cdir, "cases.json"), {})
-    t0 = time.time()
-    todo = [("derivative", c) for c in past_derivatives(watch)] + [("anniversary", c) for c in past_anniversaries(watch, audience)]
+    todo = [("derivative", c) for c in past_derivatives(watch, lookup_budget_s)] + [("anniversary", c) for c in past_anniversaries(watch, audience)]
     added = skipped = 0
+    t0 = time.time()
     for kind, c in todo:
         if time.time() - t0 > budget_s:
             break

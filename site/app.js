@@ -274,7 +274,7 @@ const VIEWS = {
   mysteries: { label: "Unexplained", page: "mysteries" },
   coming: { label: "Coming up", page: "coming" },
   accuracy: { label: "Track record", page: "accuracy" },
-  alerts: { label: "Alerts", page: "alerts" },
+  about: { label: "About us", page: "about" },
   // professional views
   journalists: { pro: true, label: "Journalists",
     intro: "Story leads: big comebacks nobody has explained, works that rose together around one person, and causes suggested by news and Wikipedia edits.",
@@ -317,7 +317,8 @@ async function init() {
   sel.value = first;
   sel.addEventListener("change", () => loadRun(sel.value));
   const tab = params.get("tab");
-  state.view = VIEWS[tab] ? tab : tab === "overview" ? "today" : "today";
+  // Old links: ?tab=alerts now opens About us (where the feeds moved).
+  state.view = VIEWS[tab] ? tab : tab === "alerts" ? "about" : "today";
   renderTabs();
   await loadRun(first);
 }
@@ -373,7 +374,7 @@ function applyPreset() {
 function render() {
   if (!state.data) return;
   const v = VIEWS[state.view];
-  const page = { today: todayPage, mysteries: mysteriesPage, coming: comingPage, accuracy: accuracyPage, alerts: alertsPage }[v.page];
+  const page = { today: todayPage, mysteries: mysteriesPage, coming: comingPage, accuracy: accuracyPage, about: aboutPage }[v.page];
   $("view").replaceChildren(...(page ? page() : proPage(v)));
   if ($("cards")) renderList();
   const { meta } = state.data, health = meta.health || {};
@@ -529,12 +530,16 @@ function drawStream(chart, tip, dates, series) {
     layer.forEach((d, j) => { const t = y(d[0]) - y(d[1]); if (t > bt) { bt = t; bi = j; } });
     if (bt < 15) continue;
     const text = s.label.length > 28 ? s.label.slice(0, 26) + "…" : s.label;
-    const w = text.length * 6.6, cx = Math.min(Math.max(x(bi), M.l + w / 2), W - M.r - w / 2);
+    // A label that would run off either edge lines up with that edge, so edge labels form a tidy column.
+    const w = text.length * 6.6, right = x(bi) + w / 2 > W - M.r - 4, left = x(bi) - w / 2 < M.l + 4;
+    const anchor = right ? "end" : left ? "start" : "middle";
+    const tx = right ? W - M.r - 4 : left ? M.l + 4 : x(bi);
+    const x0 = anchor === "end" ? tx - w : anchor === "start" ? tx : tx - w / 2;
     const cy = (y(layer[bi][0]) + y(layer[bi][1])) / 2;
-    const box = [cx - w / 2 - 4, cy - 9, cx + w / 2 + 4, cy + 9];
+    const box = [x0 - 4, cy - 9, x0 + w + 4, cy + 9];
     if (placed.some((b) => !(box[2] < b[0] || box[0] > b[2] || box[3] < b[1] || box[1] > b[3]))) continue;
     placed.push(box);
-    lg.append("text").attr("class", "lbl").attr("x", cx).attr("y", cy + 4).attr("text-anchor", "middle").text(text);
+    lg.append("text").attr("class", "lbl").attr("x", tx).attr("y", cy + 4).attr("text-anchor", anchor).text(text);
   }
   const xhair = svg.append("line").attr("class", "xhair").attr("y1", M.t).attr("y2", H - M.b).attr("visibility", "hidden");
   const hide = () => { bands.classed("dim", false); xhair.attr("visibility", "hidden"); tip.hidden = true; };
@@ -550,9 +555,13 @@ function drawStream(chart, tip, dates, series) {
     tip.replaceChildren(h("b", {}, s.label), ` · ${short(dates[i])}: ${fmt(s.extra[i])} extra views`,
       h("small", {}, s.r ? `${s.type.label} · ${story(s.r).hed}` : "Smaller comebacks, combined"));
     tip.hidden = false;
+    // Centered on the pointer; near the right edge it right-aligns to the pointer (opens leftward),
+    // near the left edge it left-aligns, so it never gets squeezed into a narrow column.
     const tw = tip.offsetWidth;
-    tip.style.left = `${Math.min(Math.max(px, tw / 2 + 2), W - tw / 2 - 2)}px`;
+    const shift = px + tw / 2 > W - 2 ? "-100%" : px - tw / 2 < 2 ? "0%" : "-50%";
+    tip.style.left = `${px}px`;
     tip.style.top = `${py}px`;
+    tip.style.transform = `translate(${shift}, calc(-100% - 12px))`;
   }).on("pointerleave", hide);
   chart.append(svg.node());
 }
@@ -1052,7 +1061,7 @@ function panel(name) {
 function feedStrip(names) {
   return h("p", { class: "feedstrip" }, "Follow this view: ",
     names.map((n, i) => [i ? " · " : "", h("a", { href: `feeds/${n}.xml` }, `${n}.xml`)]),
-    " · ", h("button", { type: "button", class: "linkish", onclick: () => goto("alerts") }, "all feeds"));
+    " · ", h("button", { type: "button", class: "linkish", onclick: () => goto("about") }, "all feeds"));
 }
 
 // ---------- the full list ----------
@@ -1425,7 +1434,8 @@ function accuracyPage() {
 }
 
 // ---------- Alerts ----------
-function alertsPage() {
+// About us: the mission, how we work, and the feeds (formerly the Alerts page).
+function aboutPage() {
   const base = new URL(".", location.href).href;
   const feeds = [
     ["all", "Everything new: every comeback, plus what's coming up"],
@@ -1433,9 +1443,20 @@ function alertsPage() {
     ["coming-up", "Coming up: originals with a sequel, remake or adaptation on the way"],
     ["film-tv", "Film & TV"], ["music", "Songs, albums and musicals"], ["games", "Video games"], ["books", "Books, manga and comics"],
   ];
+  const go = (view, label) => h("button", { type: "button", class: "linkish", onclick: () => goto(view) }, label);
   return [
-    h("p", { class: "intro" }, "Get new comebacks in your feed reader, every morning."),
-    sectionHead("Feeds", "Copy a link into any feed reader: Feedly, Inoreader, NetNewsWire, Outlook, Slack and others."),
+    h("p", { class: "intro" }, "The Rallyback notices when the past comes back, and finds out why."),
+    h("div", { class: "about" },
+      h("h3", { class: "about-first" }, "Our mission"),
+      h("p", { class: "mission" }, "Old favorites don't stop mattering when they leave the charts. Every day, a film, show, song, game or book from years ago suddenly finds a new audience, because of a sequel, a death, an anniversary, a meme or a story in the news. Our mission is to spot those comebacks as they happen, explain them honestly, and keep a permanent public record of what came back and why."),
+      h("h3", {}, "How we work"),
+      h("ul", { class: "about-list" },
+        h("li", {}, h("b", {}, "Every morning. "), "A new edition is built automatically each night from what millions of people read, play, stream and buy."),
+        h("li", {}, h("b", {}, "Open data only. "), "Wikipedia and Wikidata, public charts, Steam, Open Library, Project Gutenberg, news archives and public Bluesky posts. Every story links to its sources."),
+        h("li", {}, h("b", {}, "Honest about what we don't know. "), "When we can't find the reason, a comeback goes on the ", go("mysteries", "Unexplained"), " page, and we say so."),
+        h("li", {}, h("b", {}, "Keeping score in public. "), "We predict comebacks before they happen and check afterwards whether we were right. See the ", go("accuracy", "Track record"), "."),
+        h("li", {}, h("b", {}, "Readers help. "), "Know why something is back, or spotted a mistake? Use ", h("i", {}, "Know why? Tell us"), " on any story. Tips that check out become editor's notes."))),
+    sectionHead("Feeds", "Get new comebacks every morning. Copy a link into any feed reader: Feedly, Inoreader, NetNewsWire, Outlook, Slack and others."),
     h("ul", { class: "plain" }, feeds.map(([n, d]) => h("li", {},
       h("a", { href: `feeds/${n}.xml` }, h("b", {}, `${n}.xml`)),
       h("button", { type: "button", class: "copy", onclick: (e) => copy(`${base}feeds/${n}.xml`, e.target) }, "Copy link"),
