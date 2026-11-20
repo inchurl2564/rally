@@ -1402,7 +1402,7 @@ function aboutPage() {
   const go = (view, label) => h("button", { type: "button", class: "linkish", onclick: () => goto(view) }, label);
   return [
     h("div", { class: "about" },
-      h("p", { class: "intro" }, "The Rallyback notices when the past comes back, and finds out why."),
+      h("p", { class: "intro" }, "We notice when the past comes back, and find out why."),
       h("h3", { class: "about-first" }, "Our mission"),
       h("p", { class: "mission" }, "Old favorites don't stop mattering when they leave the charts. Every day, a film, show, song, game or book from years ago suddenly finds a new audience, because of a sequel, a death, an anniversary, a meme or a story in the news. Our mission is to spot those comebacks as they happen, explain them honestly, and keep a permanent public record of what came back and why."),
       h("h3", {}, "How we work"),
