@@ -150,3 +150,17 @@ Also on the site: **Follow** (kept in the reader's browser), a confidence label 
 (Confirmed / Likely / Possible), a corrections log on Track record (edit `site/data/corrections.json`:
 `[{"date": "2026-12-01", "said": "...", "fixed": "..."}]`), and an embeddable chart at `embed.html?n=10`.
 
+## Monitoring
+
+The nightly run checks itself (`health.py` plus two workflow steps) and opens one GitHub issue labelled
+`health`, which emails the repo owner, only when something needs a person:
+
+- the run failed, or finished without producing a new edition;
+- a source has been unavailable three nights in a row (Steam reviews are known to be off and are ignored);
+- the number of comebacks suddenly halved or doubled;
+- many Wikipedia pages skipped or Wikidata lookups failed;
+- a reader tip (`feedback` issue) has been open more than a week.
+
+While a problem lasts, each night adds a comment to the same issue. Close it once it's dealt with.
+Quiet nights send nothing.
+

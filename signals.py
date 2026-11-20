@@ -73,6 +73,7 @@ class _Breaker:
         if self.fails >= self.limit and not self.off:
             self.off = True
             log(f"      {self.name}: switching off for this run ({why})")
+            radar.HEALTH.setdefault("sources_off", []).append(self.name)   # shown in the footer; watched by health.py
 
 
 def _fetch(url, raw=False):
@@ -149,6 +150,7 @@ def _charts() -> dict:
             out[key] = rows
         else:
             log(f"      {label}: nothing today")
+            radar.HEALTH.setdefault("sources_off", []).append(label)
     return out
 
 

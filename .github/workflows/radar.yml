@@ -95,6 +95,38 @@ jobs:
             git push
           fi
 
+      # Health check: opens (or adds to) one "needs attention" issue, which emails the repo owner,
+      # only when something needs a person. Quiet nights send nothing.
+      - name: Health check
+        if: github.event_name != 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python health.py --site site > health.md || true
+          old=$(gh issue list --repo "$GITHUB_REPOSITORY" --label feedback --state open --limit 200 --json createdAt \
+                --jq '[.[] | select((now - (.createdAt | fromdateiso8601)) > 604800)] | length' 2>/dev/null || echo 0)
+          if [ "${old:-0}" -gt 0 ]; then
+            echo "- $old reader tip(s) have been waiting more than a week: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/issues?q=is%3Aopen+label%3Afeedback" >> health.md
+          fi
+          if [ -s health.md ]; then
+            gh label create health --color d93f0b --description "The Rallyback needs attention" 2>/dev/null || true
+            body="$(printf 'Nightly check, %s:\n\n' "$(date -u +%F)"; cat health.md; printf '\nClose this issue once it is dealt with.\n')"
+            n=$(gh issue list --repo "$GITHUB_REPOSITORY" --label health --state open --json number --jq '.[0].number' 2>/dev/null)
+            if [ -n "$n" ]; then gh issue comment "$n" --body "$body"; else gh issue create --title "The Rallyback needs attention" --label health --body "$body"; fi
+          else
+            echo "All quiet."
+          fi
+
+      # If any step above failed, say so in an issue (an email) with a link to the run.
+      - name: Report a failed run
+        if: failure() && github.event_name != 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh label create health --color d93f0b --description "The Rallyback needs attention" 2>/dev/null || true
+          gh issue create --title "The Rallyback: last night's update failed" --label health \
+            --body "The nightly run failed on $(date -u +%F), so today's edition may be missing or old. Details: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+
       # Anyone watching the repo (Watch → Custom → Issues) gets this by email.
       # Email digest is paused (feeds only for now). To resume: Settings → Secrets and
       # variables → Actions → Variables → add EMAIL_DIGEST = true.
