@@ -744,7 +744,7 @@ function panel(name) {
 function feedStrip(names) {
   return h("p", { class: "feedstrip" }, "Follow this view: ",
     names.map((n, i) => [i ? " · " : "", h("a", { href: `feeds/${n}.xml` }, `${n}.xml`)]),
-    " · ", h("button", { type: "button", class: "linkish", onclick: () => goto("alerts") }, "email alerts"));
+    " · ", h("button", { type: "button", class: "linkish", onclick: () => goto("alerts") }, "all feeds"));
 }
 
 // ---------- the full list ----------
@@ -1039,27 +1039,18 @@ function accuracyPage() {
 function alertsPage() {
   const base = new URL(".", location.href).href;
   const feeds = [
-    ["all", "Everything new: comebacks, shared causes, six-degrees threads, predictions"],
-    ["unexplained", "The mysteries: unexplained spikes and causes found in coverage. Great for journalists."],
-    ["coming-up", "Coming soon: sequels, remakes and adaptations of older works"],
+    ["all", "Everything new: every comeback, plus what's coming up"],
+    ["unexplained", "Unexplained comebacks, the ones nobody can account for yet"],
+    ["coming-up", "Coming up: originals with a sequel, remake or adaptation on the way"],
     ["film-tv", "Film & TV"], ["music", "Songs, albums and musicals"], ["games", "Video games"], ["books", "Books, manga and comics"],
   ];
   return [
-    h("p", { class: "intro" }, "Get the day's comebacks without checking the site."),
-    sectionHead("By Email", "A short daily digest, free."),
-    h("ol", {},
-      h("li", {}, "Sign in to GitHub (free) and open ", ext(`https://github.com/${REPO}`, h("b", {}, `github.com/${REPO}`)), "."),
-      h("li", {}, "Click ", h("b", {}, "Watch"), " → ", h("b", {}, "Custom"), " → tick ", h("b", {}, "Issues"), " → ", h("b", {}, "Apply"), "."),
-      h("li", {}, "Each morning's digest arrives in your inbox.")),
-    h("p", { class: "muted" }, "No GitHub account? Paste any feed below into a free RSS-to-email service."),
-    sectionHead("By Feed", "Paste a link into any feed reader (Feedly, Inoreader, NetNewsWire, Outlook, Slack…)."),
+    h("p", { class: "intro" }, "Get new comebacks in your feed reader, every morning."),
+    sectionHead("Feeds", "Copy a link into any feed reader: Feedly, Inoreader, NetNewsWire, Outlook, Slack and others."),
     h("ul", { class: "plain" }, feeds.map(([n, d]) => h("li", {},
       h("a", { href: `feeds/${n}.xml` }, h("b", {}, `${n}.xml`)),
       h("button", { type: "button", class: "copy", onclick: (e) => copy(`${base}feeds/${n}.xml`, e.target) }, "Copy link"),
       h("div", { class: "small muted" }, d)))),
-    sectionHead("Raw Data", null),
-    h("p", {}, "Build your own alerts from ", h("a", { href: "data/latest.json" }, h("b", {}, "latest.json")), " or ",
-      h("a", { href: "data/latest.csv" }, h("b", {}, "latest.csv")), ", refreshed daily around 04:30 UTC."),
   ];
 }
 function copy(text, btn) {

@@ -27,7 +27,7 @@ The main menu is for everyone. Each professional audience has its own view, link
 - **Programmers:** films and TV people are rediscovering, plus upcoming anniversaries.
 - **Researchers:** daily snapshots, a CSV, the forecast record and the method.
 
-There are also **Coming up** (forecasts), **Accuracy** (how often it's right) and **Get alerts** tabs.
+There are also **Coming up** (forecasts), **Track record** (how often it's right) and **Alerts** (feeds) tabs.
 
 ## What it does
 
@@ -43,8 +43,9 @@ These are leads, not conclusions. Wikidata is volunteer-edited, and news and edi
 
 ## Alerts
 
-- **Email:** each run posts a digest as a GitHub issue. Click **Watch → Custom → Issues** on this repo to get it by email.
-- **Feeds:** `site/feeds/*.xml` (Atom) covers all findings, unexplained spikes, coming-up forecasts, film & TV, music, games, and books.
+Feeds only for now: `site/feeds/*.xml` (Atom) covers all findings, unexplained comebacks, coming-up forecasts, film & TV, music, games, and books. The site's **Alerts** page lists them with copy buttons.
+
+The daily email digest (a GitHub issue each run) is paused. To turn it back on, add the repository variable `EMAIL_DIGEST` = `true` (**Settings → Secrets and variables → Actions → Variables**).
 
 ## Reader tips
 

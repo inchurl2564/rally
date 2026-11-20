@@ -73,8 +73,10 @@ jobs:
           fi
 
       # Anyone watching the repo (Watch → Custom → Issues) gets this by email.
+      # Email digest is paused (feeds only for now). To resume: Settings → Secrets and
+      # variables → Actions → Variables → add EMAIL_DIGEST = true.
       - name: Post daily digest
-        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && vars.EMAIL_DIGEST == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

@@ -19,9 +19,9 @@ import re
 
 FEEDS = {
     "all": ("Rally: all new comebacks", lambda e: True),
-    "unexplained": ("Rally: the mysteries (unexplained comebacks, for journalists)",
+    "unexplained": ("Rally: unexplained comebacks",
                     lambda e: e["verdict"] in ("unexplained", "common thread", "coverage") or e["kind_of"] == "thread"),
-    "coming-up": ("Rally: coming soon", lambda e: e["kind_of"] == "forecast"),
+    "coming-up": ("Rally: coming up", lambda e: e["kind_of"] == "forecast"),
     "film-tv": ("Rally: film & TV", lambda e: e.get("medium") in ("film", "TV series")),
     "music": ("Rally: music", lambda e: e.get("medium") in ("song", "album", "musical")),
     "games": ("Rally: video games", lambda e: e.get("medium") == "video game"),
