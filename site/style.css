@@ -445,3 +445,5 @@ p, li, .dek, .about .mission { text-wrap: pretty; }
 .ax-title { font: 600 11px var(--sans); fill: var(--muted); }
 .mm-dot { fill: var(--s3); fill-opacity: .85; stroke: var(--paper); stroke-width: 1.5; cursor: pointer; }
 .mm-solved { fill: var(--paper); fill-opacity: .01; stroke: var(--muted); stroke-width: 1.75; cursor: pointer; pointer-events: all; }
+/* A thin rule between the score key and the mystery map */
+.score-key + .page-chart { border-top: 1px solid var(--hair); padding-top: 16px; margin-top: 14px; }
