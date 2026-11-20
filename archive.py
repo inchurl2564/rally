@@ -231,11 +231,12 @@ def _stub(site: str, site_url: str, doc: dict) -> None:
 
 def _cause_key(causes: list) -> str | None:
     """The person or release behind a comeback, so one story isn't listed once per title."""
+    for c in causes or []:                      # an editor's note groups a story first (e.g. all the Bond titles)
+        if c[0] == "note":
+            return f"note:{c[2]}"
     for c in causes or []:
         if c[1] and c[0] not in ("anniversary",):
             return c[1]
-        if c[0] == "note":
-            return f"note:{c[2]}"
     return None
 
 
