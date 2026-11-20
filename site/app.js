@@ -326,6 +326,7 @@ async function loadRun(id) {
   state.byQid = Object.fromEntries(state.data.results.map((r) => [r.qid, r]));
   // Works in an explained "same person, same time" group are in the news, not unexplained.
   state.explainedByThread = new Set((state.data.common_threads || []).filter(threadExplained).flatMap((t) => t.works.map((w) => w.qid)));
+  buildCauseGroups();
   applyPreset();
   render();
   syncURL();
@@ -558,6 +559,82 @@ function howItWorks() {
       h("li", {}, h("b", {}, "We find out why."), " A new release, the news, a death, an anniversary. When we can't tell, it's ", h("i", {}, "Unexplained"), ", and you can tip us off.")));
 }
 
+// ---------- one row per cause ----------
+// Titles that came back for the same known reason (an editor's note, a new release, a death,
+// the same creator, an explained "same person" group) read as one story in lists.
+// Unexplained coincidences stay separate: grouping them would imply a cause we haven't found.
+// Each title belongs to one group at most: editor's note first, then the largest shared trigger, then the largest thread.
+function buildCauseGroups() {
+  const D = state.data, R = state.byQid, groupOf = new Map(), groups = [];
+  const claim = (key, qids, make) => {
+    const free = [...new Set(qids)].filter((q) => R[q] && !groupOf.has(q));
+    if (free.length < 2) return;
+    const g = { key, works: free.map((q) => R[q]) };
+    Object.assign(g, make(free));
+    groups.push(g); free.forEach((q) => groupOf.set(q, g));
+  };
+  const notes = new Map();
+  for (const r of D.results) if (r.editor_note) notes.set(r.editor_note.id, [...(notes.get(r.editor_note.id) || []), r.qid]);
+  for (const t of D.common_threads || []) if (t.editor_note) notes.set(t.editor_note.id, [...(notes.get(t.editor_note.id) || []), ...t.works.map((w) => w.qid)]);
+  for (const [id, qids] of notes) {
+    const note = (R[qids.find((q) => R[q] && R[q].editor_note)] || {}).editor_note
+      || (D.common_threads || []).find((t) => t.editor_note && t.editor_note.id === id).editor_note;
+    claim(`note-${id}`, qids, (free) => {
+      const ws = free.map((q) => R[q]);
+      return { story: { reason: STREAM_TYPES[0], kicker: "In the news", hed: `${oldNames(ws)} are back`,
+        dek: `${note.text} ${ws.length} older titles connected to the story started rising together.` }, sources: () => [sourceLine(note)] };
+    });
+  }
+  const bySize = (xs, n) => [...xs].sort((a, b) => n(b) - n(a));
+  bySize(D.shared_triggers || [], (t) => t.works.length).forEach((t, i) =>
+    claim(`shared-${i}`, t.works, (free) => ({ story: sharedStory({ ...t, works: free }), sources: () => [] })));
+  bySize((D.common_threads || []).filter(threadExplained), (t) => t.works.length).forEach((t, i) =>
+    claim(`thread-${i}`, t.works.map((w) => w.qid), (free) => {
+      const tt = { ...t, works: t.works.filter((w) => free.includes(w.qid)) };
+      return { story: threadStory(tt), sources: () => threadSources(tt) };
+    }));
+  for (const g of groups) {
+    g.works.sort((a, b) => b.score - a.score);
+    g.id = `g-${g.key.replace(/[^\w-]/g, "_")}`;
+  }
+  state.groupOf = groupOf;
+}
+
+// A whole group as one list row. The titles are inside, each with its own numbers and sources.
+function groupCard(g, members) {
+  const top = topPictured(members) || null, best = members[0];
+  const photo = top ? pic(null, top.image, top.label, 240, top.image_of) : null;
+  const scores = members.map((r) => r.rally_score).filter((x) => x != null);
+  const inside = h("details", { class: "more-info group-members" },
+    h("summary", {}, `The ${members.length} titles`), ...members.map((r) => card(r, false, true)), sourcesBox(g.sources()));
+  return h("article", { class: `card group${photo ? " has-media" : ""}`, id: g.id },
+    photo,
+    h("div", {},
+      kickerEl(g.story.reason, g.story.kicker),
+      h("h3", { class: "hed" }, h("a", { href: `#${g.id}`, onclick: (e) => { e.preventDefault(); inside.open = !inside.open; } }, g.story.hed)),
+      h("p", { class: "dek" }, g.story.dek),
+      h("div", { class: "tags" },
+        h("span", { class: "tagx" }, `${members.length} titles`),
+        scores.length ? h("span", { class: "tagx", title: SCORE_HELP }, `Top Rallyback Score ${Math.max(...scores)}`) : null,
+        best.stage === "emerging" ? h("span", { class: "tagx hot" }, "Just starting") : null),
+      inside));
+}
+
+// Collapse a sorted list of titles into rows: a group sits where its best-placed member would.
+// A group with only one member left after filters shows as that title alone.
+function toRows(list) {
+  const members = new Map();
+  for (const r of list) { const g = state.groupOf && state.groupOf.get(r.qid); if (g) members.set(g, [...(members.get(g) || []), r]); }
+  const rows = [], done = new Set();
+  for (const r of list) {
+    const g = state.groupOf && state.groupOf.get(r.qid);
+    if (!g || members.get(g).length < 2) { rows.push({ r }); continue; }
+    if (done.has(g)) continue;
+    done.add(g); rows.push({ g, members: members.get(g) });
+  }
+  return rows;
+}
+
 // Title chips for a group, capped so long groups stay readable.
 function workChips(works, cap = 12) {
   const ws = [...works].sort((a, b) => (b.score || 0) - (a.score || 0));
@@ -617,10 +694,12 @@ function todayPage() {
       h("aside", { class: "index" },
         h("h2", {}, "Top 10 comebacks"),
         h("p", {}, "Ranked by Rallyback Score: the size of the jump, how many people usually care, confirmation elsewhere and staying power."),
-        h("ol", {}, rest.slice(0, 10).map((r) => h("li", {}, h("div", {},
-          h("div", { class: "t" }, link(r, r.label)),
+        h("ol", {}, topStories(lead, rest, 10).map(({ r, g }) => h("li", {}, h("div", {},
+          h("div", { class: "t" }, g ? h("a", { href: `#${g.id}`, onclick: (e) => { e.preventDefault(); focusGroup(g); } }, oldNames(g.works))
+            : link(r, r.label)),
           h("div", { class: "s" }, r.rally_score != null ? h("b", { class: "sc", title: SCORE_HELP }, `${r.rally_score}`) : null,
-            r.rally_score != null ? " · " : null, `${mult(r)} usual interest · `, story(r).kicker))))))),
+            r.rally_score != null ? " · " : null,
+            g ? `${g.works.length} titles · ${g.story.kicker}` : `${mult(r)} usual interest · ${story(r).kicker}`))))))),
   ];
   // Works already shown in a group feature aren't repeated as cards.
   const inGroups = new Set([...shared.flatMap((t) => t.works), ...threads.flatMap((t) => t.works.map((w) => w.qid))]);
@@ -654,6 +733,19 @@ function todayPage() {
   out.push(sectionHead(`All comebacks (${state.data.results.length})`, "Search, filter by reason, and dig into the numbers."));
   out.push(listSection());
   return out.filter(Boolean);
+}
+
+// Top N distinct stories: one entry per cause, never the lead's own story again.
+function topStories(lead, rest, n) {
+  const seen = new Set([state.groupOf && state.groupOf.get(lead.qid)].filter(Boolean)), out = [];
+  for (const r of rest) {
+    const g = state.groupOf && state.groupOf.get(r.qid);
+    if (g && seen.has(g)) continue;
+    if (g) seen.add(g);
+    out.push({ r, g });
+    if (out.length === n) break;
+  }
+  return out;
 }
 
 function threadFeature(t) {
@@ -829,14 +921,17 @@ function renderList() {
     if (!state.verdicts.size) { const fa = FILTERED.has(a.verdict), fb = FILTERED.has(b.verdict); if (fa !== fb) return fa ? 1 : -1; }
     return SORTS[state.sort](a, b);
   });
-  $("count").textContent = list.length === all.length ? `${all.length} comebacks` : `${list.length} of ${all.length} comebacks`;
   const open = !!VIEWS[state.view].pro;
+  // Pro views list every title on its own; everyone else gets one row per cause.
+  const rows = open ? list.map((r) => ({ r })) : toRows(list);
+  const of = list.length === all.length ? `${all.length} comebacks` : `${list.length} of ${all.length} comebacks`;
+  $("count").textContent = rows.length < list.length ? `${of}, from ${rows.length} stories` : of;
   const filtering = state.q || state.verdicts.size || state.kinds.size || state.stages.size;
   const cap = state.view === "today" && !state.showAll && !filtering ? 12 : Infinity;
-  const shown = list.slice(0, cap);
-  const more = list.length > shown.length
-    ? h("button", { type: "button", class: "btn ghost show-all", onclick: () => { state.showAll = true; renderList(); } }, `Show all ${list.length} comebacks`) : null;
-  $("cards").replaceChildren(...(list.length ? shown.map((r) => card(r, open)) : [h("p", { class: "status" }, "Nothing matches these filters.")]), ...(more ? [more] : []));
+  const shown = rows.slice(0, cap);
+  const more = rows.length > shown.length
+    ? h("button", { type: "button", class: "btn ghost show-all", onclick: () => { state.showAll = true; renderList(); } }, `Show all ${rows.length} stories`) : null;
+  $("cards").replaceChildren(...(rows.length ? shown.map((x) => (x.g ? groupCard(x.g, x.members) : card(x.r, open))) : [h("p", { class: "status" }, "Nothing matches these filters.")]), ...(more ? [more] : []));
 }
 
 function correctionLink(r, label = "Report a correction", cls) {
@@ -910,7 +1005,7 @@ function evidenceList(ev, limit = 4) {
     h("li", {}, h("span", { class: "src" }, e.source), e.url ? ext(e.url, e.text) : e.text, h("span", { class: "d" }, short(e.date)))));
 }
 
-function card(r, open) {
+function card(r, open, inGroup) {
   const st = story(r);
   const checks = [];
   const add = (node) => { if (checks.length) checks.push(" · "); checks.push(node); };
@@ -924,12 +1019,14 @@ function card(r, open) {
   return h("article", { class: `card${photo ? " has-media" : ""}`, id: `w-${r.qid}` },
     photo,
     h("div", {},
-      kickerEl(st.reason, st.kicker),
+      // Inside a group the reason is already said once above, so each title just names itself.
+      inGroup ? null : kickerEl(st.reason, st.kicker),
       h("h3", { class: "hed" }, h("a", { href: `#w-${r.qid}`, onclick: (e) => {
-        e.preventDefault(); const d = e.target.closest(".card").querySelector("details"); d.open = !d.open; } }, st.hed)),
-      h("p", { class: "dek" }, st.dek),
+        e.preventDefault(); const d = e.target.closest(".card").querySelector("details"); d.open = !d.open; } },
+        inGroup ? `${plain(r.label)} (${r.release_year})` : st.hed)),
+      h("p", { class: "dek" }, inGroup ? `The ${noun(r.kind)} is drawing ${mult(r)} its usual interest.` : st.dek),
       h("div", { class: "tags" },
-        h("span", { class: "tagx" }, `${r.label} · ${r.release_year}`),
+        inGroup ? null : h("span", { class: "tagx" }, `${r.label} · ${r.release_year}`),
         r.stage === "emerging" ? h("span", { class: "tagx hot" }, "Just starting") : r.stage ? h("span", { class: "tagx" }, STAGES[r.stage]) : null,
         r.early ? h("span", { class: "tagx", title: "Spotted by our watchlist before it reached Wikipedia's top 1,000" }, "Caught early") : null,
         r.rally_score != null ? h("span", { class: "tagx", title: SCORE_HELP }, `Rallyback Score ${r.rally_score}`) : null),
@@ -979,6 +1076,15 @@ function sparkline(r, compact) {
   return h("div", { class: "spark" }, svg, compact ? null : h("div", { class: "spark-legend" }, h("span", {}, "Daily Wikipedia views, last 12 months"), h("span", {}, "dashed line = usual")));
 }
 
+function focusGroup(g) {
+  focusCard(g.works[0].qid);
+  const el = $(g.id);
+  if (!el) return;
+  el.querySelector(".group-members").open = false;
+  el.scrollIntoView({ block: "start" });
+  for (const ms of [700, 1400]) setTimeout(() => { if (Math.abs(el.getBoundingClientRect().top) > 40) el.scrollIntoView({ block: "start" }); }, ms);
+}
+
 function focusCard(qid) {
   let el = $(`w-${qid}`);
   if (!el && $("cards") && !state.showAll) { state.showAll = true; renderList(); el = $(`w-${qid}`); }
@@ -991,6 +1097,8 @@ function focusCard(qid) {
     el = $(`w-${qid}`);
   }
   if (!el) return;
+  const grp = el.closest(".group-members");
+  if (grp) grp.open = true;
   const d = el.querySelector("details");
   if (d) d.open = true;
   el.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });

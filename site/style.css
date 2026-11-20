@@ -147,6 +147,9 @@ select, input[type="search"] { font: 500 14px var(--sans); color: var(--ink); ba
 .card { border-top: 1px solid var(--hair); padding: 20px 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; scroll-margin-top: 16px; }
 .card.has-media { grid-template-columns: 96px minmax(0, 1fr); }
 .card.flash { background: var(--tint); }
+.group-members > summary { font-weight: 600; }
+.group-members > .card { padding: 14px 0 14px 14px; border-left: 2px solid var(--hair); border-top: 0; margin-top: 4px; }
+.group-members > .card .hed { font-size: 16px; }
 .card .media { aspect-ratio: 1; }
 .card .hed { font-size: 19px; }
 .card .dek { font-size: 14px; }
