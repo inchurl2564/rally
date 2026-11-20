@@ -32,7 +32,7 @@ There are also **Coming up** (forecasts), **Accuracy** (how often it's right) an
 2. **Measure:** compare the last 3 and 14 days with the median of the previous ~11 months. 3× over 14 days, or 2.5× over 3 days, counts as a revival. Each revival gets a stage: *emerging*, *peaking*, *sustained* or *fading*.
 3. **Explain:** look in Wikidata for deaths of credited people, sequels, adaptations, remakes, new series entries, new work by the same creator, or anniversaries. For spikes Wikidata can't explain, read edit summaries, edit bursts and news headlines from the same days.
 4. **Connect:** group spikes by a shared event, and group unexplained spikes by a shared person with the same timing.
-5. **Filter:** set aside seasonal items (also up this time last year) and spikes that are almost all desktop traffic (likely bots).
+5. **Filter:** set aside seasonal items (also up this time last year), spikes that are almost all desktop traffic (likely bots), and one-day surges from a feature on Wikipedia's front page (Today's featured article, Did you know, On this day).
 6. **Forecast and check:** list upcoming sequels, adaptations and anniversaries for older works, then later check whether attention actually rose. The site publishes the hit rate, how often explanations are backed by independent evidence, and reader corrections.
 
 These are leads, not conclusions. Wikidata is volunteer-edited, and news and edit lookups are best-effort. Verify before publishing or acting.

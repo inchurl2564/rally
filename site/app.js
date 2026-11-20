@@ -36,7 +36,7 @@ const REPO = (() => {
   return m && seg ? `${m[1]}/${seg}` : "inchurl2564/rally";
 })();
 
-const FILTERED = new Set(["seasonal", "automated?"]);
+const FILTERED = new Set(["seasonal", "automated?", "front page"]);
 const MYSTERY = new Set(["unexplained", "weak link", "lookup failed"]);
 const STAGES = { emerging: "Just starting", peaking: "At its peak", sustained: "Still going", fading: "Cooling off" };
 const NOUN = { film: "film", "TV series": "show", song: "song", album: "album", "video game": "game", book: "book", "manga/comic": "comic", musical: "musical" };
@@ -115,6 +115,9 @@ function story(r) {
     case "seasonal":
       return { kicker: "Right on Schedule", hed: `It's that time of year for ${w}`,
         dek: `Interest in the ${yr} ${n} jumps around now every year. Same weeks last year: ${r.last_year_lift}× usual.` };
+    case "front page":
+      return { kicker: "Wikipedia's Doing", hed: `${w} was on Wikipedia's front page`,
+        dek: `The ${yr} ${n} was ${r.front_page.kind === "Today's featured article" ? "Today's Featured Article" : `in “${r.front_page.kind}”`} on ${fmtDate(r.front_page.date)}, which sends tens of thousands of readers to a page for a day. Not a comeback.` };
     case "automated?":
       return { kicker: "Probably Bots", hed: `${w}'s spike looks automated`,
         dek: `Almost all of the extra traffic comes from desktop computers, a typical sign of bots rather than people.` };
@@ -883,7 +886,7 @@ function method() {
       h("li", {}, h("b", {}, "Measure."), " Compare each work's last 3 and 14 days with its median over the previous ~11 months. 3× over 14 days, or 2.5× over 3 days, counts. Stages: just starting (began in the last 4 days), at its peak, still going (10+ days), cooling off."),
       h("li", {}, h("b", {}, "Explain."), " Look in Wikidata near the spike for deaths of credited people, sequels, adaptations, remakes, new series entries, new work by the same creator, and anniversaries. For spikes it can't explain, read Wikipedia edit summaries, edit bursts and GDELT news headlines from the same days."),
       h("li", {}, h("b", {}, "Connect."), " Group spikes by a shared event, and unexplained spikes by a shared person with the same timing."),
-      h("li", {}, h("b", {}, "Filter."), " Set aside seasonal items (also up this time last year) and spikes that are almost all desktop traffic (likely bots)."),
+      h("li", {}, h("b", {}, "Filter."), " Set aside seasonal items (also up this time last year), spikes that are almost all desktop traffic (likely bots), and one-day surges from a feature on Wikipedia's front page."),
       h("li", {}, h("b", {}, "Predict and check."), " List upcoming sequels, adaptations and anniversaries, then check later whether attention rose.")),
     h("p", { class: "muted" }, h("b", {}, "Limits. "), "Wikipedia attention isn't sales or streams. Wikidata is volunteer-edited. News and edit lookups are best-effort and sometimes rate-limited. Two-title threads can be coincidence. Headlines are generated from the data. Verify before publishing or acting."));
 }

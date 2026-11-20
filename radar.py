@@ -598,6 +598,7 @@ VERDICT_LABEL = {
     "coverage": "Cause suggested by news/edits",
     "ripple": "Riding a connected story",
     "editor": "Editor's note",
+    "front page": "Featured on Wikipedia's front page",
 }
 
 
@@ -611,7 +612,8 @@ SECTIONS = [
     ("Explained revivals", "A likely trigger was found near the start of the spike.",
      {"death", "derivative", "same-creator", "anniversary", "weak link", "common thread"}),
     ("Filtered out", "Seasonal items that were also up this time last year, and spikes that are almost all "
-     "desktop traffic (real surges are mostly mobile).", {"seasonal", "automated?"}),
+     "desktop traffic (real surges are mostly mobile), and one-day surges from a feature on Wikipedia's front page.",
+     {"seasonal", "automated?", "front page"}),
 ]
 
 
@@ -827,7 +829,7 @@ def write_site_data(site: str, results, meta, clusters, threads, keep_runs: int,
             "qid", "title", "label", "kind", "age", "verdict", "lift", "peak_lift", "baseline",
             "recent_mean", "peak", "score", "still_elevated", "last_year_lift", "desktop_share",
             "days_in_top", "best_rank", "lift3", "stage", "early", "early_ratio", "cause", "evidence",
-            "edit_burst", "corroborated", "image", "image_of", "ripple", "editor_note")}
+            "edit_burst", "corroborated", "image", "image_of", "ripple", "editor_note", "front_page")}
         out.update(release=r["release"].isoformat(), release_year=r["release"].year,
                    spike_start=r["spike_start"].isoformat(), peak_day=r["peak_day"].isoformat(),
                    spark_start=(r["spark_start"] + dt.timedelta(days=len(r["spark"]) - 365)).isoformat(),
@@ -1018,6 +1020,20 @@ def main():
             r["verdict"] = "automated?"
         elif r.get("last_year_lift", 0) >= 2.5:
             r["verdict"] = "seasonal"
+    # Wikipedia's own front page (featured article, Did you know, On this day) explains a one-day surge.
+    try:
+        import explain
+        days = {r["peak_day"] + dt.timedelta(days=k) for r in results for k in (-1, 0)}
+        feats = explain.front_page(days)
+        for r in results:
+            hit = [(d, kind) for d, kind in feats.get(r["title"], []) if 0 <= (r["peak_day"] - d).days <= 1]
+            if hit:
+                r["front_page"] = {"date": hit[0][0].isoformat(), "kind": hit[0][1]}
+                if r["verdict"] not in ("death", "derivative", "editor"):
+                    r["verdict"] = "front page"
+        log(f"      front page: {sum(1 for r in results if r.get('front_page'))} spikes were Wikipedia front-page features")
+    except Exception as e:
+        log(f"      front-page check failed: {e}")
     for r in results:
         r["score_hint"] = math.log2(max(r["lift"], r["lift3"], 1.01)) * math.log10(10 + r["recent_mean"])
     log("      looking for common threads among unexplained spikes")

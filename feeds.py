@@ -42,7 +42,7 @@ def _entries_for_run(data: dict, prev: dict | None, site_url: str, labels: dict)
     by_q = {r["qid"]: r for r in data["results"]}
     out = []
     for r in data["results"]:
-        if r["qid"] in prev_q or r["verdict"] in ("seasonal", "automated?"):
+        if r["qid"] in prev_q or r["verdict"] in ("seasonal", "automated?", "front page"):
             continue
         why = r["triggers"][0]["text"] if r["triggers"] else (
             f"Likely cause from coverage: {r['cause']}" if r.get("cause") else "No recorded cause yet")

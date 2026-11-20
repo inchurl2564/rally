@@ -175,3 +175,53 @@ def corroborates(trigger: dict, evidence: list[dict]) -> bool | None:
     want = {"death": "death", "anniversary": "anniversary", "derivative": "remake/sequel news",
             "same-creator": "remake/sequel news"}.get(trigger["type"])
     return bool(want and likely_cause(evidence) == want)
+
+
+# ---------- Wikipedia's front page ----------
+# A Main Page feature (Today's featured article, Did you know, On this day) sends tens of
+# thousands of readers to an article for a day. That's Wikipedia's doing, not a comeback.
+
+FRONT = _Source("Wikipedia front page", 1.0)
+_BOLD_LINK = re.compile(r"'''+\s*\[\[([^\]|#]+)")
+
+
+def _wikitext(page: str) -> str:
+    q = urllib.parse.urlencode({"action": "parse", "page": page, "prop": "wikitext", "format": "json",
+                                "formatversion": 2, "maxlag": 5})
+    d = FRONT.get(f"{MW_API}?{q}", {"Api-User-Agent": radar.UA})
+    return (d or {}).get("parse", {}).get("wikitext", "")
+
+
+def front_page(days: set[dt.date]) -> dict[str, list[tuple[dt.date, str]]]:
+    """{article title (underscored): [(date, feature)]} for front-page features on these days."""
+    out: dict[str, list] = {}
+
+    def add(title, d, kind):
+        t = title.strip().replace(" ", "_")
+        if t:
+            out.setdefault(t[0].upper() + t[1:], []).append((d, kind))
+
+    for d in sorted(days):
+        tfa = _wikitext(f"Wikipedia:Today's featured article/{d.strftime('%B')} {d.day}, {d.year}")
+        m = _BOLD_LINK.search(tfa)
+        if m:
+            add(m.group(1), d, "Today's featured article")
+        for t in _BOLD_LINK.findall(_wikitext(f"Wikipedia:Selected anniversaries/{d.strftime('%B')} {d.day}")):
+            add(t, d, "On this day")
+    # Did you know: hooks for the current month are on Recent additions, older ones in monthly archives.
+    months = {(d.year, d.month) for d in days}
+    pages = ["Wikipedia:Recent additions"] + [f"Wikipedia:Recent additions/{y}/{dt.date(y, m, 1):%B}" for y, m in months]
+    for page in pages:
+        day = None
+        for line in _wikitext(page).splitlines():
+            h = re.match(r"\s*(?:=+|''')[^=\n]*?(\d{1,2} [A-Z][a-z]+ \d{4})", line)
+            if h:
+                try:
+                    day = dt.datetime.strptime(h.group(1), "%d %B %Y").date()
+                except ValueError:
+                    day = None
+                continue
+            if day and day in days and line.lstrip().startswith("*"):
+                for t in _BOLD_LINK.findall(line):
+                    add(t, day, "Did you know")
+    return out
