@@ -934,16 +934,13 @@ function caseClosed() {
       h("div", { class: "closed-why" }, causeLine(r), via ? h("span", { class: "closed-via" }, ` Solved thanks to a ${via}.`) : null));
     return li;
   });
-  const cap = 6, list = h("ul", { class: "closed-list" }, items);
-  items.slice(cap).forEach((li) => { li.hidden = true; });
-  const more = items.length > cap ? h("button", { type: "button", class: "btn ghost show-all", "aria-expanded": "false",
-    onclick: (e) => { const open = e.target.getAttribute("aria-expanded") !== "true";
-      items.slice(cap).forEach((li) => { li.hidden = !open; }); e.target.setAttribute("aria-expanded", String(open));
-      e.target.textContent = open ? "Show fewer" : `Show all ${items.length} solved`; } }, `Show all ${items.length} solved`) : null;
+  // Folded by default: the heading and one line, with a link that opens the list.
   return h("section", { class: "case-closed", "aria-label": "Mysteries solved this week" },
     h("h2", {}, "Case closed"),
     h("p", { class: "small muted" }, "Mysteries from the past week that we've now explained. They've moved to their sections on Today."),
-    list, more);
+    h("details", { class: "closed-more" },
+      h("summary", {}, `See the ${items.length} solved ${items.length === 1 ? "mystery" : "mysteries"}`),
+      h("ul", { class: "closed-list" }, items)));
 }
 
 // ---------- Mysteries ----------

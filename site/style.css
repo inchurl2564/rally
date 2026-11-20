@@ -376,4 +376,8 @@ tr.card-row .story { max-width: 560px; margin: 0; }
 .closed-why { color: var(--muted); font-size: 14px; margin-top: 3px; }
 .closed-via { color: var(--ink); font-weight: 600; }
 .closed-card .story { max-width: 560px; margin-top: 12px; }
-.case-closed .show-all { margin: 10px 0 0; }
+.closed-more > summary { cursor: pointer; list-style: none; font: 800 12px/1.2 var(--sans); letter-spacing: .08em; text-transform: uppercase; color: var(--ink); padding: 2px 0; }
+.closed-more > summary::-webkit-details-marker { display: none; }
+.closed-more > summary::after { content: " +"; color: var(--muted); }
+.closed-more[open] > summary::after { content: " –"; }
+.closed-more[open] > summary { margin-bottom: 6px; }
