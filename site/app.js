@@ -1404,6 +1404,7 @@ function comingPage() {
       { n: due.length, label: "recently due", title: "Recently due" }]),
     [...dAll, ...aAll].some((x) => x.prediction) ? h("p", { class: "small muted outlook-key" }, h("b", {}, "Expect about 3× · 70% chance"),
       " is our prediction, learned from over 10,000 past sequels, adaptations, series entries and anniversaries since 2016: the usual size of the comeback, and how often similar cases reached at least 2× their usual interest.") : null,
+    historyChart(),
     ...pageSection("Due for a comeback", "A sequel, remake or adaptation is on the way. Release dates can slip.",
       { cards: dCards, rest: dAll.filter((c) => !dCards.includes(c)), all: dAll, card: derivCard, row: dRow }, ["Due", "The original", "What's bringing it back", "Outlook"], "comebacks due"),
     ...pageSection("Big anniversaries", "Round-number birthdays of well-known older works.",
@@ -1699,6 +1700,7 @@ function weekPage() {
     box.replaceChildren(
       h("p", { class: "intro" }, `This week in comebacks: ${fmtDate(W.from).replace(/, \d{4}/, "")} to ${fmtDate(W.to)}.`),
       h("p", { class: "contents" }, h("b", {}, fmt(W.comebacks)), " comebacks so far this week · ", pickWeek),
+      weekStories(W),
       sectionHead("The 5 biggest", "One per story, by Rallyback Score."),
       h("ol", { class: "ranked" }, W.top.map(rank)),
       W.mystery ? sectionHead("Best mystery", "The biggest comeback we still can't explain. Know why?") : null,
@@ -1842,6 +1844,65 @@ function mysteryMap(L) {
       chart.querySelector("svg")?.remove();
       chart.append(svg.node());
     });
+}
+
+
+// ---------- This week: the biggest stories, by extra attention ----------
+const typeOfVerdict = (v) => STREAM_TYPES.find((t) => t.verdicts.includes(v)) || (v === "editor" ? STREAM_TYPES[0] : OTHER);
+const fmtK = (n) => (n >= 1e6 ? `${(n / 1e6).toFixed(1)}M` : n >= 1e3 ? `${Math.round(n / 1e3)}K` : fmt(n));
+function weekStories(W) {
+  const xs = W.stories || [];
+  if (xs.length < 3) return null;
+  const max = Math.max(...xs.map((x) => x.extra));
+  const present = STREAM_TYPES.filter((t) => xs.some((x) => typeOfVerdict(x.verdict) === t));
+  const tip = h("div", { class: "tip2", hidden: "" });
+  const rows = xs.map((x) => {
+    const t = typeOfVerdict(x.verdict);
+    const row = h("div", { class: "hbar-row" },
+      h("div", { class: "hbar-label" }, titleLink(x.qid, plain(x.label)), x.titles > 1 ? h("span", { class: "muted" }, ` and ${x.titles - 1} more`) : null,
+        h("div", { class: "small muted hbar-why" }, x.why || "Reason unknown yet")),
+      h("div", { class: "hbar-track" }, h("i", { style: `width:${(100 * x.extra / max).toFixed(1)}%;background:${t.color}` })),
+      h("div", { class: "hbar-val" }, `+${fmtK(x.extra)}`));
+    return row;
+  });
+  return h("section", { class: "stream page-chart", "aria-label": "The week's biggest stories" },
+    h("div", { class: "stream-head" }, h("div", {}, h("h2", {}, "The week's biggest stories"),
+      h("p", {}, "Old favorites grouped by what brought them back, sized by the extra attention they drew this week."))),
+    h("div", { class: "legend", role: "list" }, present.map((t) => h("span", { role: "listitem" }, h("i", { style: `background:${t.color}` }), t.label))),
+    h("div", { class: "hbars" }, rows),
+    h("p", { class: "stream-note" }, "Extra attention = daily Wikipedia views above each title's usual level, added up over this week's editions."));
+}
+
+// ---------- Coming up: what history says (from the prediction backfill) ----------
+const HISTORY_ROWS = [
+  ["derivative|sequel to", "A sequel"], ["derivative|remake of", "A remake"], ["anniversary|50+", "50th anniversary or more"],
+  ["derivative|adaptation of", "An adaptation"], ["anniversary|30-40", "30th or 40th anniversary"],
+  ["derivative|new entry in the series of", "A new entry in the series"], ["anniversary|20-25", "20th or 25th anniversary"],
+  ["anniversary|10", "10th anniversary"],
+];
+function historyChart() {
+  const box = h("div", { class: "hbars hist" });
+  const sec = h("section", { class: "stream page-chart", "aria-label": "What history says" },
+    h("div", { class: "stream-head" }, h("div", {}, h("h2", {}, "What history says"),
+      h("p", {}, "What happened to older works when something like this came along, in every case we could measure since 2016. It's where our predictions come from."))),
+    box, h("p", { class: "stream-note" }, ""));
+  loadOnce("data/calibration/model.json").then((m) => {
+    const G = m.groups || {};
+    const rows = HISTORY_ROWS.map(([k, label]) => ({ k, label, g: G[k] })).filter((x) => x.g && x.g.n >= 50)
+      .sort((a, b) => b.g.expected - a.g.expected);
+    if (!rows.length) { sec.remove(); return; }
+    const maxX = Math.max(...rows.map((x) => x.g.expected));
+    box.replaceChildren(
+      h("div", { class: "hbar-row hbar-head" }, h("div", {}), h("div", {}, "Typical comeback"), h("div", {}, "Reaches 2× its usual interest")),
+      ...rows.map((x) => h("div", { class: "hbar-row", title: `Based on ${fmt(x.g.n)} past cases. The middle half ranged from ${fmtX(x.g.low)} to ${fmtX(x.g.high)}.` },
+        h("div", { class: "hbar-label" }, h("b", {}, x.label), h("div", { class: "small muted" }, `${fmt(x.g.n)} past cases`)),
+        h("div", { class: "hbar-cell" }, h("div", { class: "hbar-track" }, h("i", { style: `width:${(100 * (x.g.expected - 1) / (maxX - 1)).toFixed(1)}%;background:var(--s5)` })),
+          h("span", { class: "hbar-val" }, fmtX(x.g.expected))),
+        h("div", { class: "hbar-cell" }, h("div", { class: "hbar-track" }, h("i", { style: `width:${Math.round(x.g.chance * 100)}%;background:var(--s2)` })),
+          h("span", { class: "hbar-val" }, `${Math.round(x.g.chance * 100)}%`)))));
+    sec.querySelector(".stream-note").textContent = `From ${fmt(m.cases)} past cases. "Typical" is the middle case: half did better, half did worse. Hover a row for the range.`;
+  }).catch(() => sec.remove());
+  return sec;
 }
 
 // ---------- corrections log (site/data/corrections.json, edited by hand) ----------

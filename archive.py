@@ -231,11 +231,12 @@ def _stub(site: str, site_url: str, doc: dict) -> None:
 
 def _cause_key(causes: list) -> str | None:
     """The person or release behind a comeback, so one story isn't listed once per title."""
+    for c in causes or []:                      # an editor's note groups a story first (e.g. all the Bond titles)
+        if c[0] == "note":
+            return f"note:{c[2]}"
     for c in causes or []:
         if c[1] and c[0] not in ("anniversary",):
             return c[1]
-        if c[0] == "note":
-            return f"note:{c[2]}"
     return None
 
 
@@ -369,10 +370,31 @@ def weekly(site: str, hist: dict, runs: list[str], latest: dict) -> None:
         per_day.append({"date": day, "edition": True,
                         "counts": {k: len(v) for k, v in groups.items()},
                         "titles": {k: [t for _, t in sorted(v, reverse=True)[:5]] for k, v in groups.items()}})
+    # The week's biggest stories: titles grouped by what brought them back, sized by the total
+    # extra attention they drew this week (views above their usual level, summed over the days).
+    stories: dict[str, dict] = {}
+    for r in wk_runs:
+        for q, row in days[r].items():
+            if q not in works or row.get("verdict") in SET_ASIDE:
+                continue
+            extra = max(0.0, (row.get("lift") or 1) - 1) * (row.get("baseline") or 0)
+            k = _cause_key(row.get("causes")) or q
+            st = stories.setdefault(k, {"key": k, "titles": {}, "extra": 0.0, "best": None})
+            st["extra"] += extra
+            st["titles"][q] = max(st["titles"].get(q, 0), row.get("rally_score") or 0)
+            if not st["best"] or (row.get("rally_score") or 0) > (st["best"][1].get("rally_score") or 0):
+                st["best"] = (q, row)
+    top_stories = []
+    for st in sorted(stories.values(), key=lambda x: -x["extra"])[:10]:
+        q, row = st["best"]
+        k = st["key"]
+        why = (_causes(row.get("causes") or [], hist["names"], notes) or [None])[0]
+        top_stories.append({"label": works[q][0], "qid": q, "title": works[q][0], "year": str(works[q][2]),
+                            "titles": len(st["titles"]), "extra": round(st["extra"]), "verdict": row.get("verdict"), "why": why})
     key = f"{y}-W{w:02d}"
     doc = {"week": key, "from": monday.isoformat(), "to": (monday + dt.timedelta(days=6)).isoformat(), "updated": runs[-1],
            "editions": len(wk_runs), "comebacks": len(best), "top": top5, "mystery": mystery,
-           "coming": soon[:6], "results": results, "days": per_day}
+           "coming": soon[:6], "results": results, "days": per_day, "stories": top_stories}
     wdir = os.path.join(site, "data", "weekly")
     _save(os.path.join(wdir, f"{key}.json"), doc)
     idx = sorted({f[:-5] for f in os.listdir(wdir) if f.endswith(".json") and f != "index.json"}, reverse=True)
