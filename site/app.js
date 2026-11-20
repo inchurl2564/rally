@@ -103,12 +103,12 @@ function story(r) {
       const hed = rp.relation === "sequel or adaptation" ? `${rp.name} is drawing crowds, and fans are going back to ${w}`
         : ["franchise", "series", "character"].includes(rp.relation) ? `${rp.name} is in the news, and ${w} is along for the ride`
         : rp.relation === "source material" ? `${rp.name} is in the news, and so is ${w}`
-        : `${rp.name} is in the news, and ${w} is back`;
+        : `${rp.name} is in the news, and readers are looking up ${w}`;
       return { kicker: "The Ripple Effect", hed,
         dek: `${jumped}, right as interest in the ${yr} ${n} took off.${["franchise", "series", "character", "sequel or adaptation", "source material"].includes(rp.relation) ? "" : ` Something happened involving ${rp.name}.`}` };
     }
     case "editor":
-      return { kicker: "Explained", hed: `Why ${w} is back`, dek: `${r.editor_note.text} The ${yr} ${n} is drawing ${x} its usual audience.` };
+      return { kicker: "Explained", hed: `Why readers are looking up ${w}`, dek: `${r.editor_note.text} The ${yr} ${n} is drawing ${x} its usual audience.` };
     case "coverage":
       return { kicker: "Explained", hed: `Why ${w} is suddenly everywhere`,
         dek: `${causeSentence(r.cause)}, based on news and Wikipedia edits from the days interest jumped. The ${yr} ${n} is at ${x} its usual audience.` };
@@ -344,7 +344,9 @@ function streamData(days = 45, top = 15) {
   const rest = rows.slice(top);
   // Group bands by type in palette order (so only validated-adjacent hues touch), biggest first within a type.
   bands.sort((a, b) => STREAM_TYPES.indexOf(a.type) - STREAM_TYPES.indexOf(b.type) || b.total - a.total);
-  const series = bands.map((b) => ({ key: b.r.qid, label: b.r.label, r: b.r, type: b.type, extra: b.extra, total: b.total }));
+  const dup = (b) => bands.filter((o) => o.r.label === b.r.label).length > 1;
+  const series = bands.map((b) => ({ key: b.r.qid, label: dup(b) ? `${b.r.label} (${b.r.release_year})` : b.r.label,
+    r: b.r, type: b.type, extra: b.extra, total: b.total }));
   // Smaller comebacks are left out rather than merged: combined, they'd swamp the stories.
   return { dates, series, omitted: rest.length };
 }
@@ -458,8 +460,11 @@ function todayPage() {
   const L = live();
   if (!L.length) return [h("p", { class: "status" }, "A quiet day: no comebacks in this edition.")];
   // Lead with a story people will recognise: a real everyday audience, ideally a picture.
-  const known = L.slice(0, 12).filter((r) => r.baseline >= 100);
-  const lead = known.find((r) => r.image) || known[0] || L.find((r) => r.image) || L[0];
+  const known = L.slice(0, 25).filter((r) => r.baseline >= 100);
+  // Prefer a story we can actually tell (a named cause) over a mystery.
+  const told = (r) => ["editor", "death", "derivative", "ripple", "same-creator", "anniversary"].includes(r.verdict);
+  const lead = known.find((r) => told(r) && r.image) || known.find((r) => r.image) || known[0] ||
+    L.find((r) => r.image) || L[0];
   const rest = L.filter((r) => r !== lead);
   const st = story(lead);
   const out = [

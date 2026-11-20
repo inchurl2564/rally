@@ -162,7 +162,8 @@ def apply(results: list[dict], threads: list[dict]) -> None:
         lo = dt.date.fromisoformat(n["from"]) - dt.timedelta(days=10)
         hi = dt.date.fromisoformat(n.get("to") or n["from"]) + dt.timedelta(days=21)
         works = {w.lower() for w in n.get("works", [])}
-        names = {x.lower() for x in (n.get("entity_name"), n.get("entity_title", "").replace("_", " ")) if x}
+        names = {x.lower() for x in (n.get("entity_name"), n.get("entity_title", "").replace("_", " "),
+                                      *n.get("related", [])) if x}
         note = {"text": n["note"], "source": n["source"], "id": n["id"]}
         for r in results:
             if not lo <= r["spike_start"] <= hi:
