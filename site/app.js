@@ -849,19 +849,44 @@ function contentsLine(parts) {
     h("a", { href: `#${secId(x.title)}`, onclick: (e) => { e.preventDefault(); $(secId(x.title))?.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); } },
       h("b", {}, fmt(x.n)), ` ${x.label}`)]));
 }
+// A table row whose title opens that item's card right under it (and closes it again).
+// One card open at a time per list. The card stays on this page: its headline isn't a link away.
+function openableRow(item, row, card, span) {
+  const tr = row(item), t = tr.querySelector("b.t");
+  if (!t) return tr;
+  const a = h("a", { href: "#", class: "row-open", "aria-expanded": "false" }, t.textContent);
+  a.addEventListener("click", (e) => {
+    e.preventDefault();
+    const body = tr.parentNode, wasOpen = a.getAttribute("aria-expanded") === "true";
+    body.querySelectorAll("tr.card-row").forEach((x) => x.remove());
+    body.querySelectorAll('a.row-open[aria-expanded="true"]').forEach((x) => x.setAttribute("aria-expanded", "false"));
+    if (wasOpen) return;
+    const c = noKicker(card(item));
+    c.querySelectorAll(".hed a").forEach((x) => x.replaceWith(x.textContent));
+    const detail = h("tr", { class: "card-row" }, h("td", { colspan: String(span) }, c));
+    tr.after(detail);
+    a.setAttribute("aria-expanded", "true");
+    if (detail.getBoundingClientRect().bottom > innerHeight) detail.scrollIntoView({ block: "nearest", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+  });
+  t.replaceChildren(a);
+  return tr;
+}
+
 // Wide screens: the top items as cards, the rest in a table. Phones: no cards, just the full list.
-function pageSection(title, sub, { cards, rest, all, card, row }, columns, noun) {
+function pageSection(title, sub, { cards, rest, all, card, row: plainRow }, columns, noun) {
   if (!all.length) return [];
+  const row = (item) => openableRow(item, plainRow, card, columns.length);
   const head = sectionHead(title, sub);
   head.id = secId(title);
+  const sec = SECTION_COLOR[title] ? `--sec:${SECTION_COLOR[title]}` : null;
   return [head,
-    h("div", { class: "wide-only" },
+    h("div", { class: "wide-only", style: sec },
       h("div", { class: "grid", style: SECTION_COLOR[title] ? `--sec:${SECTION_COLOR[title]}` : null }, cards.map(card).map(noKicker)),
       rest.length ? h("h3", { class: "rail-head table-head" }, `More ${noun}`) : null,
       rest.length ? table(columns, rest.map(row), 12, noun) : null),
-    h("div", { class: "narrow-only" }, table(columns, all.map(row), 12, noun))];
+    h("div", { class: "narrow-only", style: sec }, table(columns, all.map(row), 12, noun))];
 }
-const workCell = (r, label, sub) => h("td", {}, h("b", {}, r ? link(r, label) : label), h("div", { class: "small muted" }, sub));
+const workCell = (r, label, sub) => h("td", {}, h("b", { class: "t" }, label), h("div", { class: "small muted" }, sub));
 const scoreCell = (n) => h("td", { class: "num" }, scoreDot(n));
 
 function derivCard(c) {
@@ -894,7 +919,7 @@ function mysteriesPage() {
   const caseRow = (r) => h("tr", {},
     h("td", { class: "nowrap" }, short(r.spike_start)),
     // On phones the tip link sits under the title instead of in its own column, so the table fits.
-    h("td", {}, h("b", {}, link(r, plain(r.label))), h("div", { class: "small muted" }, `${r.kind}, ${r.release_year}`),
+    h("td", {}, h("b", { class: "t" }, plain(r.label)), h("div", { class: "small muted" }, `${r.kind}, ${r.release_year}`),
       h("div", { class: "tip-inline" }, tipLink(r, "Tell us →"))),
     h("td", { class: "num" }, mult(r)),
     scoreCell(r.rally_score),
@@ -1256,6 +1281,9 @@ function table(head, rows, cap = Infinity, noun = "rows") {
     const toggle = h("button", { type: "button", class: "btn ghost show-all", "aria-expanded": "false" });
     const set = (open) => {
       extra.forEach((tr) => { tr.hidden = !open; });
+      if (!open) {   // a card opened under a row that's now folded away goes too
+        box.querySelectorAll("tr.card-row").forEach((x) => { if (x.previousElementSibling && x.previousElementSibling.hidden) x.remove(); });
+      }
       toggle.setAttribute("aria-expanded", String(open));
       toggle.textContent = open ? `Show fewer ${noun}` : `Show all ${rows.length} ${noun}`;
     };
