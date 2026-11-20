@@ -90,6 +90,14 @@ jobs:
           gh issue create --title "Rally: the comeback report, $(date -u -d yesterday '+%b %-d, %Y')" \
             --label digest --body-file site/data/digest.md
 
+      # Stamp the script and stylesheet with this commit, so a browser never pairs a cached
+      # old app.js with a new page (GitHub Pages lets browsers cache files for 10 minutes).
+      - name: Version the script and stylesheet
+        run: |
+          v="${GITHUB_SHA::8}"
+          sed -i "s|src=\"app.js\"|src=\"app.js?v=$v\"|; s|href=\"style.css\"|href=\"style.css?v=$v\"|" site/index.html
+          grep -n "app.js\|style.css" site/index.html
+
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
