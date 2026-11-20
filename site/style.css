@@ -466,3 +466,9 @@ p, li, .dek, .about .mission { text-wrap: pretty; }
 .rank-trend .spark svg { height: 44px; }
 .rank-trend-cap { font-size: 11px; color: var(--muted); margin-top: 2px; }
 @media (max-width: 720px) { .ranked li:has(.rank-trend) { grid-template-columns: 34px 1fr; } .rank-trend { grid-column: 2; } }
+/* Phones: date, then Following and editions, then search, each on its own row (no overlap) */
+@media (max-width: 600px) {
+  .mast-top { grid-template-columns: minmax(0, 1fr); row-gap: 6px; }
+  .mast-right { flex-direction: row; justify-content: flex-start; flex-wrap: wrap; gap: 4px 16px; }
+  .mast-right .run-pick select { max-width: 100%; padding-left: 0; text-indent: 0; }
+}
