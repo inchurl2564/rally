@@ -1042,8 +1042,8 @@ function mysteriesPage() {
     contentsLine([{ n: L.length, label: "open cases", title: "Open cases" }, { n: groups.length, label: "linked by one person", title: "Linked by one person" },
       { n: (state.data.solved || []).filter((x) => state.byQid[x.qid]).length, label: "solved this week", toggle: "case-closed" }]),
     caseClosed(),
-    mysteryMap(L),
     scoreKey(),
+    mysteryMap(L),
     ...pageSection("Open cases", "Comebacks we can't explain yet, newest first.",
       { cards: L.slice(0, 6), rest: L.slice(6), all: L, card: storyCard, row: caseRow }, ["Started", "Work", "× usual", "Score", ""], "open cases"),
     ...pageSection("Linked by one person", "Several titles with the same person, all rising at the same time, for no reason we can find.",
@@ -1818,14 +1818,14 @@ function mysteryMap(L) {
         tip.replaceChildren(h("b", {}, plain(p.r.label)), ` (${p.r.release_year}) · ${fmtX(p.lift)} its usual interest`,
           h("small", {}, `${fmt(p.base)} views on a normal day · ${solved.includes(p) ? "solved: " + reasonOf(p.r).label : "since " + short(p.r.spike_start)}`));
         placeTip(tip, px, py, Wd); };
-      svg.append("g").selectAll("circle").data(solved).join("circle").attr("class", "mm-solved")
-        .attr("cx", (p) => x(p.lift)).attr("cy", (p) => y(p.base)).attr("r", 5.5)
-        .on("pointermove pointerdown", function (e, p) { show(p, e); }).on("pointerleave", () => { tip.hidden = true; })
-        .on("click", (e, p) => openWork(p.r.qid));
       svg.append("g").selectAll("circle").data(pts).join("circle").attr("class", "mm-dot")
         .attr("cx", (p) => x(p.lift)).attr("cy", (p) => y(p.base)).attr("r", 5)
         .on("pointermove pointerdown", function (e, p) { d3.select(this).attr("r", 7); show(p, e); })
         .on("pointerleave", function () { d3.select(this).attr("r", 5); tip.hidden = true; })
+        .on("click", (e, p) => openWork(p.r.qid));
+      svg.append("g").selectAll("circle").data(solved).join("circle").attr("class", "mm-solved")
+        .attr("cx", (p) => x(p.lift)).attr("cy", (p) => y(p.base)).attr("r", 6)
+        .on("pointermove pointerdown", function (e, p) { show(p, e); }).on("pointerleave", () => { tip.hidden = true; })
         .on("click", (e, p) => openWork(p.r.qid));
       // Name the three biggest, if there's room.
       const placed = [];
