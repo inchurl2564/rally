@@ -391,3 +391,7 @@ tr.card-row .story { max-width: 560px; margin: 0; }
 .about-list { margin: 0; padding-left: 18px; }
 .about-list li { margin: 8px 0; line-height: 1.5; }
 .about h3.about-first { margin-top: 20px; }
+/* No single-word last lines: headlines split into even lines, paragraphs avoid a lone last word.
+   Browsers without support simply wrap as before. */
+h1, h2, h3, .hed, .intro, .section-head h2 { text-wrap: balance; }
+p, li, .dek, .about .mission { text-wrap: pretty; }
