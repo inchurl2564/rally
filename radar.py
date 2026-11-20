@@ -850,12 +850,15 @@ def write_site_data(site: str, results, meta, clusters, threads, keep_runs: int,
         if not r["image"] and images.get(rp.get("qid")):
             r["image"], r["image_of"] = images[rp["qid"]], rp.get("name")
     people = fetch_people_images({r["qid"] for r in results if not r["image"]} |
+                                 {c["old"] for c in (coming_up or {}).get("derivatives", []) if not images.get(c["old"])} |
                                  {a["qid"] for a in (coming_up or {}).get("anniversaries", []) if not images.get(a["qid"])})
     for r in results:
         if not r["image"] and r["qid"] in people:
             r["image"], r["image_of"] = people[r["qid"]]
     for c in (coming_up or {}).get("derivatives", []):
-        c["new_image"], c["old_image"] = images.get(c["new"]), images.get(c["old"])
+        c["new_image"], c["old_image"], c["old_image_of"] = images.get(c["new"]), images.get(c["old"]), None
+        if not c["old_image"] and c["old"] in people:
+            c["old_image"], c["old_image_of"] = people[c["old"]]
     for a in (coming_up or {}).get("anniversaries", []):
         a["image"], a["image_of"] = images.get(a["qid"]), None
         if not a["image"] and a["qid"] in people:

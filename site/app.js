@@ -70,23 +70,23 @@ function story(r) {
   switch (r.verdict) {
     case "death": {
       const who = t.text.split(" (")[0], role = (t.text.match(/\(([^)]+)\)/) || [])[1];
-      return { kicker: "In Memoriam", hed: `Remembering ${who}: ${w} is back`,
-        dek: `${who}${role ? `, ${role} on the ${yr} ${n},` : ""} died on ${fmtDate(t.date)}. Since then ${x} as many people as usual have been looking it up.` };
+      return { kicker: "In Memoriam", hed: `${w} is back as fans remember ${who}`,
+        dek: `The ${yr} ${n} has drawn ${x} its usual audience since ${who}${role ? `, its ${role},` : ""} died on ${fmtDate(t.date)}.` };
     }
     case "derivative": {
       const [rel, ...rest] = t.text.split(": "), nw = strip(rest.join(": "));
       const what = REL[rel] || "a new release";
       return upcoming
-        ? { kicker: "Homework", hed: `Everyone's catching up on ${w} before ${nw} arrives`,
-            dek: `${nw}, ${what}, is due ${fmtDate(t.date)}. Interest in the ${yr} ${n} is already ${x} its usual level.` }
-        : { kicker: "The Sequel Effect", hed: `${nw} sends fans back to ${w}`,
-            dek: `${nw}, ${what}, came out ${fmtDate(t.date)}, and the ${yr} ${n} is drawing ${x} its usual audience.` };
+        ? { kicker: "Homework", hed: `${w} is back, just ahead of ${nw}`,
+            dek: `The ${yr} ${n} is already at ${x} its usual audience, with ${what}, ${nw}, due ${fmtDate(t.date)}.` }
+        : { kicker: "The Sequel Effect", hed: `${w} is back, thanks to ${nw}`,
+            dek: `The ${yr} ${n} is drawing ${x} its usual audience since ${what}, ${nw}, came out ${fmtDate(t.date)}.` };
     }
     case "same-creator": {
       const m = t.text.match(/^new work by (.+?): (.+)$/) || [];
       const who = m[1] || "Its creator", nw = strip(m[2] || "a new release");
-      return { kicker: "Back Catalog", hed: upcoming ? `${who}'s next release has fans revisiting ${w}` : `${who}'s new release sends fans back to ${w}`,
-        dek: `${nw} ${upcoming ? `is due ${fmtDate(t.date)}` : `came out ${fmtDate(t.date)}`}. The ${yr} ${n} is drawing ${x} its usual audience.` };
+      return { kicker: "Back Catalog", hed: upcoming ? `${w} is back as ${who}'s next release nears` : `${w} is back after ${who}'s new release`,
+        dek: `The ${yr} ${n} is drawing ${x} its usual audience. ${who}'s ${nw} ${upcoming ? `is due ${fmtDate(t.date)}` : `came out ${fmtDate(t.date)}`}.` };
     }
     case "anniversary": {
       const yrs = (t.text.match(/^(\d+)/) || [])[1];
@@ -99,13 +99,13 @@ function story(r) {
         dek: `They all started rising around ${short(t.date)}. Something is going on with ${who}, but we can't say what yet.` };
     }
     case "ripple": {
-      const rp = r.ripple, jumped = `${rp.name}'s own Wikipedia page jumped ${rp.ratio}× on ${short(rp.date)} (${fmt(rp.peak)} readers in a day)`;
-      const hed = rp.relation === "sequel or adaptation" ? `${rp.name} is drawing crowds, and fans are going back to ${w}`
-        : ["franchise", "series", "character"].includes(rp.relation) ? `${rp.name} is in the news, and ${w} is along for the ride`
-        : rp.relation === "source material" ? `${rp.name} is in the news, and so is ${w}`
-        : `${rp.name} is in the news, and readers are looking up ${w}`;
+      const rp = r.ripple;
+      const hed = rp.relation === "sequel or adaptation" ? `${w} is back as ${rp.name} draws crowds`
+        : ["franchise", "series", "character"].includes(rp.relation) ? `${w} rides the ${rp.name} wave`
+        : rp.relation === "source material" ? `${w} is back as ${rp.name} makes news`
+        : `${w} draws readers amid news about ${rp.name}`;
       return { kicker: "The Ripple Effect", hed,
-        dek: `${jumped}, right as interest in the ${yr} ${n} took off.${["franchise", "series", "character", "sequel or adaptation", "source material"].includes(rp.relation) ? "" : ` Something happened involving ${rp.name}.`}` };
+        dek: `Interest in the ${yr} ${n} took off right as ${rp.name}'s own Wikipedia page jumped ${rp.ratio}× on ${short(rp.date)} (${fmt(rp.peak)} readers in a day).${["franchise", "series", "character", "sequel or adaptation", "source material"].includes(rp.relation) ? "" : ` Something happened involving ${rp.name}.`}` };
     }
     case "editor":
       return { kicker: "Explained", hed: `Why readers are looking up ${w}`, dek: `${r.editor_note.text} The ${yr} ${n} is drawing ${x} its usual audience.` };
@@ -134,20 +134,34 @@ function story(r) {
   }
 }
 
+// "A, B and 10 more": the old works themselves, biggest comeback first.
+function oldNames(works) {
+  const ws = [...works].sort((a, b) => (b.score || 0) - (a.score || 0));
+  const nm = (w) => (ws.filter((o) => o.label === w.label).length > 1 ? `${w.label} (${w.release_year})` : w.label);
+  if (ws.length === 1) return nm(ws[0]);
+  if (ws.length === 2) return `${nm(ws[0])} and ${nm(ws[1])}`;
+  return `${nm(ws[0])}, ${nm(ws[1])} and ${ws.length - 2} more`;
+}
+// The biggest old work in a group that has a photo, so groups are pictured by what came back.
+const topPictured = (works) => {
+  const ws = [...works].sort((a, b) => (b.score || 0) - (a.score || 0));
+  return ws.find((w) => w.image && !w.image_of) || ws.find((w) => w.image);   // its own photo first
+};
+
 function sharedStory(t) {
   const works = t.works.map((q) => state.byQid[q]).filter(Boolean);
-  const kinds = [...new Set(works.map((w) => noun(w.kind)))];
-  const what = kinds.length === 1 ? `${PLURAL[kinds[0]] || "works"}` : "favorites";
+  const names = oldNames(works);
   if (t.type === "death") {
     const who = t.text.split(" (")[0];
-    return { kicker: "In Memoriam", hed: `Remembering ${who}: ${works.length} old ${what} are back`,
-      dek: `${who} died on ${fmtDate(t.date)}, and fans went back to the work.` };
+    return { kicker: "In Memoriam", hed: `${names} ${works.length === 1 ? "is" : "are"} back as fans remember ${who}`,
+      dek: `${works.length} older titles are drawing far more readers than usual since ${who} died on ${fmtDate(t.date)}.` };
   }
   const nw = t.text.split(": ").slice(1).join(": ").replace(/ \((upcoming|attention rose before release)\)$/, "") || t.text;
   const up = /\(upcoming\)$/.test(t.text);
+  const are = works.length === 1 ? "is" : "are";
   return { kicker: up ? "Homework" : "The Sequel Effect",
-    hed: up ? `${nw} lands ${short(t.date)}, and fans are revisiting the old ${what}` : `${nw} is sending fans back to the old ${what}`,
-    dek: `${works.length} earlier titles are drawing far more readers than usual.` };
+    hed: up ? `${names} ${are} back, just ahead of ${nw}` : `${names} ${are} back, thanks to ${nw}`,
+    dek: `${works.length} older titles are drawing far more readers than usual. ${nw} ${up ? `is due ${fmtDate(t.date)}` : `came out ${fmtDate(t.date)}`}.` };
 }
 
 function sourceLine(note) {
@@ -166,8 +180,9 @@ function threadStory(t) {
   const cause = t.editor_note ? t.editor_note.text
     : pj ? `${t.name}'s own Wikipedia page jumped ${pj.ratio}× on ${short(pj.date)} (${fmt(pj.peak)} readers in a day), so this is about ${t.name}.${t.cause ? ` ${causeSentence(t.cause)}.` : ""}`
     : t.cause ? `${causeSentence(t.cause)}, based on news and Wikipedia edits.` : "Wikidata doesn't record why. Maybe you know?";
-  return { kicker: "Six Degrees", hed: `Something's going on with ${t.name}`,
-    dek: `${t.works.length} titles ${how} ${t.name} all started spiking around ${short(t.around)}. ${cause}` };
+  const works = t.works.map((w) => state.byQid[w.qid]).filter(Boolean);
+  return { kicker: "Six Degrees", hed: `${oldNames(works)}: ${t.works.length} titles ${how} ${t.name}, all back at once`,
+    dek: `They all started rising around ${short(t.around)}. ${cause}` };
 }
 
 // ---------- photos: only real, freely licensed Wikimedia Commons images ----------
@@ -496,12 +511,12 @@ function todayPage() {
   ];
   const shared = state.data.shared_triggers || [];
   if (shared.length) {
-    out.push(sectionHead("Because Of…", "One event, many old favorites back at once."));
+    out.push(sectionHead("Back Together", "Old favorites coming back at once, all for the same reason."));
     out.push(h("div", {}, shared.map((t) => {
-      const sst = sharedStory(t), first = state.byQid[t.works[0]];
+      const sst = sharedStory(t), top = topPictured(t.works.map((q) => state.byQid[q]).filter(Boolean));
       return withPic("article", "feature",
-        t.image ? pic(wikidata(t.qid), t.image, t.text.split(": ").pop().split(" (")[0], 300)
-          : first ? pic(wikipedia(first.title), first.image, first.label, 300, first.image_of) : null,
+        top ? pic(wikipedia(top.title), top.image, top.label, 300, top.image_of)
+          : t.image ? pic(wikidata(t.qid), t.image, t.text.split(": ").pop().split(" (")[0], 300) : null,
         h("div", {}, h("span", { class: "kicker" }, sst.kicker), h("h3", { class: "hed" }, sst.hed), h("p", { class: "dek" }, sst.dek),
           h("div", { class: "chips" }, t.works.map((q) => state.byQid[q]).filter(Boolean).map((w) =>
             h("a", { class: "chip", href: `#w-${w.qid}`, onclick: (e) => { e.preventDefault(); focusCard(w.qid); } }, `${w.label} (${w.release_year})`)))));
@@ -524,8 +539,8 @@ function todayPage() {
   }
   const cu = state.data.coming_up || {};
   if ((cu.derivatives || []).length) {
-    out.push(sectionHead("Coming Soon", "Sequels, remakes and adaptations on the way. Expect the originals to come roaring back.", "Full calendar", "coming"));
-    out.push(h("div", { class: "rail" }, cu.derivatives.slice(0, 10).map(derivMini)));
+    out.push(sectionHead("Coming Soon", "Old favorites about to come roaring back, and the sequels, remakes and adaptations bringing them.", "Full calendar", "coming"));
+    out.push(h("div", { class: "rail" }, pictured(cu.derivatives).slice(0, 10).map(derivMini)));
   }
   if ((cu.anniversaries || []).length) {
     out.push(sectionHead("Happy Anniversary", "Big birthdays in the next two months.", "Full calendar", "coming"));
@@ -537,8 +552,9 @@ function todayPage() {
 }
 
 function threadFeature(t) {
-  const st = threadStory(t);
-  return withPic("article", "feature", pic(wikidata(t.qid), t.image, t.name, 300),
+  const st = threadStory(t), top = topPictured(t.works.map((w) => state.byQid[w.qid]).filter(Boolean));
+  return withPic("article", "feature", top ? pic(wikipedia(top.title), top.image, top.label, 300, top.image_of)
+      : pic(wikidata(t.qid), t.image, t.name, 300, t.name),
     h("div", {}, h("span", { class: "kicker" }, st.kicker), h("h3", { class: "hed" }, st.hed), h("p", { class: "dek" }, st.dek),
       h("div", { class: "chips" }, t.works.map((w) => state.byQid[w.qid]).filter(Boolean).map((w) =>
         h("a", { class: "chip", href: `#w-${w.qid}`, onclick: (e) => { e.preventDefault(); focusCard(w.qid); } }, `${w.label} (${w.release_year})`))),
@@ -556,12 +572,18 @@ function storyCard(r) {
     MYSTERY.has(r.verdict) ? h("div", {}, correctionLink(r, "Know why? Tell us →", "ask")) : null);
 }
 
+const NEWREL = { "adaptation of": "a new adaptation", "sequel to": "the sequel", "new entry in the series of": "a new entry in the series",
+  "remake of": "the remake", "spin-off of": "a spin-off" };
+// Drop Wikipedia's disambiguation tag: "Prince of Persia (1989 video game)" → "Prince of Persia".
+// Rails show pictured items first (stable, so date order holds within each group).
+const pictured = (cs) => [...cs].sort((a, b) => !(a.old_image || a.new_image) - !(b.old_image || b.new_image));
+const plain = (label) => label.replace(/ \((?:\d{4} )?(?:video game|film|album|song|novel|book|TV series|game|musical|play|manga|comics?)\)$/i, "");
 function derivMini(c) {
-  return withPic("article", "mini", c.new_image ? pic(wikidata(c.new), c.new_image, c.new_label, 480)
-    : pic(wikipedia(c.old_title), c.old_image, c.old_label, 480),
-    h("div", { class: "when" }, `Due ${short(c.date)}`),
-    h("h3", { class: "hed" }, c.new_label),
-    h("p", { class: "dek" }, `${c.rel[0].toUpperCase()}${c.rel.slice(1)} `, ext(wikipedia(c.old_title), c.old_label), ` (${c.old_release.slice(0, 4)}). Expect a comeback.`));
+  return withPic("article", "mini", c.old_image ? pic(wikipedia(c.old_title), c.old_image, c.old_label, 480, c.old_image_of)
+    : c.new_image ? pic(wikidata(c.new), c.new_image, c.new_label, 480, c.new_label) : null,
+    h("div", { class: "when" }, `Comeback due ${short(c.date)}`),
+    h("h3", { class: "hed" }, ext(wikipedia(c.old_title), plain(c.old_label)), ` (${c.old_release.slice(0, 4)})`),
+    h("p", { class: "dek" }, `${NEWREL[c.rel] ? NEWREL[c.rel][0].toUpperCase() + NEWREL[c.rel].slice(1) : "A new release"}, ${c.new_label}, arrives ${fmtDate(c.date)}.`));
 }
 function annMini(a) {
   return withPic("article", "mini", pic(wikipedia(a.title), a.image, a.label, 480, a.image_of),
@@ -604,7 +626,7 @@ function panel(name) {
   }
   if (name === "coming-mini" && (cu.derivatives || []).length)
     return h("div", {}, sectionHead("Coming Soon", "Sequels, adaptations and remakes of older works due soon.", "Full calendar", "coming"),
-      h("div", { class: "rail" }, cu.derivatives.slice(0, 10).map(derivMini)));
+      h("div", { class: "rail" }, pictured(cu.derivatives).slice(0, 10).map(derivMini)));
   if (name === "anniversaries-mini" && (cu.anniversaries || []).length)
     return h("div", {}, sectionHead("Anniversaries Ahead", "Round-number birthdays in the next 60 days, biggest audiences first.", "Full calendar", "coming"),
       h("div", { class: "rail" }, cu.anniversaries.slice(0, 10).map(annMini)));
@@ -792,10 +814,9 @@ function focusCard(qid) {
 function comingPage() {
   const cu = state.data.coming_up || { derivatives: [], anniversaries: [] };
   const dRows = (cu.derivatives || []).map((c) => h("tr", {},
-    h("td", { class: "nowrap" }, fmtDate(c.date)),
-    h("td", {}, ext(wikidata(c.new), h("b", {}, c.new_label)), h("div", { class: "small muted" }, c.new_kind)),
-    h("td", {}, c.rel),
-    h("td", {}, ext(wikipedia(c.old_title), c.old_label), h("div", { class: "small muted" }, `${c.old_kind}, ${c.old_release.slice(0, 4)}`))));
+    h("td", {}, ext(wikipedia(c.old_title), h("b", {}, plain(c.old_label))), h("div", { class: "small muted" }, `${c.old_kind}, ${c.old_release.slice(0, 4)}`)),
+    h("td", {}, ext(wikidata(c.new), c.new_label), h("div", { class: "small muted" }, NEWREL[c.rel] || c.rel)),
+    h("td", { class: "nowrap" }, fmtDate(c.date))));
   const aRows = (cu.anniversaries || []).map((a) => h("tr", {},
     h("td", { class: "nowrap" }, fmtDate(a.date)),
     h("td", {}, ext(wikipedia(a.title), h("b", {}, a.label)), h("div", { class: "small muted" }, `${a.kind}, ${a.release.slice(0, 4)}`)),
@@ -803,9 +824,9 @@ function comingPage() {
     h("td", { class: "num" }, a.audience ? fmt(a.audience) : "–")));
   return [
     h("p", { class: "intro" }, "What's about to bring old favorites back: sequels, remakes and adaptations on the way, plus the big birthdays. We check later whether we were right."),
-    sectionHead("On the Way", "Due in the next five months, each tied to an older work. From Wikidata; release dates can slip."),
-    (cu.derivatives || []).length ? h("div", { class: "rail" }, cu.derivatives.slice(0, 12).map(derivMini)) : null,
-    table(["Due", "New release", "Relation", "The original"], dRows),
+    sectionHead("Due for a Comeback", "Older favorites with a sequel, remake or adaptation due in the next five months. From Wikidata; release dates can slip."),
+    (cu.derivatives || []).length ? h("div", { class: "rail" }, pictured(cu.derivatives).slice(0, 12).map(derivMini)) : null,
+    table(["The original", "What's bringing it back", "Due"], dRows),
     sectionHead("Big Birthdays", "Round-number anniversaries in the next 60 days, ranked by how many people normally read about them."),
     (cu.anniversaries || []).length ? h("div", { class: "rail" }, cu.anniversaries.slice(0, 12).map(annMini)) : null,
     table(["Date", "Work", "Turns", "Readers on a normal day"], aRows),

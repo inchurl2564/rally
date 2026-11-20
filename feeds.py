@@ -15,6 +15,7 @@ import datetime as dt
 import html
 import json
 import os
+import re
 
 FEEDS = {
     "all": ("Rally: all new comebacks", lambda e: True),
@@ -58,14 +59,15 @@ def _entries_for_run(data: dict, prev: dict | None, site_url: str, labels: dict)
             continue
         names = ", ".join(by_q[q]["label"] for q in t["works"] if q in by_q)
         out.append({"id": f"shared-{t['qid']}-{run}", "kind_of": "shared", "verdict": "shared", "date": run,
-                    "title": f"{t['text']} is lifting {len(t['works'])} older works",
+                    "title": f"{len(t['works'])} older works are back: " + ", ".join(by_q[q]["label"] for q in t["works"][:3] if q in by_q)
+                             + f"{', …' if len(t['works']) > 3 else ''} ({t['text']})",
                     "summary": names, "link": f"{site_url}?run={run}"})
     for t in data.get("common_threads", []):
         if t["qid"] in prev_events:
             continue
         names = ", ".join(by_q[w["qid"]]["label"] for w in t["works"] if w["qid"] in by_q)
         out.append({"id": f"thread-{t['qid']}-{t['around']}", "kind_of": "thread", "verdict": "common thread",
-                    "date": run, "title": f"{len(t['works'])} works with {t['name']} spiked together around {t['around']}",
+                    "date": run, "title": f"{len(t['works'])} works with {t['name']} are back at once, from {t['around']}",
                     "summary": f"{names}. {t.get('cause') and 'Likely cause: ' + t['cause'] + '.' or 'No recorded cause.'}",
                     "link": f"{site_url}?run={run}"})
     for c in data.get("coming_up", {}).get("derivatives", []):
@@ -73,8 +75,8 @@ def _entries_for_run(data: dict, prev: dict | None, site_url: str, labels: dict)
             continue
         out.append({"id": f"fc-{c['new']}-{c['old']}", "kind_of": "forecast", "verdict": "forecast",
                     "medium": c["old_kind"], "date": run,
-                    "title": f"Coming {c['date']}: {c['new_label']}, {c['rel']} {c['old_label']}",
-                    "summary": f"Expect renewed interest in {c['old_label']} ({c['old_release'][:4]}).",
+                    "title": f"{re.sub(r' [(][^)]*[)]$', '', c['old_label'])} ({c['old_release'][:4]}) is due for a comeback",
+                    "summary": f"{c['new_label']}, {c['rel']} it, arrives {c['date']}.",
                     "link": f"{site_url}?run={run}&tab=coming"})
     return out
 
