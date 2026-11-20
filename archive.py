@@ -345,10 +345,34 @@ def weekly(site: str, hist: dict, runs: list[str], latest: dict) -> None:
     checks = _load(os.path.join(site, "data", "forecast_checks.json"), {})
     results = sorted([x for x in checks.values() if (end - dt.timedelta(days=14)).isoformat() <= x["date"] <= end.isoformat()],
                      key=lambda x: x["date"], reverse=True)[:8]
+    # New comebacks each day of the week, by reason (for the week chart). The record's first
+    # day has nothing to compare with, so it isn't counted as "new".
+    reason = {"ripple": "news", "editor": "news", "coverage": "news", "derivative": "release", "same-creator": "release",
+              "unexplained": "unexplained", "weak link": "unexplained", "lookup failed": "unexplained",
+              "common thread": "unexplained", "death": "memoriam", "anniversary": "anniversary"}
+    per_day = []
+    for i in range(7):
+        day = (monday + dt.timedelta(days=i)).isoformat()
+        prev = [r for r in runs if r < day]
+        if day not in days:
+            per_day.append({"date": day, "edition": False})
+            continue
+        if not prev:
+            per_day.append({"date": day, "edition": True, "first": True})
+            continue
+        before = set(days[prev[-1]])
+        groups: dict[str, list] = {}
+        for q, row in days[day].items():
+            k = reason.get(row.get("verdict"))
+            if k and q not in before and q in works:
+                groups.setdefault(k, []).append((row.get("rally_score") or 0, works[q][0]))
+        per_day.append({"date": day, "edition": True,
+                        "counts": {k: len(v) for k, v in groups.items()},
+                        "titles": {k: [t for _, t in sorted(v, reverse=True)[:5]] for k, v in groups.items()}})
     key = f"{y}-W{w:02d}"
     doc = {"week": key, "from": monday.isoformat(), "to": (monday + dt.timedelta(days=6)).isoformat(), "updated": runs[-1],
            "editions": len(wk_runs), "comebacks": len(best), "top": top5, "mystery": mystery,
-           "coming": soon[:6], "results": results}
+           "coming": soon[:6], "results": results, "days": per_day}
     wdir = os.path.join(site, "data", "weekly")
     _save(os.path.join(wdir, f"{key}.json"), doc)
     idx = sorted({f[:-5] for f in os.listdir(wdir) if f.endswith(".json") and f != "index.json"}, reverse=True)
