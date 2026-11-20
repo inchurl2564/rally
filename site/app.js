@@ -553,9 +553,13 @@ function drawStream(chart, tip, dates, series) {
     tip.replaceChildren(h("b", {}, s.label), ` · ${short(dates[i])}: ${fmt(s.extra[i])} extra views`,
       h("small", {}, s.r ? `${s.type.label} · ${story(s.r).hed}` : "Smaller comebacks, combined"));
     tip.hidden = false;
+    // Centered on the pointer; near the right edge it right-aligns to the pointer (opens leftward),
+    // near the left edge it left-aligns, so it never gets squeezed into a narrow column.
     const tw = tip.offsetWidth;
-    tip.style.left = `${Math.min(Math.max(px, tw / 2 + 2), W - tw / 2 - 2)}px`;
+    const shift = px + tw / 2 > W - 2 ? "-100%" : px - tw / 2 < 2 ? "0%" : "-50%";
+    tip.style.left = `${px}px`;
     tip.style.top = `${py}px`;
+    tip.style.transform = `translate(${shift}, calc(-100% - 12px))`;
   }).on("pointerleave", hide);
   chart.append(svg.node());
 }
