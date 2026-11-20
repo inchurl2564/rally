@@ -498,7 +498,7 @@ function streamSection() {
     h("div", { class: "legend", role: "list" }, present.map((t) =>
       h("span", { role: "listitem" }, h("i", { style: `background:${t.color}` }), t.label))),
     chart,
-    h("p", { class: "stream-note" }, `The ${series.length} biggest comebacks of the last 45 days${omitted ? ` (${omitted} smaller ones not shown)` : ""}. Band thickness = extra daily Wikipedia views above each title's usual level. Hover or tap for numbers; click to read the story.`),
+    h("p", { class: "stream-note" }, `The ${series.length} biggest comebacks of the last 45 days${omitted ? ` (${omitted} smaller ones not shown)` : ""}. Band thickness = extra daily views above each title's usual level. Hover or tap for numbers; click to read the story.`),
     h("details", {}, h("summary", {}, "View as table"), h("div", { class: "tablewrap" }, table)));
   requestAnimationFrame(() => drawStream(chart, tip, dates, series));
   return sec;
@@ -515,7 +515,7 @@ function drawStream(chart, tip, dates, series) {
   const area = d3.area().x((d, i) => x(i)).y0((d) => y(d[0])).y1((d) => y(d[1])).curve(d3.curveBasis);
   chart.querySelector("svg")?.remove();
   const svg = d3.create("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("height", H).attr("role", "img")
-    .attr("aria-label", `Streamgraph of extra daily Wikipedia views for the ${series.length} biggest comebacks over the last ${dates.length} days. A table view follows.`);
+    .attr("aria-label", `Streamgraph of extra daily views for the ${series.length} biggest comebacks over the last ${dates.length} days. A table view follows.`);
   // weekly ticks
   const ax = svg.append("g");
   ax.append("line").attr("class", "axis-line").attr("x1", M.l).attr("x2", W - M.r).attr("y1", H - M.b + 0.5).attr("y2", H - M.b + 0.5);
