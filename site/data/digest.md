@@ -2,8 +2,8 @@ The Rallyback, the comeback report, for **2026-11-19**: 160 new findings. [Open 
 
 ### Shared triggers
 
-- [3 older works are back: Prem Ratan Dhan Payo, Vivah, Maine Pyar Kiya (new work by Sooraj R. Barjatya: Yeh Prem Mol Liya (upcoming))](https://inchurl2564.github.io/rally/?run=2026-11-19)  
-  Prem Ratan Dhan Payo, Vivah, Maine Pyar Kiya
+- [3 older works are back: Maine Pyar Kiya, Prem Ratan Dhan Payo, Vivah (new work by Sooraj R. Barjatya: Yeh Prem Mol Liya (upcoming))](https://inchurl2564.github.io/rally/?run=2026-11-19)  
+  Maine Pyar Kiya, Prem Ratan Dhan Payo, Vivah
 - [2 older works are back: Penny Lane, Golden Slumbers (new work by The Beatles: Rubber Soul: Special Edition)](https://inchurl2564.github.io/rally/?run=2026-11-19)  
   Penny Lane, Golden Slumbers
 - [2 older works are back: Songs of Innocence, Achtung Baby (new work by U2: Carnaval de Luz)](https://inchurl2564.github.io/rally/?run=2026-11-19)  
@@ -26,17 +26,17 @@ The Rallyback, the comeback report, for **2026-11-19**: 160 new findings. [Open 
 - [4 works with Robin Williams are back at once, from 2026-11-14](https://inchurl2564.github.io/rally/?run=2026-11-19)  
   World's Greatest Dad, The Face of Love, What Dreams May Come, The Best of Times. No recorded cause.
 - [4 works with Joe Pasternak are back at once, from 2026-11-19](https://inchurl2564.github.io/rally/?run=2026-11-19)  
-  The Opposite Sex, Thrill of a Romance, Anchors Aweigh, Three Daring Daughters. No recorded cause.
+  The Opposite Sex, Three Daring Daughters, Anchors Aweigh, Thrill of a Romance. No recorded cause.
 - [3 works with Gene Kelly are back at once, from 2026-11-19](https://inchurl2564.github.io/rally/?run=2026-11-19)  
   What a Way to Go!, The Pirate, For Me and My Gal. No recorded cause.
 - [2 works with Slim Pickens are back at once, from 2026-11-14](https://inchurl2564.github.io/rally/?run=2026-11-19)  
   The Getaway, Will Penny. No recorded cause.
-- [3 works with Frances Fisher are back at once, from 2026-11-11](https://inchurl2564.github.io/rally/?run=2026-11-19)  
-  Jolene, Female Perversions, You're Not You. No recorded cause.
 - [2 works with Trevor Howard are back at once, from 2026-11-15](https://inchurl2564.github.io/rally/?run=2026-11-19)  
   The Charge of the Light Brigade, The Way Ahead. No recorded cause.
-- [3 works with Ryan Adams are back at once, from 2026-11-18](https://inchurl2564.github.io/rally/?run=2026-11-19)  
-  Heartbreaker, 1989, Gold. Likely cause: re-release.
+- [3 works with Frances Fisher are back at once, from 2026-11-11](https://inchurl2564.github.io/rally/?run=2026-11-19)  
+  Jolene, Female Perversions, You're Not You. No recorded cause.
+- [2 works with Charles Millot are back at once, from 2026-11-18](https://inchurl2564.github.io/rally/?run=2026-11-19)  
+  The Sleeping Car Murders, The Nun. No recorded cause.
 
 ### New comebacks
 
@@ -50,8 +50,6 @@ The Rallyback, the comeback report, for **2026-11-19**: 160 new findings. [Open 
   Death of someone credited · fading. Sebastián Lelio (director) died. Spike began 2026-11-06; usual 45 views/day.
 - [Rectify (2013) is back: 12.7× usual attention](https://inchurl2564.github.io/rally/?run=2026-11-19#w-Q7303179)  
   No trigger found · sustained. No recorded cause yet. Spike began 2026-11-02; usual 268 views/day.
-- [The Nightingale (2015) is back: 4.4× usual attention](https://inchurl2564.github.io/rally/?run=2026-11-19#w-Q25218724)  
-  No trigger found · emerging. No recorded cause yet. Spike began 2026-11-16; usual 1,151 views/day.
 - [Cassiopeia (1996) is back: 61.6× usual attention](https://inchurl2564.github.io/rally/?run=2026-11-19#w-Q2941299)  
   No trigger found · emerging. No recorded cause yet. Spike began 2026-11-19; usual 18 views/day.
 - [Songs of Innocence (2014) is back: 3.7× usual attention](https://inchurl2564.github.io/rally/?run=2026-11-19#w-Q14037150)  
@@ -60,6 +58,8 @@ The Rallyback, the comeback report, for **2026-11-19**: 160 new findings. [Open 
   Shared person, same timing · fading. Charles Leavitt (screenwriter) is credited on 2 works that all started spiking around 2026-11-09. Spike began 2026-11-06; usual 889 views/day.
 - [Force 10 from Navarone (1978) is back: 3.8× usual attention](https://inchurl2564.github.io/rally/?run=2026-11-19#w-Q572736)  
   Shared person, same timing · emerging. Robert Riettii (cast member) is credited on 2 works that all started spiking around 2026-11-16. Spike began 2026-11-17; usual 293 views/day.
+- [The Nightingale (2015) is back: 4.4× usual attention](https://inchurl2564.github.io/rally/?run=2026-11-19#w-Q25218724)  
+  No trigger found · emerging. No recorded cause yet. Spike began 2026-11-16; usual 1,151 views/day.
 - [Swingin' (1983) is back: 11.8× usual attention](https://inchurl2564.github.io/rally/?run=2026-11-19#w-Q7658661)  
   Death of someone credited · emerging. John Anderson (performer) died. Spike began 2026-11-19; usual 36 views/day.
 - [The Face of Love (2013) is back: 15.4× usual attention](https://inchurl2564.github.io/rally/?run=2026-11-19#w-Q15046522)  
@@ -67,8 +67,14 @@ The Rallyback, the comeback report, for **2026-11-19**: 160 new findings. [Open 
 
 ### Coming up
 
+- [The Snow Queen (1844) is due for a comeback](https://inchurl2564.github.io/rally/?run=2026-11-19&tab=coming)  
+  North, adaptation of it, arrives 2026-11-26.
 - [Monster Hunter 4 (2013) is due for a comeback](https://inchurl2564.github.io/rally/?run=2026-11-19&tab=coming)  
   Monster Hunter Wilds, new entry in the series of it, arrives 2026-12-04.
+- [Mrs Dalloway (1925) is due for a comeback](https://inchurl2564.github.io/rally/?run=2026-11-19&tab=coming)  
+  Clarissa, adaptation of it, arrives 2026-12-11.
+- [Rendezvous with Rama (1973) is due for a comeback](https://inchurl2564.github.io/rally/?run=2026-11-19&tab=coming)  
+  Rendezvous with Rama, adaptation of it, arrives 2027-01-01.
 
 ---
 Leads, not conclusions: verify before publishing. To get this by email, **Watch** this repo → **Custom** → **Issues**.
