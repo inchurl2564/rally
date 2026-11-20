@@ -471,4 +471,6 @@ p, li, .dek, .about .mission { text-wrap: pretty; }
   .mast-top { grid-template-columns: minmax(0, 1fr); row-gap: 6px; }
   .mast-right { flex-direction: row; justify-content: flex-start; flex-wrap: wrap; gap: 4px 16px; }
   .mast-right .run-pick select { max-width: 100%; padding-left: 0; text-indent: 0; }
+  .mast-right .run-pick { order: 1; }
+  .mast-right .follow-link { order: 2; }
 }
