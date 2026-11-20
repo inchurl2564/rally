@@ -18,14 +18,14 @@ import os
 import re
 
 FEEDS = {
-    "all": ("Rally: all new comebacks", lambda e: True),
-    "unexplained": ("Rally: unexplained comebacks",
+    "all": ("The Rallyback: all new comebacks", lambda e: True),
+    "unexplained": ("The Rallyback: unexplained comebacks",
                     lambda e: e["verdict"] in ("unexplained", "common thread", "coverage") or e["kind_of"] == "thread"),
-    "coming-up": ("Rally: coming up", lambda e: e["kind_of"] == "forecast"),
-    "film-tv": ("Rally: film & TV", lambda e: e.get("medium") in ("film", "TV series")),
-    "music": ("Rally: music", lambda e: e.get("medium") in ("song", "album", "musical")),
-    "games": ("Rally: video games", lambda e: e.get("medium") == "video game"),
-    "books": ("Rally: books & comics", lambda e: e.get("medium") in ("book", "manga/comic")),
+    "coming-up": ("The Rallyback: coming up", lambda e: e["kind_of"] == "forecast"),
+    "film-tv": ("The Rallyback: film & TV", lambda e: e.get("medium") in ("film", "TV series")),
+    "music": ("The Rallyback: music", lambda e: e.get("medium") in ("song", "album", "musical")),
+    "games": ("The Rallyback: video games", lambda e: e.get("medium") == "video game"),
+    "books": ("The Rallyback: books & comics", lambda e: e.get("medium") in ("book", "manga/comic")),
 }
 KEEP = 300
 
@@ -98,7 +98,7 @@ def _atom(name: str, title: str, entries: list[dict], site_url: str) -> str:
   <link rel="self" href="{_x(site_url)}feeds/{name}.xml"/>
   <link href="{_x(site_url)}"/>
   <updated>{updated}</updated>
-  <author><name>Rally</name></author>{items}
+  <author><name>The Rallyback</name></author>{items}
 </feed>
 """
 
@@ -128,7 +128,7 @@ def _digest(site: str, data: dict, new: list[dict], site_url: str) -> None:
     run = data["meta"]["window_end"]
     sections = [("Shared triggers", "shared"), ("Common threads", "thread"), ("New comebacks", "work"),
                 ("Coming up", "forecast")]
-    lines = [f"Rally, the comeback report, for **{run}**: {len(new)} new findings. "
+    lines = [f"The Rallyback, the comeback report, for **{run}**: {len(new)} new findings. "
              f"[Open the site]({site_url}?run={run}).", ""]
     for head, k in sections:
         items = [e for e in new if e["kind_of"] == k][:12]

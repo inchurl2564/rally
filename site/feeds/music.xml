@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
-  <title>Rally: music</title>
+  <title>The Rallyback: music</title>
   <id>https://inchurl2564.github.io/rally/feeds/music.xml</id>
   <link rel="self" href="https://inchurl2564.github.io/rally/feeds/music.xml"/>
   <link href="https://inchurl2564.github.io/rally/"/>
   <updated>2026-11-18T06:00:00Z</updated>
-  <author><name>Rally</name></author>
+  <author><name>The Rallyback</name></author>
   <entry>
     <id>https://inchurl2564.github.io/rally/#work-Q3278172-2026-11-16</id>
     <title>Sing a Song of Sixpence (1744) is back: 13.1× usual attention</title>

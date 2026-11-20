@@ -1,5 +1,5 @@
 """
-Per-comeback checks and the Rally Score.
+Per-comeback checks and the Rallyback Score.
 
   global_reach   Is it rising on Wikipedia in other languages too? (pageviews API, 12 big editions)
   chatter        How many Bluesky posts mention it this week, versus the weeks before (public search)
@@ -7,7 +7,7 @@ Per-comeback checks and the Rally Score.
                  independent places confirm it, and how long it has lasted
   record         A compact permanent history: site/data/history/YYYY-MM.json, one row per comeback
                  per day (lift, score, reason, stage, sources), kept forever. This is what later
-                 lets Rally say how long each kind of comeback lasts and how big it tends to be.
+                 lets The Rallyback say how long each kind of comeback lasts and how big it tends to be.
 
 No API keys. Every lookup is best-effort: a source that fails is skipped, never fatal.
 """
@@ -35,7 +35,7 @@ LANG_UP = 2.0           # a language edition counts as "rising" at 2x its usual 
 LANG_MIN = 20           # …with at least this many views a day
 BSKY = "https://api.bsky.app/xrpc/app.bsky.feed.searchPosts"
 BUDGET_S = 12 * 60      # time limit for each check; strongest comebacks go first
-UA = {"User-Agent": "Rally/0.4 (open-data research; +https://github.com/inchurl2564/rally)"}
+UA = {"User-Agent": "Rallyback/0.4 (open-data research; +https://github.com/inchurl2564/rally)"}
 
 
 def log(*a):
@@ -183,7 +183,7 @@ def chatter(results: list[dict], end: dt.date) -> None:
     log(f"      Bluesky: {n} of {len(top)} comebacks have at least 2x their usual posts")
 
 
-# ---------- the Rally Score ----------
+# ---------- the Rallyback Score ----------
 
 def confirmations(r: dict) -> float:
     """How many independent places confirm the comeback, beyond English Wikipedia."""

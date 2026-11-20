@@ -389,8 +389,8 @@ function sectionHead(title, sub, moreLabel, moreView) {
     moreView ? h("button", { type: "button", class: "more", onclick: () => goto(moreView) }, `${moreLabel} →`) : null);
 }
 
-const SCORE_HELP = "Rally Score, 0 to 100: how big the jump is, how many people usually care, how many other places confirm it, and how long it has lasted.";
-const scorePill = (r) => (r.rally_score != null ? h("span", { class: "score", title: SCORE_HELP }, h("small", {}, "Rally Score"), String(r.rally_score)) : null);
+const SCORE_HELP = "Rallyback Score, 0 to 100: how big the jump is, how many people usually care, how many other places confirm it, and how long it has lasted.";
+const scorePill = (r) => (r.rally_score != null ? h("span", { class: "score", title: SCORE_HELP }, h("small", {}, "Rallyback Score"), String(r.rally_score)) : null);
 
 function bigstat(r, withSpark = true) {
   return h("div", { class: "bigstat" }, scorePill(r), h("b", {}, mult(r)),
@@ -551,7 +551,7 @@ window.addEventListener("resize", () => {
 
 // ---------- Today ----------
 function howItWorks() {
-  return h("section", { class: "how", "aria-label": "How Rally works" },
+  return h("section", { class: "how", "aria-label": "How The Rallyback works" },
     h("ol", {},
       h("li", {}, h("b", {}, "We watch."), " Every day we track how much attention older movies, shows, songs, games and books are getting."),
       h("li", {}, h("b", {}, "We spot comebacks."), " When an old favorite suddenly gets far more attention than usual, it's back."),
@@ -616,7 +616,7 @@ function todayPage() {
         sourcesBox(sourcesFor(lead))),
       h("aside", { class: "index" },
         h("h2", {}, "Top 10 comebacks"),
-        h("p", {}, "Ranked by Rally Score: the size of the jump, how many people usually care, confirmation elsewhere and staying power."),
+        h("p", {}, "Ranked by Rallyback Score: the size of the jump, how many people usually care, confirmation elsewhere and staying power."),
         h("ol", {}, rest.slice(0, 10).map((r) => h("li", {}, h("div", {},
           h("div", { class: "t" }, link(r, r.label)),
           h("div", { class: "s" }, r.rally_score != null ? h("b", { class: "sc", title: SCORE_HELP }, `${r.rally_score}`) : null,
@@ -748,7 +748,7 @@ function panel(name) {
       h("div", { class: "rail" }, bigAnniversaries(cu.anniversaries, 10).map(annMini)));
   if (name === "downloads") {
     const run = $("run").value;
-    return h("div", { class: "block" }, sectionHead("Downloads", "Data is derived from CC0 sources. Please cite as “Rally (open data from Wikimedia and Wikidata)”."),
+    return h("div", { class: "block" }, sectionHead("Downloads", "Data is derived from CC0 sources. Please cite as “The Rallyback (open data from Wikimedia and Wikidata)”."),
       h("ul", { class: "plain" },
         h("li", {}, h("a", { href: "data/latest.csv", download: "" }, h("b", {}, "latest.csv")), " · spreadsheet of this edition"),
         h("li", {}, h("a", { href: `data/runs/${run}.json` }, h("b", {}, `runs/${run}.json`)), " · full snapshot with 12-month series, triggers and evidence"),
@@ -842,7 +842,7 @@ function renderList() {
 function correctionLink(r, label = "Report a correction", cls) {
   const top = r.triggers[0];
   const body = [`**Work:** ${r.label} (${r.release_year}) ${wikidata(r.qid)}`, `**Edition:** ${$("run").value}`,
-    `**Radar said:** ${story(r).hed}${top ? ` (${top.text})` : ""}${r.cause ? `; likely cause: ${r.cause}` : ""}`,
+    `**The Rallyback said:** ${story(r).hed}${top ? ` (${top.text})` : ""}${r.cause ? `; likely cause: ${r.cause}` : ""}`,
     "", "**What actually happened (with a link if you have one):**", ""].join("\n");
   const url = `https://github.com/${REPO}/issues/new?labels=feedback&title=${encodeURIComponent(`About ${r.label}`)}&body=${encodeURIComponent(body)}`;
   return h("a", { href: url, target: "_blank", rel: "noopener", class: cls || null }, label);
@@ -860,7 +860,7 @@ function tipLink(r, label = "Know why? Tell us →") {
 function openTip(r) {
   let dlg = $("tipform");
   if (dlg) dlg.remove();
-  const work = `${r.label} (${r.release_year}) · ${wikipedia(r.title)} · edition ${$("run").value} · Rally said: ${story(r).hed}`;
+  const work = `${r.label} (${r.release_year}) · ${wikipedia(r.title)} · edition ${$("run").value} · The Rallyback said: ${story(r).hed}`;
   const status = h("p", { class: "form-status", role: "status" });
   const why = h("textarea", { name: "why", required: "", rows: "4", placeholder: "A trailer, a TikTok trend, a TV placement, news about someone involved…" });
   const link = h("input", { name: "link", type: "url", placeholder: "https://" });
@@ -932,7 +932,7 @@ function card(r, open) {
         h("span", { class: "tagx" }, `${r.label} · ${r.release_year}`),
         r.stage === "emerging" ? h("span", { class: "tagx hot" }, "Just starting") : r.stage ? h("span", { class: "tagx" }, STAGES[r.stage]) : null,
         r.early ? h("span", { class: "tagx", title: "Spotted by our watchlist before it reached Wikipedia's top 1,000" }, "Caught early") : null,
-        r.rally_score != null ? h("span", { class: "tagx", title: SCORE_HELP }, `Rally Score ${r.rally_score}`) : null),
+        r.rally_score != null ? h("span", { class: "tagx", title: SCORE_HELP }, `Rallyback Score ${r.rally_score}`) : null),
       isOpen(r) ? h("div", { class: "card-ask" }, tipLink(r)) : null,
       h("details", { class: "more-info", open: open ? "" : null }, h("summary", {}, "Numbers & sources"),
         sparkline(r),
@@ -1089,7 +1089,7 @@ function method() {
       h("li", {}, h("b", {}, "Watch."), " Every day, read Wikimedia's bulk pageview file for ~35,000 notable older works (10+ language editions, released 10+ years ago), plus English Wikipedia's daily top 1,000."),
       h("li", {}, h("b", {}, "Measure."), " Compare each work's last 3 and 14 days with its median over the previous ~11 months. 3× over 14 days, or 2.5× over 3 days, counts. Stages: just starting (began in the last 4 days), at its peak, still going (10+ days), cooling off."),
       h("li", {}, h("b", {}, "Confirm elsewhere."), " Record Steam players and reviews, iTunes and Deezer charts, Open Library trending and Project Gutenberg downloads every day (kept forever as open data), and check Wikipedia in 12 other languages and Bluesky posts for each comeback."),
-      h("li", {}, h("b", {}, "Score."), " The Rally Score (0–100) weighs the size of the jump (40%), the everyday audience (25%), confirmation in other places (20%) and staying power (15%)."),
+      h("li", {}, h("b", {}, "Score."), " The Rallyback Score (0–100) weighs the size of the jump (40%), the everyday audience (25%), confirmation in other places (20%) and staying power (15%)."),
       h("li", {}, h("b", {}, "Explain."), " Look in Wikidata near the spike for deaths of credited people, sequels, adaptations, remakes, new series entries, new work by the same creator, and anniversaries. For spikes it can't explain, read Wikipedia edit summaries, edit bursts and GDELT news headlines from the same days."),
       h("li", {}, h("b", {}, "Connect."), " Group spikes by a shared event, and unexplained spikes by a shared person with the same timing."),
       h("li", {}, h("b", {}, "Filter."), " Set aside seasonal items (also up this time last year), spikes that are almost all desktop traffic (likely bots), and one-day surges from a feature on Wikipedia's front page."),

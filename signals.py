@@ -12,7 +12,7 @@ Open sources that need no API key, matched to works through Wikidata IDs:
 
 Chart positions, player counts and review totals are snapshots that can't be fetched after the
 fact, so every run records one and keeps it forever: site/data/signals/YYYY-MM.json, one file per
-month. That record is published as open data, and it's what later lets Rally measure how long
+month. That record is published as open data, and it's what later lets The Rallyback measure how long
 comebacks last and how big each kind of trigger tends to be.
 
 A signal is *strong* when it shows a change, not just presence:
@@ -53,7 +53,7 @@ NEW_DAYS = 7          # a chart entry is "new" if absent from the previous 7 rec
 MIN_HISTORY = 3       # days of history before "new" or "Nx usual" can be judged
 STEAM_MIN = 50        # ignore games with fewer players than this
 REVIEWS_MIN = 5       # …or fewer new reviews a day than this
-UA = {"User-Agent": "Rally/0.4 (open-data research; +https://github.com/inchurl2564/rally)"}
+UA = {"User-Agent": "Rallyback/0.4 (open-data research; +https://github.com/inchurl2564/rally)"}
 
 
 def log(*a):

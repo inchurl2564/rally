@@ -1,4 +1,4 @@
-# Rally
+# The Rallyback
 
 *The comeback report.*
 
@@ -21,7 +21,7 @@ It runs every day on GitHub Actions and publishes a static site to GitHub Pages.
 | Wikipedia in 12 other languages | Whether a comeback is global or local |
 | [Bluesky](https://docs.bsky.app/docs/api/app-bsky-feed-search-posts) public search | How many people are posting about it this week |
 
-## The Rally Score
+## The Rallyback Score
 
 Every comeback gets one number from 0 to 100: the size of the jump (40%), the everyday audience (25%), how many other places confirm it (20%: charts, Steam, other-language Wikipedias, Bluesky) and staying power (15%). It ranks the site.
 
@@ -30,7 +30,7 @@ Every comeback gets one number from 0 to 100: the size of the jump (40%), the ev
 Snapshots that can't be fetched after the fact are kept forever as open data:
 
 - `site/data/signals/YYYY-MM.json`: every day's chart positions, Steam players and review totals, matched to works.
-- `site/data/history/YYYY-MM.json`: every comeback, every day: lift, Rally Score, reason, stage and confirmations.
+- `site/data/history/YYYY-MM.json`: every comeback, every day: lift, Rallyback Score, reason, stage and confirmations.
 
 Over time this record shows how long each kind of comeback lasts and how big each kind of trigger tends to be.
 
@@ -80,7 +80,7 @@ Every card has a **Report a correction** link that opens a pre-filled issue labe
 ## Setup (one time)
 
 1. **Settings → Pages → Build and deployment → Source: GitHub Actions.**
-2. **Actions → Update Rally → Run workflow** to run it immediately.
+2. **Actions → Update The Rallyback → Run workflow** to run it immediately.
    After that it runs daily at 2 a.m. Pacific (09:00 or 10:00 UTC, depending on daylight saving time).
 
 The first run takes longer (up to ~1 hour) because it builds the watchlist and downloads about 4 weeks of bulk pageview files. Early detection switches on once 8 days of bulk data exist. Later runs reuse the cache and take a few minutes.
@@ -117,7 +117,7 @@ Set `RADAR_CONTACT` to a URL or address so Wikimedia can identify your client, a
 radar.py      pipeline: discover, measure, explain (Wikidata), write site data
 early.py      watchlist + bulk pageview files → early risers
 signals.py    Steam, iTunes and Deezer charts, Open Library, Gutenberg → daily record + signals
-enrich.py     other-language Wikipedia, Bluesky, the Rally Score, permanent history
+enrich.py     other-language Wikipedia, Bluesky, the Rallyback Score, permanent history
 explain.py    edit bursts, edit summaries, news → likely cause; corroboration
 forecast.py   upcoming sequels/adaptations/remakes, anniversaries
 evaluate.py   forecast checks, corroboration, persistence, reader reports
