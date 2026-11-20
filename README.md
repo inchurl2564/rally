@@ -42,6 +42,15 @@ These are leads, not conclusions. Wikidata is volunteer-edited, and news and edi
 - **Email:** each run posts a digest as a GitHub issue. Click **Watch → Custom → Issues** on this repo to get it by email.
 - **Feeds:** `site/feeds/*.xml` (Atom) covers all findings, unexplained spikes, coming-up forecasts, film & TV, music, games, and books.
 
+## Reader tips
+
+Each mystery has a **Know why? Tell us** link that opens a short form (what's bringing it back, an optional link, an optional email). It posts to a form service you own. Set `TIPS_FORM` at the top of `site/app.js`:
+
+- **Google Forms** (free; replies go to a Google Sheet and can email you): make a form with four short-answer/paragraph questions (*Work*, *Why*, *Link*, *Email*), then use **⋮ → Get pre-filled link** to find each question's `entry.NNN` name. `action` is `https://docs.google.com/forms/d/e/<form id>/formResponse`.
+- **Formspree or similar:** `action` is your endpoint; field names can be anything.
+
+Until `action` is set, the link opens a pre-filled GitHub issue instead.
+
 ## Reader corrections
 
 Every card has a **Report a correction** link that opens a pre-filled issue labelled `feedback`. Label reviewed reports `verified-correct` or `verified-wrong`, and the Accuracy tab counts them on the next run.

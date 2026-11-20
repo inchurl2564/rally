@@ -36,6 +36,16 @@ const REPO = (() => {
   return m && seg ? `${m[1]}/${seg}` : "inchurl2564/rally";
 })();
 
+// Where "Know why? Tell us" tips go: an on-page form that posts to a form service.
+//   Google Forms: action = "https://docs.google.com/forms/d/e/<form id>/formResponse",
+//                 fields = the form's "entry.123456" names (from its "Get pre-filled link").
+//   Formspree or similar: action = the endpoint URL, fields = any names you like.
+// While `action` is empty, tips fall back to a GitHub issue.
+const TIPS_FORM = {
+  action: "",
+  fields: { work: "", why: "", link: "", email: "" },
+};
+
 const FILTERED = new Set(["seasonal", "automated?", "front page"]);
 const MYSTERY = new Set(["unexplained", "weak link", "lookup failed"]);
 const STAGES = { emerging: "Just starting", peaking: "At its peak", sustained: "Still going", fading: "Cooling off" };
@@ -569,7 +579,7 @@ function storyCard(r) {
     h("p", { class: "dek" }, st.dek),
     sourceLine(r.editor_note),
     bigstat(r),
-    MYSTERY.has(r.verdict) ? h("div", {}, correctionLink(r, "Know why? Tell us →", "ask")) : null);
+    MYSTERY.has(r.verdict) ? h("div", {}, tipLink(r)) : null);
 }
 
 const NEWREL = { "adaptation of": "a new adaptation", "sequel to": "the sequel", "new entry in the series of": "a new entry in the series",
@@ -722,6 +732,59 @@ function correctionLink(r, label = "Report a correction", cls) {
     "", "**What actually happened (with a link if you have one):**", ""].join("\n");
   const url = `https://github.com/${REPO}/issues/new?labels=feedback&title=${encodeURIComponent(`About ${r.label}`)}&body=${encodeURIComponent(body)}`;
   return h("a", { href: url, target: "_blank", rel: "noopener", class: cls || null }, label);
+}
+
+// A tip about a mystery: opens the tip form, pre-filled with the work.
+function tipLink(r, label = "Know why? Tell us →") {
+  if (!TIPS_FORM.action) return correctionLink(r, label, "ask");
+  return h("a", { href: "#", class: "ask", onclick: (e) => { e.preventDefault(); openTip(r); } }, label);
+}
+
+function openTip(r) {
+  let dlg = $("tipform");
+  if (dlg) dlg.remove();
+  const work = `${r.label} (${r.release_year}) · ${wikipedia(r.title)} · edition ${$("run").value} · Rally said: ${story(r).hed}`;
+  const status = h("p", { class: "form-status", role: "status" });
+  const why = h("textarea", { name: "why", required: "", rows: "4", placeholder: "A trailer, a TikTok trend, a TV placement, news about someone involved…" });
+  const link = h("input", { name: "link", type: "url", placeholder: "https://" });
+  const email = h("input", { name: "email", type: "email", placeholder: "you@example.com", autocomplete: "email" });
+  const send = h("button", { type: "submit", class: "btn" }, "Send tip");
+  const form = h("form", { method: "dialog" },
+    h("span", { class: "kicker" }, "Tip the desk"),
+    h("h2", { class: "hed" }, `Why is ${r.label} back?`),
+    h("p", { class: "small muted" }, `The ${r.release_year} ${noun(r.kind)} is drawing ${mult(r)} its usual audience and we can't find the reason.`),
+    h("label", {}, h("span", {}, "What's bringing it back?"), why),
+    h("label", {}, h("span", {}, "A link, if you have one ", h("i", { class: "muted" }, "(optional)")), link),
+    h("label", {}, h("span", {}, "Your email, if we may follow up ", h("i", { class: "muted" }, "(optional)")), email),
+    h("div", { class: "form-actions" }, send,
+      h("button", { type: "button", class: "btn ghost", onclick: () => dlg.close() }, "Cancel")),
+    status);
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!why.value.trim()) { why.focus(); return; }
+    const F = TIPS_FORM.fields, data = new URLSearchParams();
+    const put = (k, v) => { if (v) data.append(F[k] || k, v); };
+    put("work", work); put("why", why.value.trim()); put("link", link.value.trim()); put("email", email.value.trim());
+    send.disabled = true; status.textContent = "Sending…";
+    try {
+      const google = /docs\.google\.com\/forms/.test(TIPS_FORM.action);
+      // Google Forms doesn't allow reading its reply from another site, so a sent request counts as success.
+      const res = await fetch(TIPS_FORM.action, google ? { method: "POST", mode: "no-cors", body: data }
+        : { method: "POST", body: data, headers: { Accept: "application/json" } });
+      if (!google && !res.ok) throw new Error(res.status);
+      form.replaceChildren(h("span", { class: "kicker" }, "Thank you"), h("h2", { class: "hed" }, "Tip received"),
+        h("p", {}, "We read every tip. If it checks out, it'll show up as an editor's note on the story."),
+        h("div", { class: "form-actions" }, h("button", { type: "button", class: "btn", onclick: () => dlg.close() }, "Close")));
+    } catch (err) {
+      send.disabled = false;
+      status.textContent = "That didn't go through. Please try again in a moment.";
+    }
+  });
+  dlg = h("dialog", { id: "tipform", class: "tipform", "aria-label": `Tip: why is ${r.label} back?` }, form);
+  dlg.addEventListener("click", (e) => { if (e.target === dlg) dlg.close(); });   // click outside to close
+  document.body.append(dlg);
+  dlg.showModal();
+  why.focus();
 }
 
 function evidenceList(ev, limit = 4) {
