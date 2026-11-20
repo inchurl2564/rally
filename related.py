@@ -13,10 +13,12 @@ their pages jumped at the same time.
 
 from __future__ import annotations
 
+import concurrent.futures as cf
 import datetime as dt
 import math
 import statistics
 import sys
+import time
 
 import radar
 
@@ -27,6 +29,8 @@ LINK_PROPS = {
 PEOPLE_PER_WORK = 12      # best-known credited people checked per work
 MIN_RATIO = 4.0           # the connected page must jump at least this much…
 MIN_VIEWS = 300           # …and reach at least this many views/day
+MAX_WORKS = 120          # strongest unexplained spikes checked per run
+BUDGET_S = 20 * 60       # time budget for fetching connected pages
 
 
 def log(*a):
@@ -128,16 +132,28 @@ def ripple(project: str, works: list[dict], end: dt.date) -> None:
     """Attach r["ripple"] = strongest connected page that jumped with the work, if any."""
     if not works:
         return
-    links = connected(works)
     spiking = {w["qid"] for w in works}   # another spiking work is a fellow traveller, not a cause
+    works = sorted(works, key=lambda w: -w.get("score_hint", 0))[:MAX_WORKS]
+    links = connected(works)
     start = min(w["spike_start"] for w in works) - dt.timedelta(days=45)
+    # Fetch every connected page once, two at a time, within a time budget.
+    titles = list(dict.fromkeys(e["title"] for w in works for e in links.get(w["qid"], [])
+                                if e["qid"] not in spiking and e["title"] not in _views_cache))
+    deadline = time.monotonic() + BUDGET_S
+    def fetch(t):
+        if time.monotonic() < deadline:
+            _views(project, t, start, end)
+    with cf.ThreadPoolExecutor(max_workers=2) as ex:
+        list(ex.map(fetch, titles))
+    if time.monotonic() >= deadline:
+        log(f"      ripple: time budget reached; {sum(t in _views_cache for t in titles)} of {len(titles)} pages fetched")
     checked = 0
     for w in works:
         best = None
         for e in links.get(w["qid"], []):
-            if e["qid"] in spiking:
+            if e["qid"] in spiking or e["title"] not in _views_cache:
                 continue
-            series = _views(project, e["title"], start, end)
+            series = _views_cache[e["title"]]
             checked += 1
             ratio, peak, day = jump(series, w["spike_start"])
             # A cause should be bigger news than its effect.
