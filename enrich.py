@@ -19,6 +19,7 @@ import datetime as dt
 import json
 import math
 import os
+import re
 import statistics
 import sys
 import time
@@ -208,19 +209,103 @@ def rally_score(r: dict, end: dt.date) -> int:
 
 # ---------- the permanent record ----------
 
+HISTORY_FIELDS = ["lift", "lift3", "rally_score", "verdict", "stage", "baseline", "spike_start", "confirmations", "causes"]
+
+
+def _role(text: str | None) -> str | None:
+    """'Patrick Stewart (cast member) died' -> 'cast member'."""
+    m = re.search(r"\(([^()]+)\)", text or "")
+    return m.group(1) if m else None
+
+
+def causes_of(r: dict) -> list[list]:
+    """What brought a comeback back, compactly, for the permanent record: [kind, qid, detail, date].
+    kind: a trigger type (death, derivative, same-creator, anniversary, common thread), "ripple"
+    (a related page jumped), "note" (editor's note) or "coverage" (cause read from news/edits).
+    The qid is the person, new work or related entity, so later analysis can ask
+    "whose news moves catalogs most" (star power) or "how big is a sequel bump"."""
+    out = []
+    for t in r.get("triggers") or []:
+        detail = t.get("text") if t.get("type") == "anniversary" else _role(t.get("text"))
+        if t.get("type") in ("derivative", "same-creator"):
+            detail = (t.get("text") or "").split(":")[0]       # "new entry in same series", "new work by X"
+        out.append([t.get("type"), t.get("qid"), detail, str(t.get("date") or "")[:10]])
+    rp = r.get("ripple")
+    if rp:
+        out.append(["ripple", rp.get("qid"), rp.get("relation"), str(rp.get("date") or "")[:10]])
+    if r.get("editor_note"):
+        out.append(["note", None, r["editor_note"].get("id"), None])
+    if r.get("cause"):
+        out.append(["coverage", None, r["cause"], None])
+    return out
+
+
+FRANCHISE_PROPS = ("P179", "P8345")    # part of the series, media franchise
+
+
+def franchises(qids: list[str], batch: int = 150) -> dict[str, list[str]]:
+    """{work qid: [series/franchise qids]} plus their labels, for franchise-level rollups."""
+    out: dict[str, list[str]] = {}
+    names: dict[str, str] = {}
+    looked: set[str] = set()        # works whose lookup actually ran (a failed batch is retried next run)
+    qids = [q for q in qids if q]
+    for i in range(0, len(qids), batch):
+        values = " ".join(f"wd:{q}" for q in qids[i:i + batch])
+        q = f"""SELECT ?item ?f ?fLabel WHERE {{
+          VALUES ?item {{ {values} }}
+          VALUES ?p {{ {" ".join("wdt:" + p for p in FRANCHISE_PROPS)} }}
+          ?item ?p ?f .
+          SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en,mul". }}
+        }}"""
+        try:
+            rows = radar.sparql(q)
+        except Exception as e:
+            log(f"      franchise lookup failed for a batch: {e}")
+            continue
+        looked.update(qids[i:i + batch])
+        for row in rows:
+            w, f = radar.qid(radar.v(row, "item")), radar.qid(radar.v(row, "f"))
+            if f not in out.setdefault(w, []):
+                out[w].append(f)
+            names[f] = radar.nice_label(radar.v(row, "fLabel"))
+    return {"of": out, "names": names, "looked": looked}
+
+
 def record(site: str, results: list[dict], run: str) -> None:
-    """Append today's comebacks to site/data/history/YYYY-MM.json (kept forever, compact)."""
+    """Append today's comebacks to site/data/history/YYYY-MM.json (kept forever, compact).
+    works[qid] = [label, kind, year, franchise qids]; days[run][qid] = values in `fields` order;
+    names[qid] = label for every franchise, person or work referred to, so the file reads on its own."""
     path = os.path.join(site, "data", "history", f"{run[:7]}.json")
     os.makedirs(os.path.dirname(path), exist_ok=True)
     try:
         with open(path) as f:
             month = json.load(f)
     except (OSError, json.JSONDecodeError):
-        month = {"fields": ["lift", "lift3", "rally_score", "verdict", "stage", "baseline", "spike_start", "confirmations"],
-                 "works": {}, "days": {}}
+        month = {"fields": HISTORY_FIELDS, "works": {}, "days": {}}
+    month["fields"] = HISTORY_FIELDS          # older days simply have fewer values
+    names = month.setdefault("names", {})
+    try:
+        fr = franchises([r["qid"] for r in results if len(month["works"].get(r["qid"], [])) < 4])
+    except Exception as e:
+        log(f"      franchise lookup failed: {e}")
+        fr = {"of": {}, "names": {}, "looked": set()}
+    names.update(fr["names"])
     for r in results:
-        month["works"].setdefault(r["qid"], [r["label"], r["kind"], r["release"].year if hasattr(r["release"], "year") else r["release"][:4]])
+        year = r["release"].year if hasattr(r["release"], "year") else str(r["release"])[:4]
+        w = month["works"].setdefault(r["qid"], [r["label"], r["kind"], year])
+        if len(w) < 4 and r["qid"] in fr["looked"]:
+            w.append(fr["of"].get(r["qid"], []))
+        for t in r.get("triggers") or []:
+            if t.get("qid") and t.get("type") != "anniversary":
+                text = t.get("text") or ""
+                if t.get("type") in ("derivative", "same-creator") and ": " in text:
+                    name = re.sub(r" \((upcoming|attention rose before release)\)$", "", text.split(": ", 1)[1])
+                else:
+                    name = text.split(" (")[0]
+                names.setdefault(t["qid"], name[:120])
+        if r.get("ripple") and r["ripple"].get("qid"):
+            names.setdefault(r["ripple"]["qid"], r["ripple"].get("name"))
     month["days"][run] = {r["qid"]: [r["lift"], r.get("lift3"), r.get("rally_score"), r["verdict"], r.get("stage"),
-                                     r["baseline"], str(r["spike_start"]), round(confirmations(r), 1)] for r in results}
+                                     r["baseline"], str(r["spike_start"]), round(confirmations(r), 1), causes_of(r)] for r in results}
     with open(path, "w") as f:
         json.dump(month, f, separators=(",", ":"))

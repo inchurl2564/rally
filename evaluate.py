@@ -60,7 +60,13 @@ def check_forecasts(site: str, project: str) -> dict:
         checks[key] = {"kind": kind, "title": title, "date": d.isoformat(), "ratio": ratio,
                        "hit": ratio >= 2.0, "label": it.get("old_label") or it.get("label"),
                        "detail": (f"{it['rel']} {it['new_label']}" if kind == "derivative"
-                                  else f"{it['years']}th anniversary")}
+                                  else f"{it['years']}th anniversary"),
+                       # Kept for "expected bump" research: what kind of release, how old the original,
+                       # and the Wikidata IDs to look up series order later.
+                       "rel": it.get("rel"), "new_kind": it.get("new_kind"), "new": it.get("new"),
+                       "old": it.get("old") or it.get("qid"), "old_kind": it.get("old_kind") or it.get("kind"),
+                       "old_year": (it.get("old_release") or it.get("release") or "")[:4],
+                       "years": it.get("years"), "audience": it.get("audience"), "baseline": round(med)}
     with open(path, "w") as f:
         json.dump(checks, f, separators=(",", ":"))
     return checks

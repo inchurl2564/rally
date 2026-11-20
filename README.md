@@ -30,7 +30,11 @@ Every comeback gets one number from 0 to 100: the size of the jump (40%), the ev
 Snapshots that can't be fetched after the fact are kept forever as open data:
 
 - `site/data/signals/YYYY-MM.json`: every day's chart positions, Steam players and review totals, matched to works.
-- `site/data/history/YYYY-MM.json`: every comeback, every day: lift, Rallyback Score, reason, stage and confirmations.
+- `site/data/history/YYYY-MM.json`: every comeback, every day: lift, Rallyback Score, reason, stage and confirmations,
+  plus its causes (`[kind, Wikidata ID, detail, date]`: the person who died, the new release, the person in the news)
+  and each work's series or franchise. `names` gives a label for every ID, so the file reads on its own.
+- `site/data/forecast_checks.json`: every forecast once its date has passed, with the bump that actually happened,
+  the kind of release (sequel, remake, adaptation) and the Wikidata IDs of both works.
 
 Over time this record shows how long each kind of comeback lasts and how big each kind of trigger tends to be.
 
