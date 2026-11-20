@@ -98,6 +98,17 @@ function story(r) {
       return { kicker: "Six Degrees", hed: `${w} is one of ${k} ${who} titles spiking at once`,
         dek: `They all started rising around ${short(t.date)}. Something is going on with ${who}, but we can't say what yet.` };
     }
+    case "ripple": {
+      const rp = r.ripple, jumped = `${rp.name}'s own Wikipedia page jumped ${rp.ratio}× on ${short(rp.date)} (${fmt(rp.peak)} readers in a day)`;
+      const hed = rp.relation === "sequel or adaptation" ? `${rp.name} is drawing crowds, and fans are going back to ${w}`
+        : ["franchise", "series", "character"].includes(rp.relation) ? `${rp.name} is in the news, and ${w} is along for the ride`
+        : rp.relation === "source material" ? `${rp.name} is in the news, and so is ${w}`
+        : `${rp.name} is in the news, and ${w} is back`;
+      return { kicker: "The Ripple Effect", hed,
+        dek: `${jumped}, right as interest in the ${yr} ${n} took off.${["franchise", "series", "character", "sequel or adaptation", "source material"].includes(rp.relation) ? "" : ` Something happened involving ${rp.name}.`}` };
+    }
+    case "editor":
+      return { kicker: "Explained", hed: `Why ${w} is back`, dek: `${r.editor_note.text} The ${yr} ${n} is drawing ${x} its usual audience.` };
     case "coverage":
       return { kicker: "Explained", hed: `Why ${w} is suddenly everywhere`,
         dek: `${causeSentence(r.cause)}, based on news and Wikipedia edits from the days interest jumped. The ${yr} ${n} is at ${x} its usual audience.` };
@@ -136,12 +147,22 @@ function sharedStory(t) {
     dek: `${works.length} earlier titles are drawing far more readers than usual.` };
 }
 
+function sourceLine(note) {
+  if (!note || !note.source) return null;
+  let host = note.source;
+  try { host = new URL(note.source).hostname.replace(/^www\./, ""); } catch (e) { /* keep raw */ }
+  return h("p", { class: "source" }, "Editor's note · Source: ", ext(note.source, host));
+}
+
 function threadStory(t) {
   const roles = [...new Set(t.works.map((w) => w.role))];
   const how = roles.length === 1 && roles[0] === "cast member" ? "starring"
     : roles.length === 1 && roles[0] === "director" ? "directed by"
     : roles.length === 1 && roles[0] === "performer" ? "by" : "featuring";
-  const cause = t.cause ? `${causeSentence(t.cause)}, based on news and Wikipedia edits.` : "Wikidata doesn't record why. Maybe you know?";
+  const pj = t.person_jump;
+  const cause = t.editor_note ? t.editor_note.text
+    : pj ? `${t.name}'s own Wikipedia page jumped ${pj.ratio}× on ${short(pj.date)} (${fmt(pj.peak)} readers in a day), so this is about ${t.name}.${t.cause ? ` ${causeSentence(t.cause)}.` : ""}`
+    : t.cause ? `${causeSentence(t.cause)}, based on news and Wikipedia edits.` : "Wikidata doesn't record why. Maybe you know?";
   return { kicker: "Six Degrees", hed: `Something's going on with ${t.name}`,
     dek: `${t.works.length} titles ${how} ${t.name} all started spiking around ${short(t.around)}. ${cause}` };
 }
@@ -308,6 +329,7 @@ function todayPage() {
         h("span", { class: "kicker" }, st.kicker),
         h("h2", { class: "hed" }, link(lead, st.hed)),
         h("p", { class: "dek" }, st.dek),
+        sourceLine(lead.editor_note),
         bigstat(lead)),
       h("aside", { class: "index" },
         h("h2", {}, "The Revival Index"),
@@ -334,10 +356,15 @@ function todayPage() {
     out.push(sectionHead("Six Degrees", "Unexplained spikes that share a person and the same timing.", "All mysteries", "mysteries"));
     out.push(h("div", {}, threads.slice(0, 4).map(threadFeature)));
   }
-  const myst = rest.filter((r) => MYSTERY.has(r.verdict) || r.verdict === "coverage").slice(0, 6);
+  const myst = rest.filter((r) => MYSTERY.has(r.verdict)).slice(0, 6);
+  const solved = rest.filter((r) => ["ripple", "editor", "coverage"].includes(r.verdict)).slice(0, 6);
   if (myst.length) {
     out.push(sectionHead("The Mysteries", "Big comebacks with no obvious reason. Know why? Tell us.", "All mysteries", "mysteries"));
     out.push(h("div", { class: "grid" }, myst.map(storyCard)));
+  }
+  if (solved.length) {
+    out.push(sectionHead("The Ripple Effect", "Old favorites riding a bigger story: news about a star, a franchise or a new adaptation."));
+    out.push(h("div", { class: "grid" }, solved.map(storyCard)));
   }
   const cu = state.data.coming_up || {};
   if ((cu.derivatives || []).length) {
@@ -360,7 +387,7 @@ function threadFeature(t) {
     h("div", {}, h("span", { class: "kicker" }, st.kicker), h("h3", { class: "hed" }, st.hed), h("p", { class: "dek" }, st.dek),
       h("div", { class: "chips" }, t.works.map((w) => state.byQid[w.qid]).filter(Boolean).map((w) =>
         h("a", { class: "chip", href: `#w-${w.qid}`, onclick: (e) => { e.preventDefault(); focusCard(w.qid); } }, `${w.label} (${w.release_year})`))),
-      evidenceList(t.evidence, 3)));
+      sourceLine(t.editor_note), evidenceList(t.evidence, 3)));
 }
 
 function storyCard(r) {
@@ -370,6 +397,7 @@ function storyCard(r) {
     h("span", { class: "kicker" }, st.kicker),
     h("h3", { class: "hed" }, link(r, st.hed)),
     h("p", { class: "dek" }, st.dek),
+    sourceLine(r.editor_note),
     bigstat(r),
     MYSTERY.has(r.verdict) ? h("div", {}, correctionLink(r, "Know why? Tell us →", "ask")) : null);
 }
@@ -391,7 +419,7 @@ function annMini(a) {
 
 // ---------- Mysteries ----------
 function mysteriesPage() {
-  const L = live().filter((r) => MYSTERY.has(r.verdict) || r.verdict === "coverage" || r.verdict === "common thread")
+  const L = live().filter((r) => MYSTERY.has(r.verdict) || ["coverage", "common thread", "ripple", "editor"].includes(r.verdict))
     .sort((a, b) => b.spike_start.localeCompare(a.spike_start) || b.score - a.score);
   const threads = state.data.common_threads || [];
   return [
@@ -543,6 +571,7 @@ function card(r, open) {
       h("span", { class: "kicker" }, st.kicker),
       h("h3", { class: "hed" }, ext(wikipedia(r.title), st.hed)),
       h("p", { class: "dek" }, st.dek),
+      sourceLine(r.editor_note),
       h("div", { class: "tags" },
         h("span", { class: "tagx" }, `${r.label} · ${r.release_year}`),
         r.stage === "emerging" ? h("span", { class: "tagx hot" }, "Just starting") : r.stage ? h("span", { class: "tagx" }, STAGES[r.stage]) : null,

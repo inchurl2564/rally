@@ -155,8 +155,10 @@ def likely_cause(evidence: list[dict]) -> str | None:
 
 def explain(project: str, title: str, query: str, around: dt.date, with_news: bool = True) -> dict:
     """Evidence for one spike. `query` is what to search news for (a work's or person's name)."""
+    import annotations   # local import: annotations imports this module
     burst = edit_burst(project, title, around)
-    ev = edit_summaries(title, around)
+    ev = annotations.added_text(title, around)        # sentences added, with the news source cited
+    ev += edit_summaries(title, around)
     if with_news:
         ev += news(query, around)
     return {"edit_burst": burst, "evidence": ev[:10], "cause": likely_cause(ev)}

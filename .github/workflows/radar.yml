@@ -7,7 +7,7 @@ on:
   push:
     branches: [main]
     # Redeploy committed data when code changes (doesn't rerun the radar).
-    paths: ["site/**", "*.py", ".github/workflows/**", "!site/data/**", "!site/feeds/**"]
+    paths: ["site/**", "*.py", "annotations.json", ".github/workflows/radar.yml", "!site/data/**", "!site/feeds/**"]
 
 permissions:
   contents: write   # commit each day's results
@@ -50,6 +50,10 @@ jobs:
           echo "{\"correct\": $(n verified-correct), \"wrong\": $(n verified-wrong), \"open\": $open}" > site/data/feedback.json
           cat site/data/feedback.json
 
+      - name: Corroborate draft editor's notes
+        if: github.event_name != 'push'
+        run: python annotations.py --check || true
+
       - name: Run the radar
         if: github.event_name != 'push'
         run: python radar.py --site site
@@ -59,7 +63,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add site/data site/feeds
+          git add site/data site/feeds annotations.json
           if git diff --cached --quiet; then
             echo "No changes."
           else

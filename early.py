@@ -32,6 +32,7 @@ import radar
 DUMPS = "https://dumps.wikimedia.org/other/pageview_complete"
 BULK = os.path.join(radar.CACHE, "bulk")
 WATCHLIST = os.path.join(radar.CACHE, "watchlist.json")
+INCOMPLETE = os.path.join(radar.CACHE, "watchlist.incomplete")   # some slices failed: retry next run
 
 MIN_SITELINKS = 10
 
@@ -58,11 +59,13 @@ def log(*a):
 
 def build_watchlist(min_age: int, max_age_days: float = 7) -> dict[str, dict]:
     """{enwiki title: {"qid", "kind", "release"}} for notable older works. Cached for a week."""
-    if os.path.exists(WATCHLIST) and time.time() - os.path.getmtime(WATCHLIST) < max_age_days * 86400:
+    if (os.path.exists(WATCHLIST) and not os.path.exists(INCOMPLETE)
+            and time.time() - os.path.getmtime(WATCHLIST) < max_age_days * 86400):
         with open(WATCHLIST) as f:
             return json.load(f)
     cutoff = dt.date.today().year - min_age
     out: dict[str, dict] = {}
+    failed = 0
     for kind, classes, prop, ranges in GROUPS:
         for lo, hi in ranges:
             hi = min(hi, cutoff + 1)
@@ -81,6 +84,7 @@ def build_watchlist(min_age: int, max_age_days: float = 7) -> dict[str, dict]:
             except Exception as e:
                 log(f"      watchlist query failed ({kind} {lo}-{hi}): {e}")
                 radar.HEALTH["lookups_failed"] += 1
+                failed += 1
                 continue
             for row in rows:
                 title = radar.urllib.parse.unquote(radar.v(row, "article").split("/wiki/", 1)[1])
@@ -91,6 +95,11 @@ def build_watchlist(min_age: int, max_age_days: float = 7) -> dict[str, dict]:
         os.makedirs(radar.CACHE, exist_ok=True)
         with open(WATCHLIST, "w") as f:
             json.dump(out, f)
+        if failed:
+            open(INCOMPLETE, "w").close()
+            log(f"      {failed} watchlist slices failed; they'll be retried next run")
+        elif os.path.exists(INCOMPLETE):
+            os.remove(INCOMPLETE)
     elif os.path.exists(WATCHLIST):  # every query failed: fall back to last week's list
         with open(WATCHLIST) as f:
             return json.load(f)

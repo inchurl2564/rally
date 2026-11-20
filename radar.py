@@ -412,6 +412,10 @@ def _derivatives(works, since):
         "derivative work": "?item wdt:P4969 ?new .",
         "remake/new version": "?new wdt:P5059 ?item .",
         "new entry in same series": "?item wdt:P179 ?s . ?new wdt:P179 ?s . FILTER(?new != ?item)",
+        "new entry in the franchise": "?item wdt:P8345 ?f . ?new wdt:P8345 ?f . FILTER(?new != ?item)",
+        "new adaptation of the same source": "?item wdt:P144 ?src . ?new wdt:P144 ?src . FILTER(?new != ?item)",
+        "follow-up": "?item wdt:P156 ?new .",
+        "adaptation of part of it": "?part wdt:P179|wdt:P361 ?item . ?new wdt:P144 ?part .",
     }
     for rel, pat in patterns.items():
         q = f"""
@@ -592,6 +596,8 @@ VERDICT_LABEL = {
     "automated?": "Likely automated traffic",
     "common thread": "Shared person, same timing",
     "coverage": "Cause suggested by news/edits",
+    "ripple": "Riding a connected story",
+    "editor": "Editor's note",
 }
 
 
@@ -781,7 +787,7 @@ def write_site_data(site: str, results, meta, clusters, threads, keep_runs: int,
             "qid", "title", "label", "kind", "age", "verdict", "lift", "peak_lift", "baseline",
             "recent_mean", "peak", "score", "still_elevated", "last_year_lift", "desktop_share",
             "days_in_top", "best_rank", "lift3", "stage", "early", "early_ratio", "cause", "evidence",
-            "edit_burst", "corroborated", "image")}
+            "edit_burst", "corroborated", "image", "ripple", "editor_note")}
         out.update(release=r["release"].isoformat(), release_year=r["release"].year,
                    spike_start=r["spike_start"].isoformat(), peak_day=r["peak_day"].isoformat(),
                    spark_start=(r["spark_start"] + dt.timedelta(days=len(r["spark"]) - 365)).isoformat(),
@@ -810,7 +816,8 @@ def write_site_data(site: str, results, meta, clusters, threads, keep_runs: int,
                              "works": [w["qid"] for w in g["works"]]} for g in clusters],
         "common_threads": [{"qid": t["qid"], "name": t["name"], "around": t["around"].isoformat(),
                             "title": t.get("title"), "cause": t.get("cause"), "evidence": t.get("evidence", []),
-                            "image": images.get(t["qid"]),
+                            "image": images.get(t["qid"]), "person_jump": t.get("person_jump"),
+                            "editor_note": t.get("editor_note"),
                             "edit_burst": t.get("edit_burst"),
                             "works": [{"qid": w["qid"], "role": role} for w, role in t["works"]]}
                            for t in threads],
@@ -965,14 +972,28 @@ def main():
     log("      looking for common threads among unexplained spikes")
     threads = common_threads([r for r in results if r["verdict"] == "unexplained"])
 
+    log("      ripple effect (did a connected person, franchise or adaptation spike too?)")
+    import related
+    try:
+        related.ripple(args.project, [r for r in results if r["verdict"] in ("unexplained", "weak link", "common thread")], end)
+    except Exception as e:
+        log(f"      ripple check failed: {e}")
+    for r in results:
+        if r.get("ripple") and r["verdict"] in ("unexplained", "weak link"):
+            r["verdict"] = "ripple"
+    for t in threads:
+        if t.get("title"):
+            t["person_jump"] = related.person_jump(args.project, t["title"], t["around"], end)
+
     log("      researching causes (edit history, news)")
     import explain
-    todo = sorted((r for r in results if r["verdict"] == "unexplained"), key=lambda r: -r["score_hint"])
+    todo = sorted((r for r in results if r["verdict"] in ("unexplained", "ripple")), key=lambda r: -r["score_hint"])
     for r in todo[:args.explain_max]:
-        e = explain.explain(args.project, r["title"], r["label"] or r["title"].replace("_", " "),
-                            r["spike_start"], with_news=not args.no_news)
+        rip = r.get("ripple")
+        title, name = (rip["title"], rip["name"]) if rip else (r["title"], r["label"] or r["title"].replace("_", " "))
+        e = explain.explain(args.project, title, name, r["spike_start"], with_news=not args.no_news)
         r.update(evidence=e["evidence"], cause=e["cause"], edit_burst=e["edit_burst"])
-        if e["cause"]:
+        if e["cause"] and r["verdict"] == "unexplained":
             r["verdict"] = "coverage"
     for t in threads:
         if t.get("title"):
@@ -985,6 +1006,9 @@ def main():
                             r["spike_start"], with_news=not args.no_news)
         r.update(evidence=e["evidence"], edit_burst=e["edit_burst"])
         r["corroborated"] = explain.corroborates(r["triggers"][0], e["evidence"])
+
+    import annotations
+    annotations.apply(results, threads)
 
     coming_up = {"derivatives": [], "anniversaries": []}
     if watch:
