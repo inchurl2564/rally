@@ -1,7 +1,7 @@
 # Waiting list
 
 Things we've decided to do (or want to) that are on hold, grouped by what they're waiting for.
-Updated as items move. Last updated: 2026-11-20.
+Updated as items move. Last updated: 2026-11-20 (prediction backfill done: 10,415 past cases).
 
 ## Waiting on a decision or an account from you
 
@@ -33,7 +33,6 @@ Updated as items move. Last updated: 2026-11-20.
 
 | Item | When |
 | --- | --- |
-| Prediction backfill finishes; sequels and 50th+ anniversaries get predictions | Within hours (running now) |
 | "Recently due" on Coming up and "How our predictions did" on This week | From late November, about a week after the first predicted dates |
 | "Biggest this year" on This week | Once the record covers more than one month (December) |
 | Staying power by cause | About February 2027 (20+ finished comebacks per cause) |

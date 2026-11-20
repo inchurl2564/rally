@@ -1374,7 +1374,7 @@ function comingPage() {
       { n: sAll.length, label: "back every year", title: "Back every year" },
       { n: due.length, label: "recently due", title: "Recently due" }]),
     [...dAll, ...aAll].some((x) => x.prediction) ? h("p", { class: "small muted outlook-key" }, h("b", {}, "Expect about 3× · 70% chance"),
-      " is our prediction, learned from hundreds of past sequels, remakes and anniversaries: the usual size of the comeback, and how often similar cases reached at least 2× their usual interest.") : null,
+      " is our prediction, learned from over 10,000 past sequels, adaptations, series entries and anniversaries since 2016: the usual size of the comeback, and how often similar cases reached at least 2× their usual interest.") : null,
     ...pageSection("Due for a comeback", "A sequel, remake or adaptation is on the way. Release dates can slip.",
       { cards: dCards, rest: dAll.filter((c) => !dCards.includes(c)), all: dAll, card: derivCard, row: dRow }, ["Due", "The original", "What's bringing it back", "Outlook"], "comebacks due"),
     ...pageSection("Big anniversaries", "Round-number birthdays of well-known older works.",
