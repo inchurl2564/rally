@@ -829,7 +829,8 @@ def write_site_data(site: str, results, meta, clusters, threads, keep_runs: int,
             "qid", "title", "label", "kind", "age", "verdict", "lift", "peak_lift", "baseline",
             "recent_mean", "peak", "score", "still_elevated", "last_year_lift", "desktop_share",
             "days_in_top", "best_rank", "lift3", "stage", "early", "early_ratio", "cause", "evidence",
-            "edit_burst", "corroborated", "image", "image_of", "ripple", "editor_note", "front_page", "signals")}
+            "edit_burst", "corroborated", "image", "image_of", "ripple", "editor_note", "front_page", "signals",
+            "rally_score", "global", "chatter")}
         out.update(release=r["release"].isoformat(), release_year=r["release"].year,
                    spike_start=r["spike_start"].isoformat(), peak_day=r["peak_day"].isoformat(),
                    spark_start=(r["spark_start"] + dt.timedelta(days=len(r["spark"]) - 365)).isoformat(),
@@ -1115,11 +1116,19 @@ def main():
             t["text"] = t["text"].replace(t.get("qid") or "@@", "a new work") if t.get("qid") and t["qid"] in t["text"] else t["text"]
 
     # Rank: lift, damped by scale so tiny pages with noisy baselines don't dominate.
-    # Each strong signal from another source raises the rank: seen in more places, more credible.
+    # Second opinions per comeback: other-language Wikipedia, Bluesky chatter.
+    import enrich
     for r in results:
         r["signals"] = sig.get(r["qid"], [])
-        n = sum(1 for x in r["signals"] if x["strong"])
-        r["score"] = round(r.pop("score_hint") * (1 + 0.25 * n), 2)
+    for name, fn in (("other languages", enrich.global_reach), ("Bluesky", enrich.chatter)):
+        try:
+            fn(results, end)
+        except Exception as e:  # optional; never sink the run
+            log(f"      {name} check failed: {e}")
+    # Rank by the Rally Score (0-100): jump, audience, confirmations elsewhere, staying power.
+    for r in results:
+        r["rally_score"] = enrich.rally_score(r, end)
+        r["score"] = round(r["rally_score"] + r.pop("score_hint") / 100, 2)   # hint breaks ties
         r["early"] = bool(r.get("early"))
     results.sort(key=lambda r: -r["score"])
 
@@ -1149,6 +1158,10 @@ def main():
         except (OSError, json.JSONDecodeError, IndexError):
             prev = None
         data = write_site_data(args.site, results, meta, clusters, threads, args.keep_runs, coming_up)
+        try:
+            enrich.record(args.site, results, end.isoformat())     # permanent daily history
+        except Exception as e:
+            log(f"      history record failed: {e}")
         import feeds
         import evaluate
         new = feeds.write(args.site, data, prev, args.site_url, VERDICT_LABEL)

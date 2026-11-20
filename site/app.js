@@ -185,13 +185,26 @@ function sharedStory(t) {
 }
 
 // Where a story's information comes from. Never in headlines or subheads; one tap away instead.
+// Confirmation from outside English Wikipedia: charts, Steam, other languages, Bluesky.
+function elsewhere(r) {
+  const items = (r.signals || []).map((x) => h("li", {}, h("span", { class: "src" }, x.source), x.text));
+  const up = (r.global || {}).up || [];
+  if (up.length) items.push(h("li", {}, h("span", { class: "src" }, "Other Wikipedias"),
+    `Also rising in ${up.slice(0, 5).map((x) => `${x.name} (${x.lift}×)`).join(", ")}${up.length > 5 ? ` and ${up.length - 5} more` : ""}, of ${r.global.checked} languages checked`));
+  const c = r.chatter;
+  if (c && c.week) items.push(h("li", {}, h("span", { class: "src" }, "Bluesky"),
+    `About ${fmt(c.week >= 1000 ? Math.round(c.week / 100) * 100 : c.week)} posts a week since it took off${c.usual ? `, ${c.ratio}× the weeks before` : ", up from almost none"}`,
+    c.top ? [h("br"), ext(c.top.url, `“${c.top.text.slice(0, 140)}${c.top.text.length > 140 ? "…" : ""}”`), ` @${c.top.handle}`] : null));
+  return items.length ? h("ul", { class: "evidence" }, items) : null;
+}
+
 function sourcesFor(r) {
   const out = [h("p", { class: "small" }, ext(wikipedia(r.title), `${r.label} on Wikipedia →`))];
   if (r.editor_note) out.push(sourceLine(r.editor_note));
   const rp = r.ripple;
   if (rp) out.push(h("p", { class: "small" }, `${rp.name}'s Wikipedia page jumped ${rp.ratio}× on ${short(rp.date)} (${fmt(rp.peak)} views in a day), as interest in this ${noun(r.kind)} took off.`));
   if (r.verdict === "coverage" && r.cause) out.push(h("p", { class: "small" }, "Likely cause read from news headlines and Wikipedia edits from the days interest jumped."));
-  if ((r.signals || []).length) out.push(h("ul", { class: "evidence" }, r.signals.map((x) => h("li", {}, h("span", { class: "src" }, x.source), x.text))));
+  out.push(elsewhere(r));
   if ((r.evidence || []).length) out.push(evidenceList(r.evidence, 4));
   out.push(h("p", { class: "small muted" }, `Interest is measured from daily Wikipedia views: usually ${fmt(r.baseline)} a day for this ${noun(r.kind)}.`));
   return out;
@@ -376,8 +389,11 @@ function sectionHead(title, sub, moreLabel, moreView) {
     moreView ? h("button", { type: "button", class: "more", onclick: () => goto(moreView) }, `${moreLabel} →`) : null);
 }
 
+const SCORE_HELP = "Rally Score, 0 to 100: how big the jump is, how many people usually care, how many other places confirm it, and how long it has lasted.";
+const scorePill = (r) => (r.rally_score != null ? h("span", { class: "score", title: SCORE_HELP }, h("small", {}, "Rally Score"), String(r.rally_score)) : null);
+
 function bigstat(r, withSpark = true) {
-  return h("div", { class: "bigstat" }, h("b", {}, mult(r)),
+  return h("div", { class: "bigstat" }, scorePill(r), h("b", {}, mult(r)),
     h("span", {}, `its usual interest · ${STAGES[r.stage] ? STAGES[r.stage].toLowerCase() : `since ${short(r.spike_start)}`}`),
     withSpark ? sparkline(r, true) : null);
 }
@@ -600,10 +616,11 @@ function todayPage() {
         sourcesBox(sourcesFor(lead))),
       h("aside", { class: "index" },
         h("h2", {}, "Top 10 comebacks"),
-        h("p", {}, "Biggest jumps in interest, this edition"),
+        h("p", {}, "Ranked by Rally Score: the size of the jump, how many people usually care, confirmation elsewhere and staying power."),
         h("ol", {}, rest.slice(0, 10).map((r) => h("li", {}, h("div", {},
           h("div", { class: "t" }, link(r, r.label)),
-          h("div", { class: "s" }, `${mult(r)} usual interest · `, story(r).kicker))))))),
+          h("div", { class: "s" }, r.rally_score != null ? h("b", { class: "sc", title: SCORE_HELP }, `${r.rally_score}`) : null,
+            r.rally_score != null ? " · " : null, `${mult(r)} usual interest · `, story(r).kicker))))))),
   ];
   // Works already shown in a group feature aren't repeated as cards.
   const inGroups = new Set([...shared.flatMap((t) => t.works), ...threads.flatMap((t) => t.works.map((w) => w.qid))]);
@@ -909,7 +926,8 @@ function card(r, open) {
       h("div", { class: "tags" },
         h("span", { class: "tagx" }, `${r.label} · ${r.release_year}`),
         r.stage === "emerging" ? h("span", { class: "tagx hot" }, "Just starting") : r.stage ? h("span", { class: "tagx" }, STAGES[r.stage]) : null,
-        r.early ? h("span", { class: "tagx", title: "Spotted by our watchlist before it reached Wikipedia's top 1,000" }, "Caught early") : null),
+        r.early ? h("span", { class: "tagx", title: "Spotted by our watchlist before it reached Wikipedia's top 1,000" }, "Caught early") : null,
+        r.rally_score != null ? h("span", { class: "tagx", title: SCORE_HELP }, `Rally Score ${r.rally_score}`) : null),
       h("details", { class: "more-info", open: open ? "" : null }, h("summary", {}, "Numbers & sources"),
         sparkline(r),
         h("dl", { class: "nums" },
@@ -921,7 +939,7 @@ function card(r, open) {
           h("li", {}, t.qid ? ext(wikidata(t.qid), t.text) : t.text, h("span", { class: "d" }, short(t.date))))) : null,
         h("p", { class: "small" }, ext(wikipedia(r.title), `${r.label} on Wikipedia →`)),
         r.editor_note ? sourceLine(r.editor_note) : null,
-        (r.signals || []).length ? h("ul", { class: "evidence" }, r.signals.map((x) => h("li", {}, h("span", { class: "src" }, x.source), x.text))) : null,
+        elsewhere(r),
         evidenceList(r.evidence, 8),
         h("p", { class: "checks" }, checks))));
 }
@@ -1064,6 +1082,8 @@ function method() {
     h("ol", {},
       h("li", {}, h("b", {}, "Watch."), " Every day, read Wikimedia's bulk pageview file for ~35,000 notable older works (10+ language editions, released 10+ years ago), plus English Wikipedia's daily top 1,000."),
       h("li", {}, h("b", {}, "Measure."), " Compare each work's last 3 and 14 days with its median over the previous ~11 months. 3× over 14 days, or 2.5× over 3 days, counts. Stages: just starting (began in the last 4 days), at its peak, still going (10+ days), cooling off."),
+      h("li", {}, h("b", {}, "Confirm elsewhere."), " Record Steam players and reviews, iTunes and Deezer charts, Open Library trending and Project Gutenberg downloads every day (kept forever as open data), and check Wikipedia in 12 other languages and Bluesky posts for each comeback."),
+      h("li", {}, h("b", {}, "Score."), " The Rally Score (0–100) weighs the size of the jump (40%), the everyday audience (25%), confirmation in other places (20%) and staying power (15%)."),
       h("li", {}, h("b", {}, "Explain."), " Look in Wikidata near the spike for deaths of credited people, sequels, adaptations, remakes, new series entries, new work by the same creator, and anniversaries. For spikes it can't explain, read Wikipedia edit summaries, edit bursts and GDELT news headlines from the same days."),
       h("li", {}, h("b", {}, "Connect."), " Group spikes by a shared event, and unexplained spikes by a shared person with the same timing."),
       h("li", {}, h("b", {}, "Filter."), " Set aside seasonal items (also up this time last year), spikes that are almost all desktop traffic (likely bots), and one-day surges from a feature on Wikipedia's front page."),

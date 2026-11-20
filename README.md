@@ -13,9 +13,26 @@ It runs every day on GitHub Actions and publishes a static site to GitHub Pages.
 | [Wikidata](https://www.wikidata.org/) (CC0) | What each work is, release dates, credits, sequels and adaptations |
 | Wikipedia edit history | Edit bursts and edit summaries from the days a spike began |
 | [GDELT](https://www.gdeltproject.org/) news API | Headlines from the days a spike began (best-effort) |
-| [Steam](https://partner.steamgames.com/doc/webapi/ISteamUserStats#GetNumberOfCurrentPlayers) current players | Older games people are playing again (recorded daily) |
-| [iTunes charts](https://itunes.apple.com/us/rss/topmovies/limit=200/json) (songs, albums, movies) | Older works back on the charts (recorded daily) |
-| [Open Library](https://openlibrary.org/trending/daily) trending | Older books people are reading again (recorded daily) |
+| [Steam](https://partner.steamgames.com/doc/webapi/ISteamUserStats#GetNumberOfCurrentPlayers) players and reviews | Older games people are playing (and reviewing) again |
+| [iTunes charts](https://itunes.apple.com/us/rss/topmovies/limit=200/json) (songs, albums, movies, US) | Older works back on the charts |
+| [Deezer charts](https://developers.deezer.com/api/chart) (tracks, albums, worldwide) | Older music back on the charts outside the US |
+| [Open Library](https://openlibrary.org/trending/daily) trending | Older books people are reading again |
+| [Project Gutenberg](https://www.gutenberg.org/browse/scores/top) top 100 | Classic books being downloaded again |
+| Wikipedia in 12 other languages | Whether a comeback is global or local |
+| [Bluesky](https://docs.bsky.app/docs/api/app-bsky-feed-search-posts) public search | How many people are posting about it this week |
+
+## The Rally Score
+
+Every comeback gets one number from 0 to 100: the size of the jump (40%), the everyday audience (25%), how many other places confirm it (20%: charts, Steam, other-language Wikipedias, Bluesky) and staying power (15%). It ranks the site.
+
+## The permanent record
+
+Snapshots that can't be fetched after the fact are kept forever as open data:
+
+- `site/data/signals/YYYY-MM.json`: every day's chart positions, Steam players and review totals, matched to works.
+- `site/data/history/YYYY-MM.json`: every comeback, every day: lift, Rally Score, reason, stage and confirmations.
+
+Over time this record shows how long each kind of comeback lasts and how big each kind of trigger tends to be.
 
 ## Who it's for
 
@@ -99,7 +116,8 @@ Set `RADAR_CONTACT` to a URL or address so Wikimedia can identify your client, a
 ```
 radar.py      pipeline: discover, measure, explain (Wikidata), write site data
 early.py      watchlist + bulk pageview files → early risers
-signals.py    Steam, iTunes charts, Open Library → second opinions
+signals.py    Steam, iTunes and Deezer charts, Open Library, Gutenberg → daily record + signals
+enrich.py     other-language Wikipedia, Bluesky, the Rally Score, permanent history
 explain.py    edit bursts, edit summaries, news → likely cause; corroboration
 forecast.py   upcoming sequels/adaptations/remakes, anniversaries
 evaluate.py   forecast checks, corroboration, persistence, reader reports
