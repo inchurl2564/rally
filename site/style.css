@@ -299,3 +299,4 @@ code { font-size: 13px; background: var(--paper-2); padding: 1px 5px; }
   border: 2px solid var(--ink); font: 900 22px/1 var(--serif); margin-right: 12px; cursor: help; }
 .score small { font: 800 8.5px/1 var(--sans); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 3px; }
 .index .s .sc { color: var(--ink); cursor: help; }
+.card-ask { margin-top: 8px; }

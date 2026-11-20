@@ -663,6 +663,8 @@ function threadFeature(t) {
     h("div", {}, kickerEl(st.reason, st.kicker),
       h("h3", { class: "hed" }, hedLink(topOf(t.works.map((w) => state.byQid[w.qid]).filter(Boolean)), st.hed)), h("p", { class: "dek" }, st.dek),
       workChips(t.works.map((w) => state.byQid[w.qid]).filter(Boolean)),
+      !threadExplained(t) && topOf(t.works.map((w) => state.byQid[w.qid]).filter(Boolean))
+        ? h("div", {}, tipLink(topOf(t.works.map((w) => state.byQid[w.qid]).filter(Boolean)))) : null,
       sourcesBox(threadSources(t))));
 }
 
@@ -674,7 +676,7 @@ function storyCard(r) {
     h("p", { class: "dek" }, st.dek),
     bigstat(r),
     sourcesBox(sourcesFor(r)),
-    MYSTERY.has(r.verdict) ? h("div", {}, tipLink(r)) : null);
+    isOpen(r) ? h("div", {}, tipLink(r)) : null);
 }
 
 const NEWREL = { "adaptation of": "a new adaptation", "sequel to": "the sequel", "new entry in the series of": "a new entry in the series",
@@ -847,6 +849,9 @@ function correctionLink(r, label = "Report a correction", cls) {
 }
 
 // A tip about a mystery: opens the tip form, pre-filled with the work.
+// Every unexplained comeback asks readers for the reason.
+const isOpen = (r) => reasonOf(r).key === "unexplained";
+
 function tipLink(r, label = "Know why? Tell us →") {
   if (!TIPS_FORM.action) return correctionLink(r, label, "ask");
   return h("a", { href: "#", class: "ask", onclick: (e) => { e.preventDefault(); openTip(r); } }, label);
@@ -928,6 +933,7 @@ function card(r, open) {
         r.stage === "emerging" ? h("span", { class: "tagx hot" }, "Just starting") : r.stage ? h("span", { class: "tagx" }, STAGES[r.stage]) : null,
         r.early ? h("span", { class: "tagx", title: "Spotted by our watchlist before it reached Wikipedia's top 1,000" }, "Caught early") : null,
         r.rally_score != null ? h("span", { class: "tagx", title: SCORE_HELP }, `Rally Score ${r.rally_score}`) : null),
+      isOpen(r) ? h("div", { class: "card-ask" }, tipLink(r)) : null,
       h("details", { class: "more-info", open: open ? "" : null }, h("summary", {}, "Numbers & sources"),
         sparkline(r),
         h("dl", { class: "nums" },
