@@ -178,15 +178,17 @@ def prune(keep_days: int) -> None:
 
 
 def early_candidates(min_age: int, days: int = 28, min_ratio: float = 2.5, min_views: int = 150,
-                     max_new_days: int = 28) -> dict[str, dict]:
+                     max_new_days: int = 28) -> tuple[dict[str, dict], dict[str, dict], dict[str, float]]:
     """Titles from the watchlist whose last 1–3 days are well above their own recent median.
 
     Needs at least 8 days of bulk data. The first run downloads up to `max_new_days` files
-    (about a minute each); later runs download one."""
+    (about a minute each); later runs download one.
+
+    Returns (flagged titles, the watchlist, median daily views per watched title)."""
     watch = build_watchlist(min_age)
     log(f"      watchlist: {len(watch):,} notable works")
     if not watch:
-        return {}
+        return {}, {}, {}
     titles = set(watch)
     end = latest_bulk_day()
     days_data: list[tuple[dt.date, dict]] = []
@@ -202,10 +204,14 @@ def early_candidates(min_age: int, days: int = 28, min_ratio: float = 2.5, min_v
         if data is not None:
             days_data.append((d, data))
     prune(days + 7)
-    days_data.sort()
+    days_data.sort(key=lambda x: x[0])
+    audience = {}
+    if days_data:
+        for t in titles:
+            audience[t] = statistics.median([dd.get(t, [0, 0])[0] for _, dd in days_data])
     if len(days_data) < 8:
         log(f"      only {len(days_data)} days of bulk data so far; early detection starts at 8")
-        return {}
+        return {}, watch, audience
     hist = days_data
     recent = [dd for d, dd in hist[-3:]]
     base_days = [dd for d, dd in hist[:-3]]
@@ -218,4 +224,4 @@ def early_candidates(min_age: int, days: int = 28, min_ratio: float = 2.5, min_v
         if best >= min_views and best / med >= min_ratio:
             flagged[t] = {"early_ratio": round(best / med, 1), "early_views": int(best), "watch": watch[t]}
     log(f"      {len(flagged)} watched works rising early (≥{min_ratio}× their recent median)")
-    return flagged
+    return flagged, watch, audience

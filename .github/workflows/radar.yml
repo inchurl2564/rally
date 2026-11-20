@@ -7,10 +7,11 @@ on:
   push:
     branches: [main]
     # Redeploy committed data when code changes (doesn't rerun the radar).
-    paths: ["site/**", "radar.py", ".github/workflows/**", "!site/data/**"]
+    paths: ["site/**", "*.py", ".github/workflows/**", "!site/data/**", "!site/feeds/**"]
 
 permissions:
-  contents: write   # commit each day's results to site/data
+  contents: write   # commit each day's results
+  issues: write     # post the daily digest; read reader reports
   pages: write
   id-token: write
 
@@ -21,7 +22,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 180    # the very first run downloads ~4 weeks of bulk files
     steps:
       - uses: actions/checkout@v4
 
@@ -29,7 +30,8 @@ jobs:
         with:
           python-version: "3.12"
 
-      # Pageview history and API responses. Daily runs only fetch new days, so they're much faster.
+      # Pageview history, bulk-file extracts, the watchlist and API responses.
+      # Daily runs only fetch what's new, so they take minutes, not hours.
       - name: Restore cache
         uses: actions/cache@v4
         with:
@@ -37,10 +39,19 @@ jobs:
           key: radar-cache-${{ github.run_id }}
           restore-keys: radar-cache-
 
-      - name: Run the radar
+      - name: Tally reader reports
         if: github.event_name != 'push'
         env:
-          RADAR_CONTACT: https://github.com/${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          n() { gh issue list --repo "$GITHUB_REPOSITORY" --state all --label "$1" --limit 1000 --json number --jq length 2>/dev/null || echo 0; }
+          open=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --label feedback --limit 1000 --json number --jq length 2>/dev/null || echo 0)
+          mkdir -p site/data
+          echo "{\"correct\": $(n verified-correct), \"wrong\": $(n verified-wrong), \"open\": $open}" > site/data/feedback.json
+          cat site/data/feedback.json
+
+      - name: Run the radar
+        if: github.event_name != 'push'
         run: python radar.py --site site
 
       - name: Commit results
@@ -48,7 +59,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add site/data
+          git add site/data site/feeds
           if git diff --cached --quiet; then
             echo "No changes."
           else
@@ -56,6 +67,24 @@ jobs:
             git pull --rebase origin main
             git push
           fi
+
+      # Anyone watching the repo (Watch → Custom → Issues) gets this by email.
+      - name: Post daily digest
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          [ -s site/data/digest.md ] || exit 0
+          grep -q "0 new findings" site/data/digest.md && { echo "Nothing new today."; exit 0; }
+          gh label create digest --color 2d5bd7 --description "Daily Revival Radar digest" 2>/dev/null || true
+          gh label create feedback --color b4462c --description "Reader correction" 2>/dev/null || true
+          gh label create verified-correct --color 2d6f4f 2>/dev/null || true
+          gh label create verified-wrong --color 8a877f 2>/dev/null || true
+          for n in $(gh issue list --label digest --state open --json number --jq '.[].number'); do
+            gh issue close "$n" --reason completed >/dev/null
+          done
+          gh issue create --title "Revival Radar digest: $(date -u -d yesterday '+%b %-d, %Y')" \
+            --label digest --body-file site/data/digest.md
 
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

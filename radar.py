@@ -236,6 +236,17 @@ def classify(project: str, titles: list[str], min_age: int, today: dt.date) -> l
 HISTORY = os.path.join(CACHE, "history")
 
 
+def prune_cache(days: int) -> None:
+    """Drop stale API responses (not history, bulk days or the watchlist) to keep the CI cache small."""
+    if not os.path.isdir(CACHE):
+        return
+    cutoff = time.time() - days * 86400
+    for f in os.listdir(CACHE):
+        path = os.path.join(CACHE, f)
+        if f.endswith(".json") and len(f) == 45 and os.path.getmtime(path) < cutoff:
+            os.remove(path)
+
+
 def history_views(project: str, title: str, start: dt.date, end: dt.date) -> dict[dt.date, int]:
     """Daily all-access views, stored per article so later runs only fetch the new days."""
     os.makedirs(HISTORY, exist_ok=True)
@@ -300,7 +311,19 @@ def measure(series: dict[dt.date, int], end: dt.date, recent_days: int) -> dict 
     while i > 0 and vals[i - 1] > 2 * baseline and (days.index(peak_day) - i) < 90:
         i -= 1
     last7 = vals[-7:]
+    last3 = sum(vals[-3:]) / 3
+    start = days[i]
+    if start >= end - dt.timedelta(days=4):
+        stage = "emerging"
+    elif last3 < 0.5 * peak:
+        stage = "fading"
+    elif sum(x > 2 * baseline for x in last7) >= 5 and start <= end - dt.timedelta(days=10):
+        stage = "sustained"
+    else:
+        stage = "peaking"
     return {
+        "lift3": round(last3 / baseline, 1),
+        "stage": stage,
         "baseline": round(baseline),
         "recent_mean": round(recent_mean),
         "peak": peak,
@@ -491,11 +514,12 @@ def common_threads(works: list[dict], window: int = 7, batch: int = 25) -> list[
         values = " ".join(f"wd:{w['qid']}" for w in chunk)
         by_q = {w["qid"]: w for w in chunk}
         q = f"""
-        SELECT DISTINCT ?item ?prop ?person ?personLabel WHERE {{
+        SELECT DISTINCT ?item ?prop ?person ?personLabel ?pa WHERE {{
           VALUES ?item {{ {values} }}
           VALUES ?prop {{ {props} }}
           ?item ?prop ?person .
           ?person wdt:P31 wd:Q5 .
+          OPTIONAL {{ ?pa schema:about ?person; schema:isPartOf <https://en.wikipedia.org/> . }}
           SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en,mul". }}
         }}"""
         try:
@@ -506,7 +530,9 @@ def common_threads(works: list[dict], window: int = 7, batch: int = 25) -> list[
             continue
         for row in rows:
             pq = qid(v(row, "person"))
-            g = people.setdefault(pq, {"qid": pq, "name": nice_label(v(row, "personLabel")), "works": {}})
+            pa = v(row, "pa")
+            g = people.setdefault(pq, {"qid": pq, "name": nice_label(v(row, "personLabel")), "works": {},
+                                       "title": urllib.parse.unquote(pa.split("/wiki/", 1)[1]) if pa else None})
             g["works"][qid(v(row, "item"))] = (by_q[qid(v(row, "item"))], CREDIT_PROPS[qid(v(row, "prop"))][0])
     threads = []
     for g in people.values():
@@ -516,7 +542,7 @@ def common_threads(works: list[dict], window: int = 7, batch: int = 25) -> list[
         mid = starts[len(starts) // 2]
         hits = [(w, role) for w, role in g["works"].values() if abs((w["spike_start"] - mid).days) <= window]
         if len(hits) >= 2:
-            threads.append({"qid": g["qid"], "name": g["name"], "around": mid,
+            threads.append({"qid": g["qid"], "name": g["name"], "around": mid, "title": g["title"],
                             "works": sorted(hits, key=lambda h: h[0]["spike_start"])})
     threads.sort(key=lambda t: -len(t["works"]))
     # Big casts make chance overlaps: keep a work in only its strongest thread.
@@ -565,6 +591,7 @@ VERDICT_LABEL = {
     "seasonal": "Seasonal (also up last year)",
     "automated?": "Likely automated traffic",
     "common thread": "Shared person, same timing",
+    "coverage": "Cause suggested by news/edits",
 }
 
 
@@ -717,13 +744,15 @@ memes, TV and ad sync placements, and viral clips aren't in Wikidata. Generated 
         f.write(doc)
 
 
-def write_site_data(site: str, results, meta, clusters, threads, keep_runs: int) -> None:
+def write_site_data(site: str, results, meta, clusters, threads, keep_runs: int,
+                    coming_up: dict | None = None) -> dict:
     """latest.json + an archive of runs + an index of runs, for the static site."""
     def work(r):
         out = {k: r.get(k) for k in (
             "qid", "title", "label", "kind", "age", "verdict", "lift", "peak_lift", "baseline",
             "recent_mean", "peak", "score", "still_elevated", "last_year_lift", "desktop_share",
-            "days_in_top", "best_rank")}
+            "days_in_top", "best_rank", "lift3", "stage", "early", "early_ratio", "cause", "evidence",
+            "edit_burst", "corroborated")}
         out.update(release=r["release"].isoformat(), release_year=r["release"].year,
                    spike_start=r["spike_start"].isoformat(), peak_day=r["peak_day"].isoformat(),
                    spark_start=(r["spark_start"] + dt.timedelta(days=len(r["spark"]) - 365)).isoformat(),
@@ -739,8 +768,11 @@ def write_site_data(site: str, results, meta, clusters, threads, keep_runs: int)
                              "qid": g["trigger"]["qid"], "text": g["trigger"]["text"],
                              "works": [w["qid"] for w in g["works"]]} for g in clusters],
         "common_threads": [{"qid": t["qid"], "name": t["name"], "around": t["around"].isoformat(),
+                            "title": t.get("title"), "cause": t.get("cause"), "evidence": t.get("evidence", []),
+                            "edit_burst": t.get("edit_burst"),
                             "works": [{"qid": w["qid"], "role": role} for w, role in t["works"]]}
                            for t in threads],
+        "coming_up": coming_up or {"derivatives": [], "anniversaries": []},
     }
     ddir = os.path.join(site, "data")
     rdir = os.path.join(ddir, "runs")
@@ -765,6 +797,18 @@ def write_site_data(site: str, results, meta, clusters, threads, keep_runs: int)
                       "counts": counts, "top_unexplained": top})
     with open(os.path.join(ddir, "index.json"), "w") as f:
         json.dump({"runs": index, "verdict_labels": VERDICT_LABEL}, f, separators=(",", ":"))
+    # Flat CSV of the latest run, for spreadsheets and research.
+    import csv
+    cols = ["label", "kind", "release", "age", "verdict", "stage", "lift", "lift3", "peak_lift", "baseline",
+            "recent_mean", "spike_start", "peak_day", "still_elevated", "early", "cause", "top_trigger",
+            "last_year_lift", "desktop_share", "qid", "title"]
+    with open(os.path.join(ddir, "latest.csv"), "w", newline="") as f:
+        wr = csv.writer(f)
+        wr.writerow(cols)
+        for r in data["results"]:
+            row = {**r, "top_trigger": r["triggers"][0]["text"] if r["triggers"] else ""}
+            wr.writerow([row.get(c, "") if row.get(c) is not None else "" for c in cols])
+    return data
 
 
 # --------------------------------------------------------------------------- #
@@ -779,15 +823,38 @@ def main():
     ap.add_argument("--out", default=os.path.join(HERE, "out"))
     ap.add_argument("--site", help="also write data for the website into SITE/data")
     ap.add_argument("--keep-runs", type=int, default=120, help="archived runs to keep on the site")
+    ap.add_argument("--early-lift", type=float, default=2.5, help="3-day lift that counts as an early riser")
+    ap.add_argument("--no-early", action="store_true", help="skip the bulk-file watchlist (faster, later detection)")
+    ap.add_argument("--bulk-new-days", type=int, default=28,
+                    help="max bulk pageview files to download in one run (~1 min each; later runs need 1)")
+    ap.add_argument("--no-news", action="store_true", help="skip GDELT news lookups")
+    ap.add_argument("--explain-max", type=int, default=30, help="max unexplained spikes to research per run")
+    ap.add_argument("--site-url", default=(f"https://{os.environ['GITHUB_REPOSITORY'].split('/')[0]}.github.io/"
+                                           f"{os.environ['GITHUB_REPOSITORY'].split('/')[1]}/")
+                    if os.environ.get("GITHUB_REPOSITORY") else "https://inchurl2564.github.io/rally/")
     args = ap.parse_args()
 
     today = dt.date.today()
     end = latest_available_day(args.project)
     log = lambda *a: print(*a, file=sys.stderr, flush=True)
 
+    prune_cache(35)
     log(f"[1/5] Discovering: top articles {end - dt.timedelta(days=args.days - 1)} .. {end}")
     seen = discover(args.project, end, args.days)
     log(f"      {len(seen):,} distinct articles")
+    watch, audience = {}, {}
+    if not args.no_early:
+        import early
+        log("      early detection from bulk pageview files")
+        try:
+            flagged, watch, audience = early.early_candidates(args.min_age, max_new_days=args.bulk_new_days)
+        except Exception as e:  # never let the optional stage sink the run
+            log(f"      early detection failed: {e}")
+            flagged = {}
+        for t, info in flagged.items():
+            if t not in seen:
+                seen[t] = {"days_in_top": 0, "best_rank": None, "early": True,
+                           "early_ratio": info["early_ratio"]}
 
     log("[2/5] Classifying via Wikidata")
     works = classify(args.project, list(seen), args.min_age, today)
@@ -804,12 +871,12 @@ def main():
     results = []
     with cf.ThreadPoolExecutor(max_workers=2) as ex:
         for w, m in ex.map(job, works):
-            if m and m["lift"] >= args.min_lift:
+            if m and (m["lift"] >= args.min_lift or m["lift3"] >= args.early_lift):
                 w.update(m)
                 w["age"] = today.year - w["release"].year
                 w.update(seen[w["title"]])
                 results.append(w)
-    log(f"      {len(results)} with lift >= {args.min_lift}x")
+    log(f"      {len(results)} with lift >= {args.min_lift}x (or rising >= {args.early_lift}x in 3 days)")
 
     log("[4/5] Looking for triggers")
     if results:
@@ -851,8 +918,41 @@ def main():
             r["verdict"] = "automated?"
         elif r.get("last_year_lift", 0) >= 2.5:
             r["verdict"] = "seasonal"
+    for r in results:
+        r["score_hint"] = math.log2(max(r["lift"], r["lift3"], 1.01)) * math.log10(10 + r["recent_mean"])
     log("      looking for common threads among unexplained spikes")
     threads = common_threads([r for r in results if r["verdict"] == "unexplained"])
+
+    log("      researching causes (edit history, news)")
+    import explain
+    todo = sorted((r for r in results if r["verdict"] == "unexplained"), key=lambda r: -r["score_hint"])
+    for r in todo[:args.explain_max]:
+        e = explain.explain(args.project, r["title"], r["label"] or r["title"].replace("_", " "),
+                            r["spike_start"], with_news=not args.no_news)
+        r.update(evidence=e["evidence"], cause=e["cause"], edit_burst=e["edit_burst"])
+        if e["cause"]:
+            r["verdict"] = "coverage"
+    for t in threads:
+        if t.get("title"):
+            e = explain.explain(args.project, t["title"], t["name"], t["around"], with_news=not args.no_news)
+            t.update(evidence=e["evidence"], cause=e["cause"], edit_burst=e["edit_burst"])
+    # Spot-check explained spikes against independent evidence (feeds the Accuracy tab).
+    explained = [r for r in results if r["verdict"] in ("death", "derivative", "same-creator", "anniversary")]
+    for r in explained[:15]:
+        e = explain.explain(args.project, r["title"], r["label"] or r["title"].replace("_", " "),
+                            r["spike_start"], with_news=not args.no_news)
+        r.update(evidence=e["evidence"], edit_burst=e["edit_burst"])
+        r["corroborated"] = explain.corroborates(r["triggers"][0], e["evidence"])
+
+    coming_up = {"derivatives": [], "anniversaries": []}
+    if watch:
+        import forecast
+        log("      forecasting (upcoming sequels/adaptations, anniversaries)")
+        try:
+            coming_up["derivatives"] = forecast.upcoming_derivatives(watch)[:80]
+        except Exception as e:
+            log(f"      derivative forecast failed: {e}")
+        coming_up["anniversaries"] = forecast.anniversaries(watch, audience)
     for r in results:
         r["label"] = nice_label(r["label"], r["title"])
         for t in r["triggers"]:
@@ -860,7 +960,8 @@ def main():
 
     # Rank: lift, damped by scale so tiny pages with noisy baselines don't dominate.
     for r in results:
-        r["score"] = round(math.log2(r["lift"]) * math.log10(10 + r["recent_mean"]), 2)
+        r["score"] = round(r.pop("score_hint"), 2)
+        r["early"] = bool(r.get("early"))
     results.sort(key=lambda r: -r["score"])
 
     log("[5/5] Writing report")
@@ -878,7 +979,25 @@ def main():
                   f, indent=2, default=str)
 
     if args.site:
-        write_site_data(args.site, results, meta, clusters, threads, args.keep_runs)
+        prev = None
+        try:
+            with open(os.path.join(args.site, "data", "latest.json")) as f:
+                prev = json.load(f)
+            if prev.get("meta", {}).get("window_end") == end.isoformat():
+                prev_file = sorted(os.listdir(os.path.join(args.site, "data", "runs")))
+                prev_file = [x for x in prev_file if x < f"{end.isoformat()}.json"]
+                prev = json.load(open(os.path.join(args.site, "data", "runs", prev_file[-1]))) if prev_file else None
+        except (OSError, json.JSONDecodeError, IndexError):
+            prev = None
+        data = write_site_data(args.site, results, meta, clusters, threads, args.keep_runs, coming_up)
+        import feeds
+        import evaluate
+        new = feeds.write(args.site, data, prev, args.site_url, VERDICT_LABEL)
+        log(f"      {len(new)} new findings in feeds")
+        try:
+            evaluate.summarize(args.site, args.project)
+        except Exception as e:
+            log(f"      accuracy summary failed: {e}")
 
     print(f"\n{'Work':42} {'Kind':11} {'Year':>4} {'Lift':>6}  Verdict / top trigger")
     for r in results[:40]:

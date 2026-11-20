@@ -4,79 +4,34 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Revival Radar</title>
-  <meta name="description" content="Older films, songs, games and books that are suddenly getting attention again, and the likely reasons why. Rebuilt daily from Wikipedia pageviews and Wikidata.">
+  <meta name="description" content="Older films, songs, games and books that are suddenly getting attention again, why, and what's likely next. Rebuilt daily from open Wikipedia and Wikidata data.">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='none' stroke='%232d5bd7' stroke-width='3'/%3E%3Cpath d='M4 20 L11 20 L14 9 L18 25 L21 16 L28 16' fill='none' stroke='%232d5bd7' stroke-width='3' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="alternate" type="application/atom+xml" title="Revival Radar: all new findings" href="feeds/all.xml">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header class="top">
-    <div class="wrap">
+    <div class="wrap top-row">
       <div class="brand">
-        <h1>Revival Radar</h1>
-        <p class="tag">Old films, songs, games and books suddenly back in the spotlight, and the likely reasons why.</p>
+        <h1><a href="./">Revival Radar</a></h1>
+        <p class="tag">Old films, songs, games and books suddenly back in the spotlight: why, and what's next.</p>
       </div>
       <label class="run-pick">
-        <span>Run</span>
-        <select id="run" aria-label="Choose a run"></select>
+        <span>Daily run</span>
+        <select id="run" aria-label="Choose a daily run"></select>
       </label>
     </div>
+    <nav class="wrap tabs" id="tabs" aria-label="Views"></nav>
   </header>
 
-  <main class="wrap">
+  <main class="wrap" id="view">
     <p id="status" class="status" role="status">Loading…</p>
-
-    <section id="stats" class="stats" hidden></section>
-
-    <section id="highlights" class="highlights" hidden>
-      <div class="panel" id="shared-panel">
-        <h2>Shared triggers</h2>
-        <p class="sub">One event linked to several older works spiking at once.</p>
-        <ul id="shared" class="events"></ul>
-      </div>
-      <div class="panel" id="threads-panel">
-        <h2>Hidden common threads</h2>
-        <p class="sub">Unexplained spikes on works that share a credited person and started rising within a week of each other. Check the news before drawing conclusions.</p>
-        <ul id="threads" class="events"></ul>
-      </div>
-    </section>
-
-    <section id="list-section" hidden>
-      <div class="list-head">
-        <h2>All revivals <span id="count" class="muted"></span></h2>
-      </div>
-      <div class="filters">
-        <input id="q" type="search" placeholder="Search titles, people, triggers…" aria-label="Search">
-        <select id="kind" aria-label="Filter by type"><option value="">All types</option></select>
-        <select id="sort" aria-label="Sort">
-          <option value="score">Sort: strongest revival</option>
-          <option value="lift">Sort: biggest lift</option>
-          <option value="recent">Sort: most views now</option>
-          <option value="start">Sort: newest spike</option>
-          <option value="age">Sort: oldest work</option>
-        </select>
-      </div>
-      <div id="chips" class="chips" role="group" aria-label="Filter by verdict"></div>
-      <div id="cards" class="cards"></div>
-    </section>
-
-    <details class="about" id="about">
-      <summary>How this works</summary>
-      <div class="about-body">
-        <ol>
-          <li><b>Discover.</b> Each day, collect every article in English Wikipedia's daily top 1,000 over the last 30 days.</li>
-          <li><b>Classify.</b> Use Wikidata to keep only creative works (films, TV, songs, albums, games, books, comics) released at least 10 years ago.</li>
-          <li><b>Measure.</b> Compare each work's average daily views over the last 14 days with its median over the previous ~11 months. Works at 3× or more are revivals.</li>
-          <li><b>Explain.</b> Search Wikidata near the start of the spike for a death of someone credited, a sequel, adaptation, remake or new entry in the series (released or upcoming), a new work by the same creator, or a round-number anniversary.</li>
-          <li><b>Connect.</b> Group spikes by the event they share, and group unexplained spikes by a person they share when they started rising at the same time.</li>
-          <li><b>Filter.</b> Set aside seasonal items that were also elevated this time last year, and spikes that are almost all desktop traffic (real surges are mostly mobile).</li>
-        </ol>
-        <p><b>Read with care.</b> These are leads, not conclusions. Wikidata is edited by volunteers and can be incomplete or wrong. Memes, TV airings and ad placements aren't recorded there, so "No trigger found" means "worth investigating", not "no cause". Two-work threads can be coincidence.</p>
-      </div>
-    </details>
   </main>
 
   <footer class="wrap foot">
-    Data: <a href="https://wikitech.wikimedia.org/wiki/Analytics/AQS/Pageviews">Wikimedia Pageviews API</a> (human traffic) and <a href="https://www.wikidata.org/">Wikidata</a>, both CC0.
+    Data: <a href="https://dumps.wikimedia.org/other/pageview_complete/readme.html">Wikimedia pageviews</a> (human traffic),
+    <a href="https://www.wikidata.org/">Wikidata</a> (CC0), Wikipedia edit history, and
+    <a href="https://www.gdeltproject.org/">GDELT</a> news. Findings are leads, not conclusions.
     <span id="generated"></span>
   </footer>
 
