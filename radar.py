@@ -1168,7 +1168,9 @@ def main():
         # and find works that come back around the same date every year.
         try:
             import calibrate
-            calibrate.update(args.site, args.project, watch, audience)
+            # The past is measured once (calibrate.py, via the "Backfill predictions" workflow);
+            # nightly we only add our own newly checked forecasts and apply the model.
+            calibrate.refresh(args.site)
             calibrate.annotate(args.site, coming_up, audience)
             by_qid = {w["qid"]: t for t, w in watch.items()}
             seasonal_seen = {r["title"] for r in results if (r.get("last_year_lift") or 0) >= 2 or r["verdict"] == "seasonal"}
@@ -1178,7 +1180,8 @@ def main():
                     month = json.load(fh)
                 for day in month.get("days", {}).values():
                     seasonal_seen |= {by_qid[q] for q, row in day.items() if row[3] == "seasonal" and q in by_qid}
-            coming_up["seasonal"] = calibrate.seasonal(args.site, args.project, watch, audience, seasonal_seen)
+            coming_up["seasonal"] = calibrate.seasonal(args.site, args.project, watch, audience, seasonal_seen,
+                                                       budget_s=3 * 60)
         except Exception as e:
             log(f"      predictions failed: {e}")
     for r in results:

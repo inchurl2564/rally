@@ -219,6 +219,44 @@ def update(site: str, project: str, watch: dict[str, dict], audience: dict[str, 
     return model
 
 
+def learn_from_checks(site: str, cases: dict) -> int:
+    """Fold our own checked forecasts (evaluate.py, about a week after each date) into the cases,
+    so the model keeps learning from new results without re-measuring the past."""
+    checks = _load(os.path.join(site, "data", "forecast_checks.json"), {})
+    n = 0
+    for k, x in checks.items():
+        if x.get("kind") not in ("derivative", "anniversary") or not x.get("old_kind") or x.get("ratio") is None:
+            continue
+        if x["kind"] == "derivative" and not x.get("rel") or x["kind"] == "anniversary" and not x.get("years"):
+            continue
+        key = f"check|{k}"
+        if key in cases:
+            continue
+        cases[key] = {"kind": x["kind"], "date": x["date"], "old": x.get("old"), "old_kind": x["old_kind"],
+                      "old_year": x.get("old_year"), "ratio": x["ratio"], "usual": x.get("baseline"),
+                      **({"rel": x["rel"], "new_kind": x.get("new_kind"), "new": x.get("new")} if x["kind"] == "derivative"
+                         else {"years": x["years"]}), "source": "our forecast"}
+        n += 1
+    return n
+
+
+def refresh(site: str) -> dict:
+    """Nightly: add newly checked forecasts and rebuild the model. No re-measuring of the past."""
+    cdir = os.path.join(site, "data", "calibration")
+    cases = _load(os.path.join(cdir, "cases.json"), {})
+    if not cases:
+        return {}
+    added = learn_from_checks(site, cases)
+    if added:
+        _save(os.path.join(cdir, "cases.json"), cases)
+    old = _load(os.path.join(cdir, "model.json"), {})
+    model = build_model([c for c in cases.values() if c])
+    model["backlog_left"] = old.get("backlog_left")
+    _save(os.path.join(cdir, "model.json"), model)
+    log(f"      predictions: {model['cases']} cases in the model ({added} new from our own checked forecasts)")
+    return model
+
+
 # ---------- the model ----------
 
 def _keys(c: dict) -> list[str]:
@@ -382,3 +420,36 @@ def seasonal(site: str, project: str, watch: dict[str, dict], audience: dict[str
     out.sort(key=lambda x: (x["date"], -x["audience"]))
     log(f"      back every year: {len(out)} regulars due in the next {horizon} days ({len(titles)} candidates)")
     return out
+
+
+# ---------- one-time backfill (run by .github/workflows/backfill.yml) ----------
+
+def main() -> None:
+    import argparse
+    import glob
+    import early
+    ap = argparse.ArgumentParser(description="Measure past sequels, remakes, adaptations and anniversaries, once.")
+    ap.add_argument("--site", default="site")
+    ap.add_argument("--project", default="en.wikipedia")
+    ap.add_argument("--hours", type=float, default=5, help="stop after this long; a later run resumes")
+    ap.add_argument("--min-age", type=int, default=10)
+    args = ap.parse_args()
+    watch = early.build_watchlist(args.min_age)
+    days = []
+    for f in sorted(glob.glob(os.path.join(radar.CACHE, "bulk", "*.json")))[-28:]:
+        days.append(_load(f, {}))
+    audience = forecast.audience_from_bulk([d for d in days if d])
+    log(f"backfill: {len(watch):,} watched works, audience for {len(audience):,}")
+    budget = args.hours * 3600
+    model = update(args.site, args.project, watch, audience, budget_s=budget, lookup_budget_s=budget)
+    cases = _load(os.path.join(args.site, "data", "calibration", "cases.json"), {})
+    if learn_from_checks(args.site, cases):
+        _save(os.path.join(args.site, "data", "calibration", "cases.json"), cases)
+        model = refresh(args.site)
+    shown = {k: g for k, g in model.get("groups", {}).items() if g["n"] >= MIN_CASES}
+    log(f"backfill done: {model.get('cases')} cases; {model.get('backlog_left')} left; "
+        f"{len(shown)} groups big enough to predict from")
+
+
+if __name__ == "__main__":
+    main()

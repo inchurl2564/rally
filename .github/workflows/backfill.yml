@@ -1,0 +1,49 @@
+name: Backfill predictions
+
+# A one-time job (run it from the Actions tab): measures what happened to well-known originals
+# when their sequels, remakes and adaptations came out, and on their past round anniversaries,
+# 2016 to now. The nightly update then only applies what was learned. If it stops at the time
+# limit, run it again and it carries on where it left off.
+on:
+  workflow_dispatch:
+    inputs:
+      hours:
+        description: "Stop after this many hours (a later run resumes)"
+        default: "5"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: revival-radar      # never at the same time as the nightly update
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 345
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Restore cache
+        uses: actions/cache@v4
+        with:
+          path: .cache
+          key: radar-cache-${{ github.run_id }}
+          restore-keys: radar-cache-
+      - name: Measure past cases
+        run: python calibrate.py --site site --hours "${{ inputs.hours }}"
+      - name: Commit results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add site/data/calibration
+          if git diff --cached --quiet; then
+            echo "No changes."
+          else
+            git commit -m "data: prediction backfill"
+            git pull --rebase origin main
+            git push
+          fi
