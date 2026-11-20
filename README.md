@@ -19,7 +19,7 @@ It runs every day on GitHub Actions and publishes a static site to GitHub Pages.
 
 ## Who it's for
 
-The site has a view for each audience:
+The main menu is for everyone. Each professional audience has its own view, linked from the footer ("For professionals"):
 
 - **Journalists:** unexplained spikes, works that rose together around one person, and likely causes from news and edits.
 - **Rights holders:** catalog titles at the *emerging* stage (the time to promote, reissue or license), plus upcoming sequels and adaptations.

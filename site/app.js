@@ -300,7 +300,6 @@ async function init() {
   sel.addEventListener("change", () => loadRun(sel.value));
   const tab = params.get("tab");
   state.view = VIEWS[tab] ? tab : tab === "overview" ? "today" : "today";
-  state.proOpen = !!VIEWS[state.view].pro;
   renderTabs();
   await loadRun(first);
 }
@@ -328,17 +327,15 @@ const fail = (msg) => setStatus(msg, true);
 
 function renderTabs() {
   const tab = (key) => h("button", { type: "button", class: "tab", "aria-current": key === state.view ? "page" : null, onclick: () => goto(key) }, VIEWS[key].label);
-  const pros = Object.keys(VIEWS).filter((k) => VIEWS[k].pro);
-  $("tabs").replaceChildren(...Object.keys(VIEWS).filter((k) => !VIEWS[k].pro).map(tab),
-    h("button", { type: "button", class: "tab toggle", "aria-expanded": String(state.proOpen), "aria-controls": "protabs",
-      onclick: () => { state.proOpen = !state.proOpen; renderTabs(); } }, state.proOpen ? "For Pros ▴" : "For Pros ▾"));
-  $("protabs").replaceChildren(...pros.map(tab));
-  $("protabs").hidden = !state.proOpen;
+  // The main menu is for everyone; the professional views are linked from the footer.
+  $("tabs").replaceChildren(...Object.keys(VIEWS).filter((k) => !VIEWS[k].pro).map(tab));
+  const foot = $("pro-links");
+  if (foot) foot.replaceChildren("For professionals: ", ...Object.keys(VIEWS).filter((k) => VIEWS[k].pro).flatMap((k, i) => [
+    i ? " · " : "", h("a", { href: `?tab=${k}`, onclick: (e) => { e.preventDefault(); goto(k); } }, VIEWS[k].label)]));
 }
 
 function goto(view) {
   state.view = view;
-  if (VIEWS[view].pro) state.proOpen = true;
   applyPreset(); renderTabs(); render(); syncURL(); window.scrollTo({ top: 0 });
 }
 
@@ -697,7 +694,11 @@ function mysteriesPage() {
 // ---------- pro views ----------
 function proPage(v) {
   const panels = (v.panels || []).map(panel).filter(Boolean);
+  const pros = Object.keys(VIEWS).filter((k) => VIEWS[k].pro);
   return [
+    h("div", { class: "pro-head" }, h("span", { class: "kicker" }, "For professionals"),
+      h("div", { class: "chips", role: "group", "aria-label": "Professional views" }, pros.map((k) =>
+        h("button", { type: "button", class: "chip", "aria-pressed": String(k === state.view), onclick: () => goto(k) }, VIEWS[k].label)))),
     h("p", { class: "intro" }, v.intro),
     v.feeds ? feedStrip(v.feeds) : null,
     ...panels,

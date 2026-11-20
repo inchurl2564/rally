@@ -290,3 +290,6 @@ code { font-size: 13px; background: var(--paper-2); padding: 1px 5px; }
 .rail-head { font: 700 13px var(--sans); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 18px 0 10px; }
 .show-all { display: block; margin: 20px auto 8px; }
 .chip.more-chip { border-style: dashed; color: var(--muted); cursor: default; }
+.pro-head { margin-top: 28px; }
+.pro-head .chips { margin-top: 4px; }
+.intro + .feedstrip, .pro-head + .intro { margin-top: 12px; }
