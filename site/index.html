@@ -4,35 +4,46 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Revival Radar</title>
-  <meta name="description" content="Older films, songs, games and books that are suddenly getting attention again, why, and what's likely next. Rebuilt daily from open Wikipedia and Wikidata data.">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='none' stroke='%232d5bd7' stroke-width='3'/%3E%3Cpath d='M4 20 L11 20 L14 9 L18 25 L21 16 L28 16' fill='none' stroke='%232d5bd7' stroke-width='3' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <meta name="description" content="What everyone's suddenly rewatching, relistening and rereading, and why. Old films, songs, games and books back in the spotlight, updated daily.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23e3120b'/%3E%3Ctext x='16' y='23' font-family='Georgia,serif' font-size='20' font-weight='900' text-anchor='middle' fill='white'%3ER%3C/text%3E%3C/svg%3E">
   <link rel="alternate" type="application/atom+xml" title="Revival Radar: all new findings" href="feeds/all.xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;0,800;0,900;1,700&display=swap">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header class="top">
-    <div class="wrap top-row">
-      <div class="brand">
-        <h1><a href="./">Revival Radar</a></h1>
-        <p class="tag">Old films, songs, games and books suddenly back in the spotlight: why, and what's next.</p>
-      </div>
+  <header class="mast">
+    <div class="wrap mast-top">
+      <span id="today" class="dateline"></span>
       <label class="run-pick">
-        <span>Daily run</span>
-        <select id="run" aria-label="Choose a daily run"></select>
+        <span class="sr">Edition</span>
+        <select id="run" aria-label="Choose an edition"></select>
       </label>
     </div>
-    <nav class="wrap tabs" id="tabs" aria-label="Views"></nav>
+    <div class="wrap mast-title">
+      <h1><a href="./">Revival Radar</a></h1>
+      <p class="tag">What everyone's suddenly rewatching, relistening and rereading, and why.</p>
+    </div>
+    <nav class="wrap nav" aria-label="Sections">
+      <div class="tabs" id="tabs"></div>
+      <div class="tabs pro" id="protabs" hidden></div>
+    </nav>
   </header>
 
   <main class="wrap" id="view">
     <p id="status" class="status" role="status">Loading…</p>
   </main>
 
-  <footer class="wrap foot">
-    Data: <a href="https://dumps.wikimedia.org/other/pageview_complete/readme.html">Wikimedia pageviews</a> (human traffic),
-    <a href="https://www.wikidata.org/">Wikidata</a> (CC0), Wikipedia edit history, and
-    <a href="https://www.gdeltproject.org/">GDELT</a> news. Findings are leads, not conclusions.
-    <span id="generated"></span>
+  <footer class="foot">
+    <div class="wrap">
+      <div class="foot-brand">Revival Radar</div>
+      <p>Built entirely from open data: <a href="https://dumps.wikimedia.org/other/pageview_complete/readme.html">Wikipedia pageviews</a>,
+        <a href="https://www.wikidata.org/">Wikidata</a>, Wikipedia edit history, <a href="https://www.gdeltproject.org/">GDELT</a> news,
+        and images from <a href="https://commons.wikimedia.org/">Wikimedia Commons</a>. We spot patterns; we don't always know the
+        reasons. Treat every story as a lead, and tell us when we're wrong.</p>
+      <p id="generated" class="small"></p>
+    </div>
   </footer>
 
   <div id="tip" class="tip" hidden></div>

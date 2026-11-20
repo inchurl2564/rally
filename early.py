@@ -37,11 +37,13 @@ MIN_SITELINKS = 10
 
 # (kind, classes, date property path, date ranges)
 # Films are the biggest group: 5-year slices keep each query under Wikidata's 60 s limit.
-_DECADES = [(1500, 1930), (1930, 1950)] + [(y, y + 5) for y in range(1950, 2030, 5)]
+_DECADES = [(1500, 1930), (1930, 1940), (1940, 1950)] + [(y, y + 5) for y in range(1950, 2030, 5)]
+# Songs and albums: same idea, from 1960 on.
+_FIVES = [(1500, 1960)] + [(y, y + 5) for y in range(1960, 2030, 5)]
 GROUPS = [
     ("film", "wd:Q11424 wd:Q24869 wd:Q202866 wd:Q506240", "wdt:P577", _DECADES),
-    ("song", "wd:Q7366 wd:Q134556 wd:Q105543609", "wdt:P577", [(1500, 1960), (1960, 1980), (1980, 2000), (2000, 2030)]),
-    ("album", "wd:Q482994 wd:Q208569 wd:Q169930 wd:Q209939", "wdt:P577", [(1500, 1970), (1970, 1990), (1990, 2005), (2005, 2030)]),
+    ("song", "wd:Q7366 wd:Q134556 wd:Q105543609", "wdt:P577", _FIVES),
+    ("album", "wd:Q482994 wd:Q208569 wd:Q169930 wd:Q209939", "wdt:P577", _FIVES),
     ("video game", "wd:Q7889", "wdt:P577", [(1950, 2000), (2000, 2030)]),
     ("TV series", "wd:Q5398426 wd:Q581714 wd:Q1259759 wd:Q63952888 wd:Q526877 wd:Q117467246",
      "wdt:P580|wdt:P577", [(1900, 2030)]),

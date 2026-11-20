@@ -744,6 +744,35 @@ memes, TV and ad sync placements, and viral clips aren't in Wikidata. Generated 
         f.write(doc)
 
 
+def fetch_images(qids: set[str], batch: int = 150) -> dict[str, str]:
+    """Freely licensed images (Wikimedia Commons file names) via Wikidata: image, poster, logo.
+    Only Commons files are linked, so everything shown is free to reuse with credit."""
+    out: dict[str, str] = {}
+    qids = [q for q in qids if q]
+    for i in range(0, len(qids), batch):
+        values = " ".join(f"wd:{q}" for q in qids[i:i + batch])
+        q = f"""SELECT ?item ?p ?img WHERE {{
+          VALUES ?item {{ {values} }}
+          VALUES ?p {{ wdt:P18 wdt:P3383 wdt:P154 }}
+          ?item ?p ?img .
+        }}"""
+        try:
+            rows = sparql(q)
+        except Exception as e:
+            print(f"      image lookup failed for a batch: {e}", file=sys.stderr)
+            continue
+        rank = {"P18": 0, "P3383": 1, "P154": 2}
+        best: dict[str, tuple[int, str]] = {}
+        for row in rows:
+            item, prop = qid(v(row, "item")), qid(v(row, "p"))
+            name = urllib.parse.unquote(v(row, "img").rsplit("/", 1)[-1])
+            if name.lower().endswith((".svg", ".jpg", ".jpeg", ".png", ".gif", ".webp", ".tif", ".tiff")):
+                if item not in best or rank[prop] < best[item][0]:
+                    best[item] = (rank[prop], name)
+        out.update({k: val for k, (_, val) in best.items()})
+    return out
+
+
 def write_site_data(site: str, results, meta, clusters, threads, keep_runs: int,
                     coming_up: dict | None = None) -> dict:
     """latest.json + an archive of runs + an index of runs, for the static site."""
@@ -752,7 +781,7 @@ def write_site_data(site: str, results, meta, clusters, threads, keep_runs: int,
             "qid", "title", "label", "kind", "age", "verdict", "lift", "peak_lift", "baseline",
             "recent_mean", "peak", "score", "still_elevated", "last_year_lift", "desktop_share",
             "days_in_top", "best_rank", "lift3", "stage", "early", "early_ratio", "cause", "evidence",
-            "edit_burst", "corroborated")}
+            "edit_burst", "corroborated", "image")}
         out.update(release=r["release"].isoformat(), release_year=r["release"].year,
                    spike_start=r["spike_start"].isoformat(), peak_day=r["peak_day"].isoformat(),
                    spark_start=(r["spark_start"] + dt.timedelta(days=len(r["spark"]) - 365)).isoformat(),
@@ -761,14 +790,27 @@ def write_site_data(site: str, results, meta, clusters, threads, keep_runs: int,
                              for t in r["triggers"]])
         return out
 
+    want = {r["qid"] for r in results} | {t["qid"] for t in threads} | \
+           {g["trigger"].get("qid") for g in clusters} | \
+           {c[k] for c in (coming_up or {}).get("derivatives", []) for k in ("new", "old")} | \
+           {a["qid"] for a in (coming_up or {}).get("anniversaries", [])}
+    images = fetch_images(want)
+    for r in results:
+        r["image"] = images.get(r["qid"])
+    for c in (coming_up or {}).get("derivatives", []):
+        c["new_image"], c["old_image"] = images.get(c["new"]), images.get(c["old"])
+    for a in (coming_up or {}).get("anniversaries", []):
+        a["image"] = images.get(a["qid"])
     data = {
         "meta": meta,
         "results": [work(r) for r in results],
         "shared_triggers": [{"type": g["trigger"]["type"], "date": g["trigger"]["date"],
+                             "image": images.get(g["trigger"].get("qid")),
                              "qid": g["trigger"]["qid"], "text": g["trigger"]["text"],
                              "works": [w["qid"] for w in g["works"]]} for g in clusters],
         "common_threads": [{"qid": t["qid"], "name": t["name"], "around": t["around"].isoformat(),
                             "title": t.get("title"), "cause": t.get("cause"), "evidence": t.get("evidence", []),
+                            "image": images.get(t["qid"]),
                             "edit_burst": t.get("edit_burst"),
                             "works": [{"qid": w["qid"], "role": role} for w, role in t["works"]]}
                            for t in threads],

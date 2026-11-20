@@ -21,78 +21,172 @@ const $ = (id) => document.getElementById(id);
 const slug = (v) => String(v).replace(/[ /]/g, "-").replace(/[?+]/g, "");
 const fmt = (n) => (n == null ? "–" : Math.round(n).toLocaleString("en-US"));
 const pct = (x) => (x == null ? "–" : `${Math.round(x * 100)}%`);
-const fmtDate = (iso) => iso ? new Date(iso + "T00:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }) : "";
+const fmtDate = (iso, opts) => iso ? new Date(iso + "T00:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric", ...(opts || { year: "numeric" }), timeZone: "UTC" }) : "";
+const short = (iso) => fmtDate(iso, {});
 const daysBetween = (a, b) => Math.round((Date.parse(b + "T00:00:00Z") - Date.parse(a + "T00:00:00Z")) / 864e5);
 const addDays = (iso, n) => new Date(Date.parse(iso + "T00:00:00Z") + n * 864e5).toISOString().slice(0, 10);
 const wikidata = (q) => `https://www.wikidata.org/wiki/${encodeURIComponent(q)}`;
 const wikipedia = (t) => `https://en.wikipedia.org/wiki/${encodeURIComponent(t)}`;
 const ext = (href, ...kids) => h("a", { href, target: "_blank", rel: "noopener" }, ...kids);
+const hash = (str) => [...String(str)].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7);
 
-// Repo for "report a correction" and "watch" links, worked out from the Pages URL.
 const REPO = (() => {
   const m = location.hostname.match(/^([^.]+)\.github\.io$/);
   const seg = location.pathname.split("/").filter(Boolean)[0];
   return m && seg ? `${m[1]}/${seg}` : "inchurl2564/rally";
 })();
 
-const VERDICT_ORDER = ["unexplained", "coverage", "common thread", "derivative", "same-creator", "death",
-  "anniversary", "weak link", "seasonal", "automated?", "lookup failed"];
 const FILTERED = new Set(["seasonal", "automated?"]);
-const STAGES = { emerging: "Emerging", peaking: "Peaking", sustained: "Sustained", fading: "Fading" };
-const CAUSE_LABEL = {
-  death: "a death", legal: "legal news", streaming: "a streaming release", broadcast: "a TV broadcast",
-  viral: "social media / viral", "sync placement": "use in a show, ad or trailer", award: "an award",
-  "re-release": "a re-release or restoration", "remake/sequel news": "remake or sequel news",
-  anniversary: "an anniversary", "auction/sale": "an auction or sale", "sports/event": "a big live event",
-  politics: "politics",
+const MYSTERY = new Set(["unexplained", "weak link", "lookup failed"]);
+const STAGES = { emerging: "Just starting", peaking: "At its peak", sustained: "Still going", fading: "Cooling off" };
+const NOUN = { film: "film", "TV series": "show", song: "song", album: "album", "video game": "game", book: "book", "manga/comic": "comic", musical: "musical" };
+const PLURAL = { film: "films", show: "shows", song: "songs", album: "albums", game: "games", book: "books", comic: "comics", musical: "musicals" };
+const noun = (k) => NOUN[k] || "work";
+const CAUSE = {
+  death: ["A death in the news", "looks like the reason"], legal: ["Legal headlines", "pulled it back into view"],
+  streaming: ["A streaming debut", "looks like the reason"], broadcast: ["A TV airing", "looks like the reason"],
+  viral: ["The internet", "is to blame: it's going viral"], "sync placement": ["A placement in a show, ad or trailer", "looks like the reason"],
+  award: ["Awards buzz", "looks like the reason"], "re-release": ["A re-release or restoration", "looks like the reason"],
+  "remake/sequel news": ["Remake or sequel news", "looks like the reason"], anniversary: ["An anniversary", "looks like the reason"],
+  "auction/sale": ["A big auction or sale", "looks like the reason"], "sports/event": ["A big live event", "looks like the reason"],
+  politics: ["Politics", "pulled it back into view"],
 };
+const causeSentence = (c) => (CAUSE[c] ? `${CAUSE[c][0]} ${CAUSE[c][1]}` : `Coverage points to ${c}`);
+const REL = { "adaptation/based on it": "a new adaptation", sequel: "the sequel", "derivative work": "a spin-off",
+  "remake/new version": "the remake", "new entry in same series": "the new entry in the series" };
 
-// ---------- audiences ----------
+function mult(r) {
+  const m = Math.max(r.lift || 0, r.lift3 || 0);
+  return m >= 10 ? `${Math.round(m)}×` : `${m.toFixed(1).replace(/\.0$/, "")}×`;
+}
+
+// ---------- the editorial voice: turn a finding into a story ----------
+function story(r) {
+  const w = r.label, yr = r.release_year, n = noun(r.kind), x = mult(r);
+  const t = r.triggers && r.triggers[0];
+  const upcoming = t && /\(upcoming\)$/.test(t.text);
+  const strip = (str) => str.replace(/ \((upcoming|attention rose before release)\)$/, "");
+  const since = `since ${short(r.spike_start)}`;
+  switch (r.verdict) {
+    case "death": {
+      const who = t.text.split(" (")[0], role = (t.text.match(/\(([^)]+)\)/) || [])[1];
+      return { kicker: "In Memoriam", hed: `Remembering ${who}: ${w} is back`,
+        dek: `${who}${role ? `, ${role} on the ${yr} ${n},` : ""} died on ${fmtDate(t.date)}. Since then ${x} as many people as usual have been looking it up.` };
+    }
+    case "derivative": {
+      const [rel, ...rest] = t.text.split(": "), nw = strip(rest.join(": "));
+      const what = REL[rel] || "a new release";
+      return upcoming
+        ? { kicker: "Homework", hed: `Everyone's catching up on ${w} before ${nw} arrives`,
+            dek: `${nw}, ${what}, is due ${fmtDate(t.date)}. Interest in the ${yr} ${n} is already ${x} its usual level.` }
+        : { kicker: "The Sequel Effect", hed: `${nw} sends fans back to ${w}`,
+            dek: `${nw}, ${what}, came out ${fmtDate(t.date)}, and the ${yr} ${n} is drawing ${x} its usual audience.` };
+    }
+    case "same-creator": {
+      const m = t.text.match(/^new work by (.+?): (.+)$/) || [];
+      const who = m[1] || "Its creator", nw = strip(m[2] || "a new release");
+      return { kicker: "Back Catalog", hed: upcoming ? `${who}'s next release has fans revisiting ${w}` : `${who}'s new release sends fans back to ${w}`,
+        dek: `${nw} ${upcoming ? `is due ${fmtDate(t.date)}` : `came out ${fmtDate(t.date)}`}. The ${yr} ${n} is drawing ${x} its usual audience.` };
+    }
+    case "anniversary": {
+      const yrs = (t.text.match(/^(\d+)/) || [])[1];
+      return { kicker: "Happy Birthday", hed: `${w} turns ${yrs}`,
+        dek: `The ${n} came out on ${fmtDate(r.release)}, and people are marking the occasion: ${x} its usual audience.` };
+    }
+    case "common thread": {
+      const who = t.text.split(" (")[0], k = (t.text.match(/credited on (\d+)/) || [])[1];
+      return { kicker: "Six Degrees", hed: `${w} is one of ${k} ${who} titles spiking at once`,
+        dek: `They all started rising around ${short(t.date)}. Something is going on with ${who}, but we can't say what yet.` };
+    }
+    case "coverage":
+      return { kicker: "Explained", hed: `Why ${w} is suddenly everywhere`,
+        dek: `${causeSentence(r.cause)}, based on news and Wikipedia edits from the days interest jumped. The ${yr} ${n} is at ${x} its usual audience.` };
+    case "seasonal":
+      return { kicker: "Right on Schedule", hed: `It's that time of year for ${w}`,
+        dek: `Interest in the ${yr} ${n} jumps around now every year. Same weeks last year: ${r.last_year_lift}× usual.` };
+    case "automated?":
+      return { kicker: "Probably Bots", hed: `${w}'s spike looks automated`,
+        dek: `Almost all of the extra traffic comes from desktop computers, a typical sign of bots rather than people.` };
+    default: {
+      const heds = [
+        `Nobody can explain why people are suddenly looking up ${w}`,
+        `${w} is having a moment. Nobody knows why.`,
+        `Why is everyone suddenly reading about ${w}?`,
+        `The internet rediscovered ${w}, and we can't figure out why`,
+      ];
+      return { kicker: "Mystery", hed: heds[hash(r.qid) % heds.length],
+        dek: `The ${yr} ${n} has drawn ${x} its usual audience ${since}, with no sequel, death, anniversary or news story we can find.` };
+    }
+  }
+}
+
+function sharedStory(t) {
+  const works = t.works.map((q) => state.byQid[q]).filter(Boolean);
+  const kinds = [...new Set(works.map((w) => noun(w.kind)))];
+  const what = kinds.length === 1 ? `${PLURAL[kinds[0]] || "works"}` : "favorites";
+  if (t.type === "death") {
+    const who = t.text.split(" (")[0];
+    return { kicker: "In Memoriam", hed: `Remembering ${who}: ${works.length} old ${what} are back`,
+      dek: `${who} died on ${fmtDate(t.date)}, and fans went back to the work.` };
+  }
+  const nw = t.text.split(": ").slice(1).join(": ").replace(/ \((upcoming|attention rose before release)\)$/, "") || t.text;
+  const up = /\(upcoming\)$/.test(t.text);
+  return { kicker: up ? "Homework" : "The Sequel Effect",
+    hed: up ? `${nw} lands ${short(t.date)}, and fans are revisiting the old ${what}` : `${nw} is sending fans back to the old ${what}`,
+    dek: `${works.length} earlier titles are drawing far more readers than usual.` };
+}
+
+function threadStory(t) {
+  const roles = [...new Set(t.works.map((w) => w.role))];
+  const how = roles.length === 1 && roles[0] === "cast member" ? "starring"
+    : roles.length === 1 && roles[0] === "director" ? "directed by"
+    : roles.length === 1 && roles[0] === "performer" ? "by" : "featuring";
+  const cause = t.cause ? `${causeSentence(t.cause)}, based on news and Wikipedia edits.` : "Wikidata doesn't record why. Maybe you know?";
+  return { kicker: "Six Degrees", hed: `Something's going on with ${t.name}`,
+    dek: `${t.works.length} titles ${how} ${t.name} all started spiking around ${short(t.around)}. ${cause}` };
+}
+
+// ---------- media: free Commons image, or a typographic tile ----------
+function media(image, name, year, kind, width = 640) {
+  const tile = () => h("div", { class: `tile k-${slug(kind || "film")}` }, h("span", { class: "yr" }, [year, kind].filter(Boolean).join(" · ")), h("span", { class: "nm" }, name));
+  if (!image) return h("div", { class: "media" }, tile());
+  const img = h("img", { src: `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(image)}?width=${width}`,
+    alt: name, loading: "lazy", decoding: "async" });
+  const wrap = h("div", { class: "media" }, img,
+    ext(`https://commons.wikimedia.org/wiki/File:${encodeURIComponent(image)}`, h("span", { class: "credit" }, "Image: Wikimedia Commons")));
+  img.addEventListener("error", () => wrap.replaceChildren(tile()));
+  return wrap;
+}
+
+// ---------- views ----------
 const PHYSICAL = ["album", "video game", "book", "manga/comic", "film"];
 const VIEWS = {
-  overview: {
-    label: "Overview",
-    intro: "Older works whose Wikipedia attention has jumped, with the likely reason. Pick a view above for what matters to you.",
-    panels: ["shared", "threads"], preset: {},
-  },
-  journalists: {
-    label: "Journalists",
-    intro: "Story leads: big revivals nobody has explained, works that rose together around one person, and causes suggested by news and Wikipedia edits. Newest first.",
-    panels: ["threads"], preset: { verdicts: ["unexplained", "coverage", "common thread"], sort: "start" },
-    feeds: ["unexplained"],
-  },
-  rights: {
-    label: "Rights holders",
-    intro: "Catalog titles gaining attention now, and what's coming. Emerging titles are the time to promote, reissue, pitch to streaming or license. Sorted by strength.",
-    panels: ["coming-mini"], preset: { stages: ["emerging", "peaking", "sustained"], hideFiltered: true },
-    feeds: ["film-tv", "music", "games", "books", "coming-up"],
-  },
-  retail: {
-    label: "Retail",
-    intro: "Physical media, games and books with emerging or sustained demand. Sustained interest is more likely to turn into sales than a one-day spike.",
-    panels: ["coming-mini"], preset: { kinds: PHYSICAL, stages: ["emerging", "sustained"], hideFiltered: true, sort: "recent" },
-    feeds: ["music", "games", "books"],
-  },
-  programmers: {
-    label: "Programmers",
+  today: { label: "Today", page: "today" },
+  mysteries: { label: "Mysteries", page: "mysteries" },
+  coming: { label: "Coming Soon", page: "coming" },
+  accuracy: { label: "Track Record", page: "accuracy" },
+  alerts: { label: "Get Alerts", page: "alerts" },
+  // professional views
+  journalists: { pro: true, label: "Journalists",
+    intro: "Story leads: big revivals nobody has explained, works that rose together around one person, and causes suggested by news and Wikipedia edits.",
+    panels: ["threads"], preset: { verdicts: ["unexplained", "coverage", "common thread", "weak link"], sort: "start" }, feeds: ["unexplained"] },
+  rights: { pro: true, label: "Rights holders",
+    intro: "Catalog titles gaining attention now, and what's coming. Titles that are just starting to rise are the ones to promote, reissue, pitch or license.",
+    panels: ["coming-mini"], preset: { stages: ["emerging", "peaking", "sustained"], hideFiltered: true }, feeds: ["film-tv", "music", "games", "books", "coming-up"] },
+  retail: { pro: true, label: "Retail",
+    intro: "Physical media, games and books with fresh or lasting demand. Lasting interest is more likely to turn into sales than a one-day spike.",
+    panels: ["coming-mini"], preset: { kinds: PHYSICAL, stages: ["emerging", "sustained"], hideFiltered: true, sort: "recent" }, feeds: ["music", "games", "books"] },
+  programmers: { pro: true, label: "Programmers",
     intro: "For cinemas, broadcasters and streaming curators: films and TV people are rediscovering, plus anniversaries worth scheduling around.",
-    panels: ["anniversaries-mini"], preset: { kinds: ["film", "TV series", "musical"], hideFiltered: true },
-    feeds: ["film-tv", "coming-up"],
-  },
-  research: {
-    label: "Researchers",
-    intro: "Everything as open data: daily snapshots, a flat CSV and the accuracy record. Data is CC0. Method below.",
-    panels: ["downloads", "method"], preset: {},
-  },
-  coming: { label: "Coming up", page: "coming" },
-  accuracy: { label: "Accuracy", page: "accuracy" },
-  alerts: { label: "Get alerts", page: "alerts" },
+    panels: ["anniversaries-mini"], preset: { kinds: ["film", "TV series", "musical"], hideFiltered: true }, feeds: ["film-tv", "coming-up"] },
+  research: { pro: true, label: "Researchers & data",
+    intro: "Everything as open data: daily snapshots, a flat CSV and the accuracy record. CC0, with the method below.",
+    panels: ["downloads", "method"], preset: {} },
 };
 
-const state = { index: null, data: null, labels: {}, accuracy: null, view: "overview",
+const state = { index: null, data: null, labels: {}, accuracy: null, view: "today", proOpen: false,
   verdicts: new Set(), kinds: new Set(), stages: new Set(), hideFiltered: false, q: "", sort: "score" };
 
-// ---------- loading ----------
 async function getJSON(url) {
   const r = await fetch(url, { cache: "no-cache" });
   if (!r.ok) throw new Error(`${url}: HTTP ${r.status}`);
@@ -100,57 +194,61 @@ async function getJSON(url) {
 }
 
 async function init() {
-  try {
-    state.index = await getJSON("data/index.json");
-  } catch (e) {
-    return fail("No data yet. The first scheduled run hasn't finished.");
-  }
+  $("today").textContent = new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
+  try { state.index = await getJSON("data/index.json"); }
+  catch (e) { return fail("No data yet. The first daily run hasn't finished."); }
   state.labels = state.index.verdict_labels || {};
   getJSON("data/accuracy.json").then((a) => { state.accuracy = a; if (state.view === "accuracy") render(); }).catch(() => {});
   const runs = state.index.runs || [];
   const sel = $("run");
-  for (const r of runs) sel.append(h("option", { value: r.id }, `${fmtDate(r.id)} · ${r.n} revivals`));
+  runs.forEach((r, i) => sel.append(h("option", { value: r.id }, i === 0 ? `Latest edition · ${short(r.id)}` : `Edition of ${fmtDate(r.id)}`)));
   const params = new URLSearchParams(location.search);
   const first = runs.some((r) => r.id === params.get("run")) ? params.get("run") : runs[0] && runs[0].id;
-  if (!first) return fail("No runs found.");
+  if (!first) return fail("No editions yet.");
   sel.value = first;
   sel.addEventListener("change", () => loadRun(sel.value));
-  state.view = VIEWS[params.get("tab")] ? params.get("tab") : "overview";
+  const tab = params.get("tab");
+  state.view = VIEWS[tab] ? tab : tab === "overview" ? "today" : "today";
+  state.proOpen = !!VIEWS[state.view].pro;
   renderTabs();
   await loadRun(first);
 }
 
 async function loadRun(id) {
   setStatus("Loading…");
-  try {
-    state.data = await getJSON(`data/runs/${encodeURIComponent(id)}.json`);
-  } catch (e) {
-    return fail(`Couldn't load the run for ${id}.`);
-  }
+  try { state.data = await getJSON(`data/runs/${encodeURIComponent(id)}.json`); }
+  catch (e) { return fail(`Couldn't load the edition for ${id}.`); }
   state.byQid = Object.fromEntries(state.data.results.map((r) => [r.qid, r]));
   applyPreset();
   render();
   syncURL();
+  if (location.hash.startsWith("#w-")) setTimeout(() => focusCard(location.hash.slice(3)), 50);
 }
 
 function syncURL() {
   const p = new URLSearchParams();
   if ($("run").value && $("run").value !== (state.index.runs[0] || {}).id) p.set("run", $("run").value);
-  if (state.view !== "overview") p.set("tab", state.view);
+  if (state.view !== "today") p.set("tab", state.view);
   const q = p.toString();
   history.replaceState(null, "", (q ? `?${q}` : location.pathname) + location.hash);
 }
-
-function setStatus(msg, error) {
-  $("view").replaceChildren(h("p", { class: `status${error ? " error" : ""}`, role: "status" }, msg));
-}
+function setStatus(msg, error) { $("view").replaceChildren(h("p", { class: `status${error ? " error" : ""}`, role: "status" }, msg)); }
 const fail = (msg) => setStatus(msg, true);
 
-// ---------- tabs ----------
 function renderTabs() {
-  $("tabs").replaceChildren(...Object.entries(VIEWS).map(([key, v]) =>
-    h("button", { type: "button", class: "tab", "aria-current": key === state.view ? "page" : null,
-      onclick: () => { state.view = key; applyPreset(); renderTabs(); render(); syncURL(); window.scrollTo({ top: 0 }); } }, v.label)));
+  const tab = (key) => h("button", { type: "button", class: "tab", "aria-current": key === state.view ? "page" : null, onclick: () => goto(key) }, VIEWS[key].label);
+  const pros = Object.keys(VIEWS).filter((k) => VIEWS[k].pro);
+  $("tabs").replaceChildren(...Object.keys(VIEWS).filter((k) => !VIEWS[k].pro).map(tab),
+    h("button", { type: "button", class: "tab toggle", "aria-expanded": String(state.proOpen), "aria-controls": "protabs",
+      onclick: () => { state.proOpen = !state.proOpen; renderTabs(); } }, state.proOpen ? "For Pros ▴" : "For Pros ▾"));
+  $("protabs").replaceChildren(...pros.map(tab));
+  $("protabs").hidden = !state.proOpen;
+}
+
+function goto(view) {
+  state.view = view;
+  if (VIEWS[view].pro) state.proOpen = true;
+  applyPreset(); renderTabs(); render(); syncURL(); window.scrollTo({ top: 0 });
 }
 
 function applyPreset() {
@@ -163,138 +261,184 @@ function applyPreset() {
   state.q = "";
 }
 
-// ---------- page ----------
 function render() {
   if (!state.data) return;
   const v = VIEWS[state.view];
-  const parts = [];
-  if (v.page === "coming") parts.push(...comingPage());
-  else if (v.page === "accuracy") parts.push(...accuracyPage());
-  else if (v.page === "alerts") parts.push(...alertsPage());
-  else {
-    parts.push(h("p", { class: "intro" }, v.intro));
-    if (state.view === "overview") parts.push(stats());
-    const panels = (v.panels || []).map(panel).filter(Boolean);
-    if (panels.length) parts.push(h("section", { class: `panels n${panels.length}` }, panels));
-    if (v.feeds) parts.push(feedStrip(v.feeds));
-    parts.push(listSection());
-  }
-  $("view").replaceChildren(...parts);
-  if (!v.page) renderList();
-  const { meta } = state.data;
-  const health = meta.health || {};
+  const page = { today: todayPage, mysteries: mysteriesPage, coming: comingPage, accuracy: accuracyPage, alerts: alertsPage }[v.page];
+  $("view").replaceChildren(...(page ? page() : proPage(v)));
+  if ($("cards")) renderList();
+  const { meta } = state.data, health = meta.health || {};
   const issues = [];
   if (health.pages_skipped) issues.push(`${health.pages_skipped} pages skipped`);
   if (health.lookups_failed) issues.push(`${health.lookups_failed} Wikidata lookups failed`);
   if ((health.sources_off || []).length) issues.push(`unavailable: ${health.sources_off.join(", ")}`);
-  $("generated").textContent = ` Window ${fmtDate(meta.window_start)} – ${fmtDate(meta.window_end)}. Generated ${meta.generated}.` +
+  $("generated").textContent = `This edition covers ${fmtDate(meta.window_start)} – ${fmtDate(meta.window_end)} and was generated ${meta.generated}.` +
     (issues.length ? ` Run issues: ${issues.join("; ")}.` : "");
 }
 
-function stats() {
-  const { meta, results } = state.data;
-  const live = results.filter((r) => !FILTERED.has(r.verdict));
-  const unexplained = live.filter((r) => ["unexplained", "common thread"].includes(r.verdict)).length;
-  const early = live.filter((r) => r.early).length;
-  const emerging = live.filter((r) => r.stage === "emerging").length;
-  const items = [
-    [fmt(live.length), "older works with 2.5–3×+ attention"],
-    [fmt(emerging), "emerging right now"],
-    [fmt(early), "caught early, before the top-1,000 list"],
-    [fmt(unexplained), "with no recorded cause"],
-  ];
-  return h("section", { class: "stats" }, items.map(([b, t]) => h("div", { class: "stat" }, h("b", {}, b), h("span", {}, t))));
+const live = () => state.data.results.filter((r) => !FILTERED.has(r.verdict)).sort((a, b) => b.score - a.score);
+
+function sectionHead(title, sub, moreLabel, moreView) {
+  return h("div", { class: "section-head" },
+    h("div", {}, h("h2", {}, title), sub ? h("p", {}, sub) : null),
+    moreView ? h("button", { type: "button", class: "more", onclick: () => goto(moreView) }, `${moreLabel} →`) : null);
 }
 
-function workLinks(qids, roles) {
-  const out = [];
-  qids.forEach((q, i) => {
-    const w = state.byQid[q];
-    if (!w) return;
-    if (out.length) out.push(", ");
-    out.push(h("a", { href: `#w-${q}`, onclick: (e) => { e.preventDefault(); focusCard(q); } }, w.label));
-    out.push(h("span", { class: "muted" }, ` (${roles ? roles[i] : `${w.kind}, ${w.release_year}`})`));
-  });
+function bigstat(r, withSpark = true) {
+  return h("div", { class: "bigstat" }, h("b", {}, mult(r)),
+    h("span", {}, `the usual audience · ${STAGES[r.stage] ? STAGES[r.stage].toLowerCase() : `since ${short(r.spike_start)}`}`),
+    withSpark ? sparkline(r, true) : null);
+}
+
+function link(r, ...kids) { return h("a", { href: `#w-${r.qid}`, onclick: (e) => { e.preventDefault(); focusCard(r.qid); } }, ...kids); }
+
+// ---------- Today ----------
+function todayPage() {
+  const L = live();
+  if (!L.length) return [h("p", { class: "status" }, "A quiet day: no revivals in this edition.")];
+  // Lead with a story people will recognise: a real everyday audience, ideally a picture.
+  const known = L.slice(0, 12).filter((r) => r.baseline >= 100);
+  const lead = known.find((r) => r.image) || known[0] || L.find((r) => r.image) || L[0];
+  const rest = L.filter((r) => r !== lead);
+  const st = story(lead);
+  const out = [
+    h("section", { class: "front" },
+      h("article", { class: "lead" },
+        ext(wikipedia(lead.title), media(lead.image, lead.label, lead.release_year, lead.kind, 1200)),
+        h("span", { class: "kicker" }, st.kicker),
+        h("h2", { class: "hed" }, link(lead, st.hed)),
+        h("p", { class: "dek" }, st.dek),
+        bigstat(lead)),
+      h("aside", { class: "index" },
+        h("h2", {}, "The Revival Index"),
+        h("p", {}, "The biggest comebacks in this edition"),
+        h("ol", {}, rest.slice(0, 10).map((r) => h("li", {}, h("div", {},
+          h("div", { class: "t" }, link(r, r.label)),
+          h("div", { class: "s" }, `${mult(r)} usual · ${story(r).kicker}`))))))),
+  ];
+  const shared = state.data.shared_triggers || [];
+  if (shared.length) {
+    out.push(sectionHead("Because Of…", "One event, many old favorites back at once."));
+    out.push(h("div", {}, shared.map((t) => {
+      const sst = sharedStory(t), first = state.byQid[t.works[0]];
+      return h("article", { class: "feature" },
+        t.image ? media(t.image, t.text.split(": ").pop().split(" (")[0], "", "", 300)
+          : media(first && first.image, first && first.label, first && first.release_year, first && first.kind, 300),
+        h("div", {}, h("span", { class: "kicker" }, sst.kicker), h("h3", { class: "hed" }, sst.hed), h("p", { class: "dek" }, sst.dek),
+          h("div", { class: "chips" }, t.works.map((q) => state.byQid[q]).filter(Boolean).map((w) =>
+            h("a", { class: "chip", href: `#w-${w.qid}`, onclick: (e) => { e.preventDefault(); focusCard(w.qid); } }, `${w.label} (${w.release_year})`)))));
+    })));
+  }
+  const threads = state.data.common_threads || [];
+  if (threads.length) {
+    out.push(sectionHead("Six Degrees", "Unexplained spikes that share a person and the same timing.", "All mysteries", "mysteries"));
+    out.push(h("div", {}, threads.slice(0, 4).map(threadFeature)));
+  }
+  const myst = rest.filter((r) => MYSTERY.has(r.verdict) || r.verdict === "coverage").slice(0, 6);
+  if (myst.length) {
+    out.push(sectionHead("The Mysteries", "Big comebacks with no obvious reason. Know why? Tell us.", "All mysteries", "mysteries"));
+    out.push(h("div", { class: "grid" }, myst.map(storyCard)));
+  }
+  const cu = state.data.coming_up || {};
+  if ((cu.derivatives || []).length) {
+    out.push(sectionHead("Coming Soon", "Sequels, remakes and adaptations on the way. Expect the originals to come roaring back.", "Full calendar", "coming"));
+    out.push(h("div", { class: "rail" }, cu.derivatives.slice(0, 10).map(derivMini)));
+  }
+  if ((cu.anniversaries || []).length) {
+    out.push(sectionHead("Happy Anniversary", "Big birthdays in the next two months.", "Full calendar", "coming"));
+    out.push(h("div", { class: "rail" }, cu.anniversaries.slice(0, 10).map(annMini)));
+  }
+  out.push(sectionHead(`Every Revival (${state.data.results.length})`, "Search, filter and dig into the numbers."));
+  out.push(listSection());
   return out;
 }
 
-function evidenceList(ev, limit = 4) {
-  if (!ev || !ev.length) return null;
-  return h("ul", { class: "evidence" }, ev.slice(0, limit).map((e) =>
-    h("li", {}, h("span", { class: "src" }, e.source), " ", e.url ? ext(e.url, e.text) : e.text,
-      h("span", { class: "d" }, fmtDate(e.date)))));
+function threadFeature(t) {
+  const st = threadStory(t);
+  return h("article", { class: "feature" },
+    ext(wikidata(t.qid), media(t.image, t.name, "", "", 300)),
+    h("div", {}, h("span", { class: "kicker" }, st.kicker), h("h3", { class: "hed" }, st.hed), h("p", { class: "dek" }, st.dek),
+      h("div", { class: "chips" }, t.works.map((w) => state.byQid[w.qid]).filter(Boolean).map((w) =>
+        h("a", { class: "chip", href: `#w-${w.qid}`, onclick: (e) => { e.preventDefault(); focusCard(w.qid); } }, `${w.label} (${w.release_year})`))),
+      evidenceList(t.evidence, 3)));
 }
 
-function burstNote(b) {
-  if (!b) return null;
-  return b.burst ? h("span", { class: "burst" }, `Wikipedia editors were busy: ${b.edits} edits around the spike (usually ~${b.usual_per_5_days}).`) : null;
+function storyCard(r) {
+  const st = story(r);
+  return h("article", { class: "story" },
+    ext(wikipedia(r.title), media(r.image, r.label, r.release_year, r.kind)),
+    h("span", { class: "kicker" }, st.kicker),
+    h("h3", { class: "hed" }, link(r, st.hed)),
+    h("p", { class: "dek" }, st.dek),
+    bigstat(r),
+    MYSTERY.has(r.verdict) ? h("div", {}, correctionLink(r, "Know why? Tell us →", "ask")) : null);
+}
+
+function derivMini(c) {
+  return h("article", { class: "mini" },
+    ext(wikidata(c.new), media(c.new_image || c.old_image, c.new_label, c.date.slice(0, 4), c.new_kind, 480)),
+    h("div", { class: "when" }, `Due ${short(c.date)}`),
+    h("h3", { class: "hed" }, c.new_label),
+    h("p", { class: "dek" }, `${c.rel[0].toUpperCase()}${c.rel.slice(1)} `, ext(wikipedia(c.old_title), c.old_label), ` (${c.old_release.slice(0, 4)}). Expect a revival.`));
+}
+function annMini(a) {
+  return h("article", { class: "mini" },
+    ext(wikipedia(a.title), media(a.image, a.label, a.release.slice(0, 4), a.kind, 480)),
+    h("div", { class: "when" }, short(a.date)),
+    h("h3", { class: "hed" }, `${a.label} turns ${a.years}`),
+    h("p", { class: "dek" }, `${noun(a.kind)[0].toUpperCase()}${noun(a.kind).slice(1)}, ${a.release.slice(0, 4)}${a.audience ? ` · ${fmt(a.audience)} readers on a normal day` : ""}`));
+}
+
+// ---------- Mysteries ----------
+function mysteriesPage() {
+  const L = live().filter((r) => MYSTERY.has(r.verdict) || r.verdict === "coverage" || r.verdict === "common thread")
+    .sort((a, b) => b.spike_start.localeCompare(a.spike_start) || b.score - a.score);
+  const threads = state.data.common_threads || [];
+  return [
+    h("p", { class: "intro" }, "Old favorites are suddenly back, and we can't always say why. These are the open cases. If you know the answer, tell us."),
+    threads.length ? sectionHead("Six Degrees", "Spikes that share a person and the same timing.") : null,
+    threads.length ? h("div", {}, threads.map(threadFeature)) : null,
+    sectionHead("Open Cases", "Newest first. Some have a likely cause from news and Wikipedia edits; most don't, yet."),
+    h("div", { class: "grid" }, L.filter((r) => r.verdict !== "common thread").map(storyCard)),
+  ].filter(Boolean);
+}
+
+// ---------- pro views ----------
+function proPage(v) {
+  const panels = (v.panels || []).map(panel).filter(Boolean);
+  return [
+    h("p", { class: "intro" }, v.intro),
+    v.feeds ? feedStrip(v.feeds) : null,
+    ...panels,
+    sectionHead("Revivals", null),
+    listSection(),
+  ].filter(Boolean);
 }
 
 function panel(name) {
-  const d = state.data;
-  if (name === "shared") {
-    const kindName = { death: "Death", derivative: "New release", "same-creator": "New release", anniversary: "Anniversary" };
-    const items = (d.shared_triggers || []).map((t) => {
-      const what = t.type === "death" ? t.text.split(" (")[0] : t.text.split(": ").slice(1).join(": ") || t.text;
-      return h("li", {},
-        h("div", { class: "when" }, `${kindName[t.type] || "Event"} · ${fmtDate(t.date)}`),
-        h("div", {}, ext(wikidata(t.qid), h("b", {}, what)), ` → ${t.works.length} older works spiked`),
-        h("div", { class: "works" }, workLinks(t.works)));
-    });
-    return box("Shared triggers", "One event linked to several older works spiking at once.", items);
-  }
+  const cu = state.data.coming_up || {};
   if (name === "threads") {
-    const items = (d.common_threads || []).map((t) => h("li", {},
-      h("div", { class: "when" }, `Spikes began around ${fmtDate(t.around)}`),
-      h("div", {}, ext(wikidata(t.qid), h("b", {}, t.name)), ` → ${t.works.length} works spiked together`),
-      h("div", { class: "works" }, workLinks(t.works.map((w) => w.qid), t.works.map((w) => w.role))),
-      t.cause ? h("div", { class: "cause" }, `Likely cause: ${CAUSE_LABEL[t.cause] || t.cause}`) : null,
-      burstNote(t.edit_burst), evidenceList(t.evidence, 3)));
-    return box("Hidden common threads", "Unexplained spikes on works that share a credited person and started rising within a week of each other.", items);
+    const t = state.data.common_threads || [];
+    return t.length ? h("div", {}, sectionHead("Six Degrees", "Unexplained spikes sharing a person and timing."), t.map(threadFeature)) : null;
   }
-  if (name === "coming-mini") {
-    const items = (d.coming_up?.derivatives || []).slice(0, 8).map(derivItem);
-    return box("Coming up", "Sequels, adaptations and remakes of older works due soon. Expect renewed interest.", items,
-      h("button", { type: "button", class: "more", onclick: () => goto("coming") }, "All upcoming →"));
-  }
-  if (name === "anniversaries-mini") {
-    const items = (d.coming_up?.anniversaries || []).slice(0, 8).map(annItem);
-    return box("Anniversaries ahead", "Round-number release anniversaries in the next 60 days, biggest audiences first.", items,
-      h("button", { type: "button", class: "more", onclick: () => goto("coming") }, "All upcoming →"));
-  }
+  if (name === "coming-mini" && (cu.derivatives || []).length)
+    return h("div", {}, sectionHead("Coming Soon", "Sequels, adaptations and remakes of older works due soon.", "Full calendar", "coming"),
+      h("div", { class: "rail" }, cu.derivatives.slice(0, 10).map(derivMini)));
+  if (name === "anniversaries-mini" && (cu.anniversaries || []).length)
+    return h("div", {}, sectionHead("Anniversaries Ahead", "Round-number birthdays in the next 60 days, biggest audiences first.", "Full calendar", "coming"),
+      h("div", { class: "rail" }, cu.anniversaries.slice(0, 10).map(annMini)));
   if (name === "downloads") {
     const run = $("run").value;
-    return h("div", { class: "panel" }, h("h2", {}, "Downloads"),
+    return h("div", { class: "block" }, sectionHead("Downloads", "Data is derived from CC0 sources. Please cite as “Revival Radar (open data from Wikimedia and Wikidata)”."),
       h("ul", { class: "plain" },
-        h("li", {}, h("a", { href: "data/latest.csv", download: "" }, "latest.csv"), " (spreadsheet of today's revivals)"),
-        h("li", {}, h("a", { href: `data/runs/${run}.json` }, `runs/${run}.json`), " (full snapshot with 12-month series, triggers and evidence)"),
-        h("li", {}, h("a", { href: "data/index.json" }, "index.json"), " (every archived daily run)"),
-        h("li", {}, h("a", { href: "data/accuracy.json" }, "accuracy.json"), " · ", h("a", { href: "data/forecast_checks.json" }, "forecast_checks.json")),
-        h("li", {}, ext(`https://github.com/${REPO}`, "Source code and full history on GitHub"))),
-      h("p", { class: "sub" }, "Data is derived from CC0 sources. Please cite as “Revival Radar (open data from Wikimedia and Wikidata)”."));
+        h("li", {}, h("a", { href: "data/latest.csv", download: "" }, h("b", {}, "latest.csv")), " · spreadsheet of this edition"),
+        h("li", {}, h("a", { href: `data/runs/${run}.json` }, h("b", {}, `runs/${run}.json`)), " · full snapshot with 12-month series, triggers and evidence"),
+        h("li", {}, h("a", { href: "data/index.json" }, h("b", {}, "index.json")), " · every archived edition"),
+        h("li", {}, h("a", { href: "data/accuracy.json" }, h("b", {}, "accuracy.json")), " · ", h("a", { href: "data/forecast_checks.json" }, "forecast_checks.json")),
+        h("li", {}, ext(`https://github.com/${REPO}`, h("b", {}, "Source code and full history on GitHub")))));
   }
   if (name === "method") return method();
   return null;
-}
-
-function box(title, sub, items, extra) {
-  return h("div", { class: "panel" }, h("h2", {}, title), h("p", { class: "sub" }, sub),
-    h("ul", { class: "events" }, items.length ? items : h("li", { class: "empty" }, "None this run.")), extra || null);
-}
-
-function goto(view) { state.view = view; applyPreset(); renderTabs(); render(); syncURL(); window.scrollTo({ top: 0 }); }
-
-function derivItem(c) {
-  return h("li", {},
-    h("div", { class: "when" }, `${fmtDate(c.date)} · ${c.new_kind}`),
-    h("div", {}, ext(wikidata(c.new), h("b", {}, c.new_label)), ` ${c.rel} `,
-      ext(wikipedia(c.old_title), c.old_label), h("span", { class: "muted" }, ` (${c.old_kind}, ${c.old_release.slice(0, 4)})`)));
-}
-function annItem(a) {
-  return h("li", {},
-    h("div", { class: "when" }, `${fmtDate(a.date)} · ${a.years}th anniversary`),
-    h("div", {}, ext(wikipedia(a.title), h("b", {}, a.label)), h("span", { class: "muted" }, ` (${a.kind}, ${a.release.slice(0, 4)})`)),
-    a.audience ? h("div", { class: "works muted" }, `Usually ${fmt(a.audience)} Wikipedia views a day`) : null);
 }
 
 function feedStrip(names) {
@@ -303,44 +447,28 @@ function feedStrip(names) {
     " · ", h("button", { type: "button", class: "linkish", onclick: () => goto("alerts") }, "email alerts"));
 }
 
-// ---------- list ----------
+// ---------- the full list ----------
 function listSection() {
   const kinds = [...new Set(state.data.results.map((r) => r.kind))].sort();
-  const kindSel = h("select", { id: "kind", "aria-label": "Filter by type" },
+  const kindSel = h("select", { "aria-label": "Filter by type" },
     h("option", { value: "" }, state.kinds.size > 1 ? "Preset types" : "All types"),
     kinds.map((k) => h("option", { value: k, selected: state.kinds.size === 1 && state.kinds.has(k) ? "" : null }, k)));
   kindSel.addEventListener("change", (e) => { state.kinds = new Set(e.target.value ? [e.target.value] : []); renderList(); });
-  const stageSel = h("select", { id: "stage", "aria-label": "Filter by stage" },
-    h("option", { value: "" }, state.stages.size > 1 ? "Preset stages" : "All stages"),
+  const stageSel = h("select", { "aria-label": "Filter by stage" },
+    h("option", { value: "" }, state.stages.size > 1 ? "Preset stages" : "Any stage"),
     Object.entries(STAGES).map(([k, v]) => h("option", { value: k, selected: state.stages.size === 1 && state.stages.has(k) ? "" : null }, v)));
   stageSel.addEventListener("change", (e) => { state.stages = new Set(e.target.value ? [e.target.value] : []); renderList(); });
-  const sortSel = h("select", { id: "sort", "aria-label": "Sort" },
-    [["score", "Strongest revival"], ["lift", "Biggest lift"], ["recent", "Most views now"], ["start", "Newest spike"], ["age", "Oldest work"]]
+  const sortSel = h("select", { "aria-label": "Sort" },
+    [["score", "Biggest comeback"], ["lift", "Biggest jump"], ["recent", "Most readers now"], ["start", "Newest"], ["age", "Oldest work"]]
       .map(([k, l]) => h("option", { value: k, selected: state.sort === k ? "" : null }, `Sort: ${l}`)));
   sortSel.addEventListener("change", (e) => { state.sort = e.target.value; renderList(); });
   const q = h("input", { id: "q", type: "search", placeholder: "Search titles, people, causes…", "aria-label": "Search" });
   q.addEventListener("input", (e) => { state.q = e.target.value.trim().toLowerCase(); renderList(); });
   return h("section", { id: "list-section" },
-    h("div", { class: "list-head" }, h("h2", {}, "Revivals ", h("span", { id: "count", class: "muted" }))),
     h("div", { class: "filters" }, q, kindSel, stageSel, sortSel),
-    h("div", { id: "chips", class: "chips", role: "group", "aria-label": "Filter by verdict" }),
+    h("div", { id: "chips", class: "chips", role: "group", "aria-label": "Filter by type of story" }),
+    h("p", { id: "count", class: "small muted" }),
     h("div", { id: "cards", class: "cards" }));
-}
-
-function renderChips(results) {
-  const counts = {};
-  for (const r of results) counts[r.verdict] = (counts[r.verdict] || 0) + 1;
-  const order = [...VERDICT_ORDER, ...Object.keys(counts).filter((v) => !VERDICT_ORDER.includes(v))];
-  $("chips").replaceChildren(...order.filter((v) => counts[v]).map((v) => {
-    const b = h("button", { class: `chip v-${slug(v)}`, type: "button", "aria-pressed": String(state.verdicts.has(v)) },
-      state.labels[v] || v, h("span", { class: "n" }, counts[v]));
-    b.addEventListener("click", () => {
-      state.verdicts.has(v) ? state.verdicts.delete(v) : state.verdicts.add(v);
-      b.setAttribute("aria-pressed", String(state.verdicts.has(v)));
-      renderList();
-    });
-    return b;
-  }));
 }
 
 const SORTS = {
@@ -348,89 +476,103 @@ const SORTS = {
   recent: (a, b) => b.recent_mean - a.recent_mean, start: (a, b) => b.spike_start.localeCompare(a.spike_start) || b.score - a.score,
   age: (a, b) => a.release.localeCompare(b.release),
 };
-
 function matches(r) {
   if (state.verdicts.size && !state.verdicts.has(r.verdict)) return false;
   if (state.kinds.size && !state.kinds.has(r.kind)) return false;
   if (state.stages.size && !state.stages.has(r.stage)) return false;
   if (state.hideFiltered && FILTERED.has(r.verdict)) return false;
   if (state.q) {
-    const hay = [r.label, r.title, r.kind, r.cause, ...r.triggers.map((t) => t.text), ...(r.evidence || []).map((e) => e.text)].join(" ").toLowerCase();
+    const st = story(r);
+    const hay = [r.label, r.title, r.kind, r.cause, st.hed, st.dek, ...r.triggers.map((t) => t.text), ...(r.evidence || []).map((e) => e.text)].join(" ").toLowerCase();
     if (!hay.includes(state.q)) return false;
   }
   return true;
 }
-
 function renderList() {
   const all = state.data.results;
   const pool = all.filter((r) => (!state.kinds.size || state.kinds.has(r.kind)) && (!state.stages.size || state.stages.has(r.stage)) && !(state.hideFiltered && FILTERED.has(r.verdict)));
-  renderChips(pool);
+  const counts = {};
+  for (const r of pool) { const k = story(r).kicker; counts[k] = (counts[k] || 0) + 1; }
+  // chips filter by story type (kicker), which maps to verdicts
+  const byKicker = {};
+  for (const r of all) (byKicker[story(r).kicker] = byKicker[story(r).kicker] || new Set()).add(r.verdict);
+  $("chips").replaceChildren(...Object.entries(counts).sort((a, b) => b[1] - a[1]).map(([k, n]) => {
+    const vs = byKicker[k];
+    const on = [...vs].every((v) => state.verdicts.has(v));
+    const b = h("button", { class: "chip", type: "button", "aria-pressed": String(on) }, k, h("span", { class: "n" }, n));
+    b.addEventListener("click", () => { vs.forEach((v) => (on ? state.verdicts.delete(v) : state.verdicts.add(v))); renderList(); });
+    return b;
+  }));
   const list = all.filter(matches).sort((a, b) => {
     if (!state.verdicts.size) { const fa = FILTERED.has(a.verdict), fb = FILTERED.has(b.verdict); if (fa !== fb) return fa ? 1 : -1; }
     return SORTS[state.sort](a, b);
   });
-  $("count").textContent = list.length === all.length ? `(${all.length})` : `(${list.length} of ${all.length})`;
-  $("cards").replaceChildren(...(list.length ? list.map(card) : [h("p", { class: "status" }, "Nothing matches these filters.")]));
+  $("count").textContent = list.length === all.length ? `${all.length} revivals` : `${list.length} of ${all.length} revivals`;
+  const open = !!VIEWS[state.view].pro;
+  $("cards").replaceChildren(...(list.length ? list.map((r) => card(r, open)) : [h("p", { class: "status" }, "Nothing matches these filters.")]));
 }
 
-function correctionLink(r) {
+function correctionLink(r, label = "Report a correction", cls) {
   const top = r.triggers[0];
-  const body = [`**Work:** ${r.label} (${r.release_year}) ${wikidata(r.qid)}`, `**Run:** ${$("run").value}`,
-    `**Radar said:** ${state.labels[r.verdict] || r.verdict}${top ? ` (${top.text})` : ""}${r.cause ? `; likely cause: ${r.cause}` : ""}`,
+  const body = [`**Work:** ${r.label} (${r.release_year}) ${wikidata(r.qid)}`, `**Edition:** ${$("run").value}`,
+    `**Radar said:** ${story(r).hed}${top ? ` (${top.text})` : ""}${r.cause ? `; likely cause: ${r.cause}` : ""}`,
     "", "**What actually happened (with a link if you have one):**", ""].join("\n");
-  const url = `https://github.com/${REPO}/issues/new?labels=feedback&title=${encodeURIComponent(`Correction: ${r.label}`)}&body=${encodeURIComponent(body)}`;
-  return ext(url, "Report a correction");
+  const url = `https://github.com/${REPO}/issues/new?labels=feedback&title=${encodeURIComponent(`About ${r.label}`)}&body=${encodeURIComponent(body)}`;
+  return h("a", { href: url, target: "_blank", rel: "noopener", class: cls || null }, label);
 }
 
-function card(r) {
-  const triggers = r.triggers.length
-    ? h("ul", { class: "triggers" }, r.triggers.map((t) => h("li", { class: `v-${slug(t.type)}` },
-        t.qid ? ext(wikidata(t.qid), t.text) : t.text, h("span", { class: "d" }, fmtDate(t.date)))))
-    : r.cause ? null
-    : h("p", { class: "none" }, "No credited deaths, sequels, adaptations, new releases or anniversaries found near the spike.");
+function evidenceList(ev, limit = 4) {
+  if (!ev || !ev.length) return null;
+  return h("ul", { class: "evidence" }, ev.slice(0, limit).map((e) =>
+    h("li", {}, h("span", { class: "src" }, e.source), e.url ? ext(e.url, e.text) : e.text, h("span", { class: "d" }, short(e.date)))));
+}
 
+function card(r, open) {
+  const st = story(r);
   const checks = [];
   const add = (node) => { if (checks.length) checks.push(" · "); checks.push(node); };
   if (r.last_year_lift != null) add(h("span", { class: r.last_year_lift >= 2.5 ? "warn" : "" }, `Same weeks last year: ${r.last_year_lift}×`));
   if (r.desktop_share != null) add(h("span", { class: r.desktop_share >= 0.85 ? "warn" : "" }, `${Math.round(r.desktop_share * 100)}% desktop`));
   if (r.corroborated === true) add(h("span", { class: "ok" }, "✓ backed by news/edits"));
   if (r.corroborated === false) add(h("span", { class: "warn" }, "Evidence doesn't mention this trigger"));
-
-  return h("article", { class: `card v-${slug(r.verdict)}`, id: `w-${r.qid}` },
-    h("div", { class: "card-head" },
-      h("div", {},
-        h("h3", {}, ext(wikipedia(r.title), r.label)),
-        h("div", { class: "meta" }, `${r.kind} · ${r.release_year} · ${r.age} years old`)),
-      h("div", { class: "badges" },
-        h("span", { class: "badge" }, state.labels[r.verdict] || r.verdict),
-        r.stage ? h("span", { class: `stage s-${r.stage}` }, STAGES[r.stage] || r.stage) : null,
-        r.early ? h("span", { class: "stage s-early", title: "Spotted by the watchlist before reaching Wikipedia's top 1,000" }, "Caught early") : null)),
-    sparkline(r),
-    h("dl", { class: "nums" },
-      h("div", {}, h("dt", {}, "14-day lift"), h("dd", {}, `${r.lift}×`)),
-      h("div", {}, h("dt", {}, "Last 3 days"), h("dd", {}, `${r.lift3 ?? "–"}×`)),
-      h("div", {}, h("dt", {}, "Usual views"), h("dd", {}, `${fmt(r.baseline)}/day`)),
-      h("div", {}, h("dt", {}, "Spike began"), h("dd", {}, fmtDate(r.spike_start)))),
-    r.cause ? h("p", { class: "cause" }, `Likely cause: ${CAUSE_LABEL[r.cause] || r.cause}`) : null,
-    triggers,
-    burstNote(r.edit_burst) ? h("p", { class: "note" }, burstNote(r.edit_burst)) : null,
-    r.evidence && r.evidence.length ? h("details", { class: "ev" }, h("summary", {}, `Evidence (${r.evidence.length})`), evidenceList(r.evidence, 8)) : null,
-    h("p", { class: "checks" }, checks, checks.length ? " · " : "", correctionLink(r)));
+  if (r.edit_burst && r.edit_burst.burst) add(`${r.edit_burst.edits} Wikipedia edits around the spike (usually ~${r.edit_burst.usual_per_5_days})`);
+  add(correctionLink(r));
+  return h("article", { class: "card", id: `w-${r.qid}` },
+    ext(wikipedia(r.title), media(r.image, r.label, r.release_year, r.kind, 240)),
+    h("div", {},
+      h("span", { class: "kicker" }, st.kicker),
+      h("h3", { class: "hed" }, ext(wikipedia(r.title), st.hed)),
+      h("p", { class: "dek" }, st.dek),
+      h("div", { class: "tags" },
+        h("span", { class: "tagx" }, `${r.label} · ${r.release_year}`),
+        r.stage === "emerging" ? h("span", { class: "tagx hot" }, "Just starting") : r.stage ? h("span", { class: "tagx" }, STAGES[r.stage]) : null,
+        r.early ? h("span", { class: "tagx", title: "Spotted by our watchlist before it reached Wikipedia's top 1,000" }, "Caught early") : null),
+      h("details", { class: "more-info", open: open ? "" : null }, h("summary", {}, "The numbers"),
+        sparkline(r),
+        h("dl", { class: "nums" },
+          h("div", {}, h("dt", {}, "14-day lift"), h("dd", {}, `${r.lift}×`)),
+          h("div", {}, h("dt", {}, "Last 3 days"), h("dd", {}, `${r.lift3 ?? "–"}×`)),
+          h("div", {}, h("dt", {}, "Usual"), h("dd", {}, `${fmt(r.baseline)}/day`)),
+          h("div", {}, h("dt", {}, "Began"), h("dd", {}, short(r.spike_start)))),
+        r.triggers.length ? h("ul", { class: "triggers" }, r.triggers.map((t) =>
+          h("li", {}, t.qid ? ext(wikidata(t.qid), t.text) : t.text, h("span", { class: "d" }, short(t.date))))) : null,
+        evidenceList(r.evidence, 8),
+        h("p", { class: "checks" }, checks))));
 }
 
 // ---------- sparkline ----------
-function sparkline(r) {
+function sparkline(r, compact) {
   const vals = r.spark, n = vals.length, W = n - 1, H = 60;
   const top = Math.max(...vals, r.baseline * 2, 1);
   const lg = (x) => Math.log10(1 + x);
   const y = (x) => H - (lg(x) / lg(top)) * (H - 4);
   const pts = vals.map((x, i) => `${i},${y(x).toFixed(1)}`).join(" ");
   const svg = s("svg", { viewBox: `0 0 ${W} ${H}`, preserveAspectRatio: "none", role: "img",
-    "aria-label": `Daily views over 12 months for ${r.label}. Usually ${fmt(r.baseline)} a day, peak ${fmt(r.peak)} on ${fmtDate(r.peak_day)}.` });
+    "aria-label": `Daily Wikipedia views over 12 months for ${r.label}. Usually ${fmt(r.baseline)} a day, peak ${fmt(r.peak)} on ${fmtDate(r.peak_day)}.` });
   svg.append(s("polygon", { class: "area", points: `0,${H} ${pts} ${W},${H}` }));
   svg.append(s("line", { class: "base", x1: 0, x2: W, y1: y(r.baseline), y2: y(r.baseline) }));
   const si = daysBetween(r.spark_start, r.spike_start);
-  if (si >= 0 && si < n) svg.append(s("line", { class: "start", x1: si, x2: si, y1: 0, y2: H }));
+  if (si >= 0 && si < n && !compact) svg.append(s("line", { class: "start", x1: si, x2: si, y1: 0, y2: H }));
   svg.append(s("polyline", { class: "line", points: pts }));
   const cursor = s("line", { class: "cursor", x1: 0, x2: 0, y1: 0, y2: H, visibility: "hidden" });
   svg.append(cursor);
@@ -439,17 +581,17 @@ function sparkline(r) {
     const box = svg.getBoundingClientRect();
     const i = Math.max(0, Math.min(n - 1, Math.round(((e.clientX - box.left) / box.width) * W)));
     cursor.setAttribute("x1", i); cursor.setAttribute("x2", i); cursor.setAttribute("visibility", "visible");
-    tip.textContent = `${fmtDate(addDays(r.spark_start, i))} · ${fmt(vals[i])} views`;
+    tip.textContent = `${fmtDate(addDays(r.spark_start, i))} · ${fmt(vals[i])} readers`;
     tip.style.left = `${box.left + (i / W) * box.width}px`; tip.style.top = `${box.top}px`; tip.hidden = false;
   };
   const leave = () => { cursor.setAttribute("visibility", "hidden"); tip.hidden = true; };
   svg.addEventListener("pointermove", move); svg.addEventListener("pointerdown", move); svg.addEventListener("pointerleave", leave);
-  return h("div", { class: "spark" }, svg, h("div", { class: "spark-legend" },
-    h("span", {}, "Last 12 months, log scale"), h("span", {}, h("span", { class: "k" }, "usual"), "  ", h("span", { class: "s" }, "spike began"))));
+  return h("div", { class: "spark" }, svg, compact ? null : h("div", { class: "spark-legend" }, h("span", {}, "Daily readers, last 12 months"), h("span", {}, "dashed line = usual")));
 }
 
 function focusCard(qid) {
   let el = $(`w-${qid}`);
+  if (!el && !$("cards")) { goto("today"); el = $(`w-${qid}`); }
   if (!el) {
     state.verdicts.clear(); state.kinds.clear(); state.stages.clear(); state.hideFiltered = false; state.q = "";
     if ($("q")) $("q").value = "";
@@ -457,97 +599,97 @@ function focusCard(qid) {
     el = $(`w-${qid}`);
   }
   if (!el) return;
+  const d = el.querySelector("details");
+  if (d) d.open = true;
   el.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
-  el.classList.add("flash"); setTimeout(() => el.classList.remove("flash"), 1600);
+  el.classList.add("flash"); setTimeout(() => el.classList.remove("flash"), 1800);
 }
 
-// ---------- other pages ----------
+// ---------- Coming Soon ----------
 function comingPage() {
   const cu = state.data.coming_up || { derivatives: [], anniversaries: [] };
-  const dRows = cu.derivatives.map((c) => h("tr", {},
+  const dRows = (cu.derivatives || []).map((c) => h("tr", {},
     h("td", { class: "nowrap" }, fmtDate(c.date)),
-    h("td", {}, ext(wikidata(c.new), c.new_label), h("div", { class: "muted small" }, c.new_kind)),
+    h("td", {}, ext(wikidata(c.new), h("b", {}, c.new_label)), h("div", { class: "small muted" }, c.new_kind)),
     h("td", {}, c.rel),
-    h("td", {}, ext(wikipedia(c.old_title), c.old_label), h("div", { class: "muted small" }, `${c.old_kind}, ${c.old_release.slice(0, 4)}`))));
-  const aRows = cu.anniversaries.map((a) => h("tr", {},
+    h("td", {}, ext(wikipedia(c.old_title), c.old_label), h("div", { class: "small muted" }, `${c.old_kind}, ${c.old_release.slice(0, 4)}`))));
+  const aRows = (cu.anniversaries || []).map((a) => h("tr", {},
     h("td", { class: "nowrap" }, fmtDate(a.date)),
-    h("td", {}, ext(wikipedia(a.title), a.label), h("div", { class: "muted small" }, `${a.kind}, ${a.release.slice(0, 4)}`)),
+    h("td", {}, ext(wikipedia(a.title), h("b", {}, a.label)), h("div", { class: "small muted" }, `${a.kind}, ${a.release.slice(0, 4)}`)),
     h("td", { class: "num" }, `${a.years}th`),
     h("td", { class: "num" }, a.audience ? fmt(a.audience) : "–")));
   return [
-    h("p", { class: "intro" }, "What's likely to bring older works back: sequels, adaptations, remakes and new series entries due soon, plus round-number anniversaries. Use it to plan reissues, stock, promotions and programming before interest arrives. The Accuracy tab tracks how often these forecasts come true."),
-    h("section", { class: "panel" }, h("h2", {}, "Upcoming sequels, adaptations and remakes"),
-      h("p", { class: "sub" }, "Due in the next ~5 months, linked to a notable older work. From Wikidata; release dates can slip."),
-      table(["Due", "New work", "Relation", "Older work likely to revive"], dRows)),
-    h("section", { class: "panel" }, h("h2", {}, "Anniversaries in the next 60 days"),
-      h("p", { class: "sub" }, "Ranked by the work's usual daily Wikipedia audience. Works whose exact release day isn't known are left out."),
-      table(["Date", "Work", "Years", "Usual views/day"], aRows)),
-  ];
+    h("p", { class: "intro" }, "What's about to bring old favorites back: sequels, remakes and adaptations on the way, plus the big birthdays. We check later whether we were right."),
+    sectionHead("On the Way", "Due in the next five months, each tied to an older work. From Wikidata; release dates can slip."),
+    (cu.derivatives || []).length ? h("div", { class: "rail" }, cu.derivatives.slice(0, 12).map(derivMini)) : null,
+    table(["Due", "New release", "Relation", "The original"], dRows),
+    sectionHead("Big Birthdays", "Round-number anniversaries in the next 60 days, ranked by how many people normally read about them."),
+    (cu.anniversaries || []).length ? h("div", { class: "rail" }, cu.anniversaries.slice(0, 12).map(annMini)) : null,
+    table(["Date", "Work", "Turns", "Readers on a normal day"], aRows),
+  ].filter(Boolean);
 }
-
 function table(head, rows) {
-  if (!rows.length) return h("p", { class: "empty" }, "Nothing yet. This list fills in once the daily run has built its watchlist.");
+  if (!rows.length) return h("p", { class: "muted" }, "Nothing here yet. This fills in once the daily run has built its watchlist.");
   return h("div", { class: "tablewrap" }, h("table", {}, h("thead", {}, h("tr", {}, head.map((x) => h("th", {}, x)))), h("tbody", {}, rows)));
 }
 
+// ---------- Track Record ----------
 function accuracyPage() {
   const a = state.accuracy;
-  if (!a) return [h("p", { class: "status" }, "No accuracy data yet. It builds up as daily runs accumulate.")];
+  if (!a) return [h("p", { class: "intro" }, "How often are we right? We're keeping score in public."), h("p", { class: "muted" }, "The scorecard builds up as daily editions accumulate. Check back in a week or two.")];
   const f = a.forecasts || {}, c = a.corroboration || {}, p = a.persistence || {}, rr = a.reader_reports || {};
   const stat = (big, label, sub) => h("div", { class: "stat" }, h("b", {}, big), h("span", {}, label), sub ? h("small", {}, sub) : null);
   const recent = (f.recent || []).map((x) => h("tr", {},
-    h("td", { class: "nowrap" }, fmtDate(x.date)), h("td", {}, x.label), h("td", {}, x.detail),
-    h("td", { class: "num" }, `${x.ratio}×`), h("td", {}, x.hit ? h("span", { class: "ok" }, "Came true") : h("span", { class: "muted" }, "No rise"))));
+    h("td", { class: "nowrap" }, fmtDate(x.date)), h("td", {}, h("b", {}, x.label)), h("td", {}, x.detail),
+    h("td", { class: "num" }, `${x.ratio}×`), h("td", {}, x.hit ? h("span", { class: "ok" }, "✓ Came true") : h("span", { class: "muted" }, "No bump"))));
   const corrRows = Object.entries(c).filter(([k]) => k !== "all").map(([k, v]) => h("tr", {},
     h("td", {}, state.labels[k] || k), h("td", { class: "num" }, v.checked), h("td", { class: "num" }, pct(v.rate))));
   return [
-    h("p", { class: "intro" }, "How often the radar is right, measured openly and updated daily. Small numbers early on: treat rates as provisional until there are dozens of checks."),
+    h("p", { class: "intro" }, "How often are we right? We're keeping score in public, every day."),
+    h("p", { class: "intro-sub" }, "Early on the numbers are small, so treat these rates as provisional until there are dozens of checks."),
     h("section", { class: "stats" },
-      stat(pct(f.all?.rate), "forecasts came true", `${f.all?.hits ?? 0} of ${f.all?.checked ?? 0} checked`),
-      stat(pct(c.all?.rate), "explanations backed by news/edits", `${c.all?.agree ?? 0} of ${c.all?.checked ?? 0} with evidence`),
-      stat(p.median_days == null ? "–" : `${p.median_days} days`, "typical time on the radar", p.share_over_7_days == null ? "" : `${pct(p.share_over_7_days)} last over a week`),
-      stat(`${rr.correct ?? 0} / ${rr.wrong ?? 0}`, "reader reports: right / wrong", `${rr.open ?? 0} awaiting review`)),
-    h("section", { class: "panel" }, h("h2", {}, "Forecast checks"),
-      h("p", { class: "sub" }, "A forecast came true if the older work's attention reached 2× its usual level within a week of the date."),
-      table(["Date", "Work", "Forecast", "Peak vs usual", "Result"], recent)),
-    h("section", { class: "panel" }, h("h2", {}, "Explanations vs. independent evidence"),
-      h("p", { class: "sub" }, "For explained spikes, whether Wikipedia edit summaries or news from the same days mention the trigger."),
-      table(["Trigger type", "Checked", "Backed by evidence"], corrRows)),
-    h("section", { class: "panel" }, h("h2", {}, "Help check it"),
-      h("p", {}, "Every card has a ", h("b", {}, "Report a correction"), " link that opens a pre-filled GitHub issue. Maintainers label reports ",
-        h("code", {}, "verified-correct"), " or ", h("code", {}, "verified-wrong"), " and the counts above update the next day."),
-      h("p", {}, ext(`https://github.com/${REPO}/issues?q=label%3Afeedback`, "See all reports →"))),
+      stat(pct(f.all?.rate), "of predictions came true", `${f.all?.hits ?? 0} of ${f.all?.checked ?? 0} checked`),
+      stat(pct(c.all?.rate), "of explanations backed by news or edits", `${c.all?.agree ?? 0} of ${c.all?.checked ?? 0} with evidence`),
+      stat(p.median_days == null ? "–" : `${p.median_days}d`, "a typical revival lasts", p.share_over_7_days == null ? "" : `${pct(p.share_over_7_days)} last over a week`),
+      stat(`${rr.correct ?? 0}/${rr.wrong ?? 0}`, "reader reports: right / wrong", `${rr.open ?? 0} awaiting review`)),
+    sectionHead("Did the Prediction Come True?", "A prediction counts if the older work hit 2× its usual readers within a week of the date."),
+    table(["Date", "Work", "We predicted", "Peak vs usual", "Result"], recent),
+    sectionHead("Do Our Explanations Hold Up?", "For explained spikes: did news or Wikipedia edits from the same days mention the same cause?"),
+    table(["Story type", "Checked", "Backed by evidence"], corrRows),
+    sectionHead("Help Us Check", null),
+    h("p", {}, "Every story has a ", h("b", {}, "Report a correction"), " link. Reports become GitHub issues; once reviewed and labelled ",
+      h("code", {}, "verified-correct"), " or ", h("code", {}, "verified-wrong"), ", they count above. ",
+      ext(`https://github.com/${REPO}/issues?q=label%3Afeedback`, h("b", {}, "See all reports →"))),
   ];
 }
 
+// ---------- Alerts ----------
 function alertsPage() {
   const base = new URL(".", location.href).href;
   const feeds = [
-    ["all", "Everything new: revivals, shared triggers, common threads, forecasts"],
-    ["unexplained", "Journalists: unexplained spikes, common threads and causes found in coverage"],
-    ["coming-up", "Rights holders, retail, programmers: upcoming sequels, adaptations and remakes"],
+    ["all", "Everything new: comebacks, shared causes, six-degrees threads, predictions"],
+    ["unexplained", "The mysteries: unexplained spikes and causes found in coverage. Great for journalists."],
+    ["coming-up", "Coming soon: sequels, remakes and adaptations of older works"],
     ["film-tv", "Film & TV"], ["music", "Songs, albums and musicals"], ["games", "Video games"], ["books", "Books, manga and comics"],
   ];
   return [
-    h("p", { class: "intro" }, "Get new findings without checking the site. Every alert is a new finding since the previous day."),
-    h("section", { class: "panel" }, h("h2", {}, "Daily email digest"),
-      h("ol", {},
-        h("li", {}, "Sign in to GitHub (free) and open ", ext(`https://github.com/${REPO}`, `github.com/${REPO}`), "."),
-        h("li", {}, "Click ", h("b", {}, "Watch"), " → ", h("b", {}, "Custom"), " → tick ", h("b", {}, "Issues"), " → ", h("b", {}, "Apply"), "."),
-        h("li", {}, "Each morning's digest is posted as an issue, so it arrives in your inbox.")),
-      h("p", { class: "sub" }, "No GitHub account? Paste any feed below into a free RSS-to-email service.")),
-    h("section", { class: "panel" }, h("h2", {}, "Feeds (Atom/RSS)"),
-      h("p", { class: "sub" }, "Paste a link into any feed reader (Feedly, Inoreader, NetNewsWire, Outlook, Slack's RSS app…)."),
-      h("ul", { class: "plain feeds" }, feeds.map(([n, d]) => h("li", {},
-        h("a", { href: `feeds/${n}.xml` }, `${n}.xml`),
-        h("button", { type: "button", class: "copy", onclick: (e) => copy(`${base}feeds/${n}.xml`, e.target) }, "Copy link"),
-        h("div", { class: "muted small" }, d))))),
-    h("section", { class: "panel" }, h("h2", {}, "Raw data"),
-      h("p", {}, "Build your own alerts from ", h("a", { href: "data/latest.json" }, "latest.json"), " or ", h("a", { href: "data/latest.csv" }, "latest.csv"),
-        ", which are refreshed daily at about 04:30 UTC.")),
+    h("p", { class: "intro" }, "Get the day's comebacks without checking the site."),
+    sectionHead("By Email", "A short daily digest, free."),
+    h("ol", {},
+      h("li", {}, "Sign in to GitHub (free) and open ", ext(`https://github.com/${REPO}`, h("b", {}, `github.com/${REPO}`)), "."),
+      h("li", {}, "Click ", h("b", {}, "Watch"), " → ", h("b", {}, "Custom"), " → tick ", h("b", {}, "Issues"), " → ", h("b", {}, "Apply"), "."),
+      h("li", {}, "Each morning's digest arrives in your inbox.")),
+    h("p", { class: "muted" }, "No GitHub account? Paste any feed below into a free RSS-to-email service."),
+    sectionHead("By Feed", "Paste a link into any feed reader (Feedly, Inoreader, NetNewsWire, Outlook, Slack…)."),
+    h("ul", { class: "plain" }, feeds.map(([n, d]) => h("li", {},
+      h("a", { href: `feeds/${n}.xml` }, h("b", {}, `${n}.xml`)),
+      h("button", { type: "button", class: "copy", onclick: (e) => copy(`${base}feeds/${n}.xml`, e.target) }, "Copy link"),
+      h("div", { class: "small muted" }, d)))),
+    sectionHead("Raw Data", null),
+    h("p", {}, "Build your own alerts from ", h("a", { href: "data/latest.json" }, h("b", {}, "latest.json")), " or ",
+      h("a", { href: "data/latest.csv" }, h("b", {}, "latest.csv")), ", refreshed daily around 04:30 UTC."),
   ];
 }
-
 function copy(text, btn) {
   (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject()).then(
     () => { btn.textContent = "Copied"; setTimeout(() => (btn.textContent = "Copy link"), 1500); },
@@ -555,15 +697,15 @@ function copy(text, btn) {
 }
 
 function method() {
-  return h("details", { class: "panel about", open: "" }, h("summary", {}, "How it works"),
+  return h("div", { class: "block" }, sectionHead("How It Works", null),
     h("ol", {},
-      h("li", {}, h("b", {}, "Watch."), " Every day, read Wikimedia's bulk pageview file and track ~35,000 notable older works (10+ language editions, released 10+ years ago). Also scan English Wikipedia's daily top 1,000."),
-      h("li", {}, h("b", {}, "Measure."), " Compare each work's last 3 and 14 days with its median over the previous ~11 months. 3× over 14 days, or 2.5× over 3 days, counts. Stages: emerging (began in the last 4 days), peaking, sustained (elevated 10+ days), fading."),
-      h("li", {}, h("b", {}, "Explain."), " Search Wikidata near the spike start for deaths of credited people, sequels, adaptations, remakes, new series entries (released or upcoming), new work by the same creator, and anniversaries. For spikes it can't explain, read Wikipedia edit summaries, edit bursts and GDELT news headlines from the same days."),
+      h("li", {}, h("b", {}, "Watch."), " Every day, read Wikimedia's bulk pageview file for ~35,000 notable older works (10+ language editions, released 10+ years ago), plus English Wikipedia's daily top 1,000."),
+      h("li", {}, h("b", {}, "Measure."), " Compare each work's last 3 and 14 days with its median over the previous ~11 months. 3× over 14 days, or 2.5× over 3 days, counts. Stages: just starting (began in the last 4 days), at its peak, still going (10+ days), cooling off."),
+      h("li", {}, h("b", {}, "Explain."), " Look in Wikidata near the spike for deaths of credited people, sequels, adaptations, remakes, new series entries, new work by the same creator, and anniversaries. For spikes it can't explain, read Wikipedia edit summaries, edit bursts and GDELT news headlines from the same days."),
       h("li", {}, h("b", {}, "Connect."), " Group spikes by a shared event, and unexplained spikes by a shared person with the same timing."),
-      h("li", {}, h("b", {}, "Filter."), " Set aside items that were also up this time last year (seasonal) and spikes that are almost all desktop traffic (likely bots)."),
-      h("li", {}, h("b", {}, "Forecast and check."), " List upcoming sequels/adaptations and anniversaries for older works, then check later whether attention actually rose.")),
-    h("p", {}, h("b", {}, "Limits. "), "Wikipedia attention isn't sales or streams. Wikidata is volunteer-edited and can be wrong or incomplete. News and edit-history lookups are best-effort and sometimes rate-limited. Two-work threads can be coincidence. Verify before publishing or acting."));
+      h("li", {}, h("b", {}, "Filter."), " Set aside seasonal items (also up this time last year) and spikes that are almost all desktop traffic (likely bots)."),
+      h("li", {}, h("b", {}, "Predict and check."), " List upcoming sequels, adaptations and anniversaries, then check later whether attention rose.")),
+    h("p", { class: "muted" }, h("b", {}, "Limits. "), "Wikipedia attention isn't sales or streams. Wikidata is volunteer-edited. News and edit lookups are best-effort and sometimes rate-limited. Two-title threads can be coincidence. Headlines are generated from the data. Verify before publishing or acting."));
 }
 
 window.addEventListener("scroll", () => { $("tip").hidden = true; }, { passive: true });
