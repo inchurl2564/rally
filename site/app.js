@@ -180,7 +180,7 @@ function sharedStory(t) {
 
 // Where a story's information comes from. Never in headlines or subheads; one tap away instead.
 function sourcesFor(r) {
-  const out = [];
+  const out = [h("p", { class: "small" }, ext(wikipedia(r.title), `${r.label} on Wikipedia →`))];
   if (r.editor_note) out.push(sourceLine(r.editor_note));
   const rp = r.ripple;
   if (rp) out.push(h("p", { class: "small" }, `${rp.name}'s Wikipedia page jumped ${rp.ratio}× on ${short(rp.date)} (${fmt(rp.peak)} views in a day), as interest in this ${noun(r.kind)} took off.`));
@@ -191,7 +191,7 @@ function sourcesFor(r) {
   return out;
 }
 function threadSources(t) {
-  const out = [];
+  const out = t.title ? [h("p", { class: "small" }, ext(wikipedia(t.title), `${t.name} on Wikipedia →`))] : [];
   if (t.editor_note) out.push(sourceLine(t.editor_note));
   if (t.person_jump) out.push(h("p", { class: "small" }, `${t.name}'s Wikipedia page jumped ${t.person_jump.ratio}× on ${short(t.person_jump.date)} (${fmt(t.person_jump.peak)} views in a day).`));
   if (t.cause) out.push(h("p", { class: "small" }, "Likely cause read from news headlines and Wikipedia edits."));
@@ -234,7 +234,7 @@ function pic(href, image, alt, width = 640, of = null) {
   if (!image) return null;
   const img = h("img", { src: `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(image)}?width=${width}`,
     alt: of || alt || "", loading: "lazy", decoding: "async" });
-  const box = h("div", { class: "media" }, ext(href, img),
+  const box = h("div", { class: "media" }, href ? ext(href, img) : img,
     ext(`https://commons.wikimedia.org/wiki/File:${encodeURIComponent(image)}`,
       h("span", { class: "credit" }, of ? `Pictured: ${of}` : "Photo: Wikimedia Commons")));
   img.addEventListener("error", () => { box.closest(".has-media")?.classList.remove("has-media"); box.remove(); });
@@ -548,7 +548,7 @@ function workChips(works, cap = 12) {
 function noteFeature(group) {
   const works = [...new Map(group.flatMap((t) => t.works.map((w) => state.byQid[w.qid])).filter(Boolean).map((w) => [w.qid, w])).values()];
   const top = topPictured(works), note = group[0].editor_note;
-  return withPic("article", "feature", top ? pic(wikipedia(top.title), top.image, top.label, 300, top.image_of) : null,
+  return withPic("article", "feature", top ? pic(null, top.image, top.label, 300, top.image_of) : null,
     h("div", {}, kickerEl(STREAM_TYPES[0]),
       h("h3", { class: "hed" }, `${oldNames(works)} are back`),
       h("p", { class: "dek" }, `${note.text} ${works.length} older titles connected to the story started rising together.`),
@@ -558,8 +558,8 @@ function noteFeature(group) {
 function sharedFeature(t) {
   const sst = sharedStory(t), top = topPictured(t.works.map((q) => state.byQid[q]).filter(Boolean));
   return withPic("article", "feature",
-    top ? pic(wikipedia(top.title), top.image, top.label, 300, top.image_of)
-      : t.image ? pic(wikidata(t.qid), t.image, t.text.split(": ").pop().split(" (")[0], 300) : null,
+    top ? pic(null, top.image, top.label, 300, top.image_of)
+      : t.image ? pic(null, t.image, t.text.split(": ").pop().split(" (")[0], 300) : null,
     h("div", {}, kickerEl(sst.reason, sst.kicker), h("h3", { class: "hed" }, sst.hed), h("p", { class: "dek" }, sst.dek),
       workChips(t.works.map((q) => state.byQid[q]).filter(Boolean))));
 }
@@ -584,7 +584,7 @@ function todayPage() {
     howItWorks(),
     streamSection(),
     h("section", { class: "front" },
-      withPic("article", "lead", pic(wikipedia(lead.title), lead.image, lead.label, 1200, lead.image_of),
+      withPic("article", "lead", pic(null, lead.image, lead.label, 1200, lead.image_of),
         kickerEl(st.reason, st.kicker),
         h("h2", { class: "hed" }, link(lead, st.hed)),
         h("p", { class: "dek" }, st.dek),
@@ -633,8 +633,8 @@ function todayPage() {
 
 function threadFeature(t) {
   const st = threadStory(t), top = topPictured(t.works.map((w) => state.byQid[w.qid]).filter(Boolean));
-  return withPic("article", "feature", top ? pic(wikipedia(top.title), top.image, top.label, 300, top.image_of)
-      : pic(wikidata(t.qid), t.image, t.name, 300, t.name),
+  return withPic("article", "feature", top ? pic(null, top.image, top.label, 300, top.image_of)
+      : pic(null, t.image, t.name, 300, t.name),
     h("div", {}, kickerEl(st.reason, st.kicker), h("h3", { class: "hed" }, st.hed), h("p", { class: "dek" }, st.dek),
       workChips(t.works.map((w) => state.byQid[w.qid]).filter(Boolean)),
       sourcesBox(threadSources(t))));
@@ -642,7 +642,7 @@ function threadFeature(t) {
 
 function storyCard(r) {
   const st = story(r);
-  return withPic("article", "story", pic(wikipedia(r.title), r.image, r.label, 640, r.image_of),
+  return withPic("article", "story", pic(null, r.image, r.label, 640, r.image_of),
     kickerEl(st.reason, st.kicker),
     h("h3", { class: "hed" }, link(r, st.hed)),
     h("p", { class: "dek" }, st.dek),
@@ -658,14 +658,14 @@ const NEWREL = { "adaptation of": "a new adaptation", "sequel to": "the sequel",
 const pictured = (cs) => [...cs].sort((a, b) => !(a.old_image || a.new_image) - !(b.old_image || b.new_image));
 const plain = (label) => label.replace(/ \((?:\d{4} )?(?:video game|film|album|song|novel|book|TV series|game|musical|play|manga|comics?)\)$/i, "");
 function derivMini(c) {
-  return withPic("article", "mini", c.old_image ? pic(wikipedia(c.old_title), c.old_image, c.old_label, 480, c.old_image_of)
-    : c.new_image ? pic(wikidata(c.new), c.new_image, c.new_label, 480, c.new_label) : null,
+  return withPic("article", "mini", c.old_image ? pic(null, c.old_image, c.old_label, 480, c.old_image_of)
+    : c.new_image ? pic(null, c.new_image, c.new_label, 480, c.new_label) : null,
     h("div", { class: "when" }, `Comeback due ${short(c.date)}`),
-    h("h3", { class: "hed" }, ext(wikipedia(c.old_title), plain(c.old_label)), ` (${c.old_release.slice(0, 4)})`),
+    h("h3", { class: "hed" }, plain(c.old_label), ` (${c.old_release.slice(0, 4)})`),
     h("p", { class: "dek" }, `${NEWREL[c.rel] ? NEWREL[c.rel][0].toUpperCase() + NEWREL[c.rel].slice(1) : "A new release"}, ${c.new_label}, arrives ${fmtDate(c.date)}.`));
 }
 function annMini(a) {
-  return withPic("article", "mini", pic(wikipedia(a.title), a.image, a.label, 480, a.image_of),
+  return withPic("article", "mini", pic(null, a.image, a.label, 480, a.image_of),
     h("div", { class: "when" }, short(a.date)),
     h("h3", { class: "hed" }, `${a.label} turns ${a.years}`),
     h("p", { class: "dek" }, `${noun(a.kind)[0].toUpperCase()}${noun(a.kind).slice(1)}, ${a.release.slice(0, 4)}${a.audience ? ` · ${fmt(a.audience)} views on a normal day` : ""}`));
@@ -880,12 +880,12 @@ function card(r, open) {
   if (r.corroborated === false) add(h("span", { class: "warn" }, "Evidence doesn't mention this trigger"));
   if (r.edit_burst && r.edit_burst.burst) add(`${r.edit_burst.edits} Wikipedia edits around the spike (usually ~${r.edit_burst.usual_per_5_days})`);
   add(correctionLink(r));
-  const photo = pic(wikipedia(r.title), r.image, r.label, 240, r.image_of);
+  const photo = pic(null, r.image, r.label, 240, r.image_of);
   return h("article", { class: `card${photo ? " has-media" : ""}`, id: `w-${r.qid}` },
     photo,
     h("div", {},
       kickerEl(st.reason, st.kicker),
-      h("h3", { class: "hed" }, ext(wikipedia(r.title), st.hed)),
+      h("h3", { class: "hed" }, st.hed),
       h("p", { class: "dek" }, st.dek),
       h("div", { class: "tags" },
         h("span", { class: "tagx" }, `${r.label} · ${r.release_year}`),
@@ -900,6 +900,7 @@ function card(r, open) {
           h("div", {}, h("dt", {}, "Began"), h("dd", {}, short(r.spike_start)))),
         r.triggers.length ? h("ul", { class: "triggers" }, r.triggers.map((t) =>
           h("li", {}, t.qid ? ext(wikidata(t.qid), t.text) : t.text, h("span", { class: "d" }, short(t.date))))) : null,
+        h("p", { class: "small" }, ext(wikipedia(r.title), `${r.label} on Wikipedia →`)),
         r.editor_note ? sourceLine(r.editor_note) : null,
         (r.signals || []).length ? h("ul", { class: "evidence" }, r.signals.map((x) => h("li", {}, h("span", { class: "src" }, x.source), x.text))) : null,
         evidenceList(r.evidence, 8),
@@ -955,12 +956,12 @@ function focusCard(qid) {
 function comingPage() {
   const cu = state.data.coming_up || { derivatives: [], anniversaries: [] };
   const dRows = (cu.derivatives || []).map((c) => h("tr", {},
-    h("td", {}, ext(wikipedia(c.old_title), h("b", {}, plain(c.old_label))), h("div", { class: "small muted" }, `${c.old_kind}, ${c.old_release.slice(0, 4)}`)),
-    h("td", {}, ext(wikidata(c.new), c.new_label), h("div", { class: "small muted" }, NEWREL[c.rel] || c.rel)),
+    h("td", {}, h("b", {}, plain(c.old_label)), h("div", { class: "small muted" }, `${c.old_kind}, ${c.old_release.slice(0, 4)}`)),
+    h("td", {}, c.new_label, h("div", { class: "small muted" }, NEWREL[c.rel] || c.rel)),
     h("td", { class: "nowrap" }, fmtDate(c.date))));
   const aRows = (cu.anniversaries || []).map((a) => h("tr", {},
     h("td", { class: "nowrap" }, fmtDate(a.date)),
-    h("td", {}, ext(wikipedia(a.title), h("b", {}, a.label)), h("div", { class: "small muted" }, `${a.kind}, ${a.release.slice(0, 4)}`)),
+    h("td", {}, h("b", {}, a.label), h("div", { class: "small muted" }, `${a.kind}, ${a.release.slice(0, 4)}`)),
     h("td", { class: "num" }, `${a.years}th`),
     h("td", { class: "num" }, a.audience ? fmt(a.audience) : "–")));
   return [
