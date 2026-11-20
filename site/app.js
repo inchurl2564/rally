@@ -505,7 +505,7 @@ window.addEventListener("resize", () => {
 function howItWorks() {
   return h("section", { class: "how", "aria-label": "How Rally works" },
     h("ol", {},
-      h("li", {}, h("b", {}, "We watch."), " Every day we count how many people read about older movies, shows, songs, games and books on Wikipedia."),
+      h("li", {}, h("b", {}, "We watch."), " Every day we count how many people read about older movies, shows, songs, games and books."),
       h("li", {}, h("b", {}, "We spot comebacks."), " When an old favorite suddenly draws far more readers than usual, it's back."),
       h("li", {}, h("b", {}, "We find out why."), " A new release, the news, a death, an anniversary. When we can't tell, it's ", h("i", {}, "Unexplained"), ", and you can tip us off.")));
 }
