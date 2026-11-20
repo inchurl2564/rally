@@ -1302,7 +1302,7 @@ function sparkline(r, compact) {
   const y = (x) => H - (lg(x) / lg(top)) * (H - 4);
   const pts = vals.map((x, i) => `${i},${y(x).toFixed(1)}`).join(" ");
   const svg = s("svg", { viewBox: `0 0 ${W} ${H}`, preserveAspectRatio: "none", role: "img",
-    "aria-label": `Daily Wikipedia views over 12 months for ${r.label}. Usually ${fmt(r.baseline)} a day, peak ${fmt(r.peak)} on ${fmtDate(r.peak_day)}.` });
+    "aria-label": `Daily views over 12 months for ${r.label}. Usually ${fmt(r.baseline)} a day, peak ${fmt(r.peak)} on ${fmtDate(r.peak_day)}.` });
   svg.append(s("polygon", { class: "area", points: `0,${H} ${pts} ${W},${H}` }));
   svg.append(s("line", { class: "base", x1: 0, x2: W, y1: y(r.baseline), y2: y(r.baseline) }));
   const si = daysBetween(r.spark_start, r.spike_start);
@@ -1320,7 +1320,7 @@ function sparkline(r, compact) {
   };
   const leave = () => { cursor.setAttribute("visibility", "hidden"); tip.hidden = true; };
   svg.addEventListener("pointermove", move); svg.addEventListener("pointerdown", move); svg.addEventListener("pointerleave", leave);
-  return h("div", { class: "spark" }, svg, compact ? null : h("div", { class: "spark-legend" }, h("span", {}, "Daily Wikipedia views, last 12 months"), h("span", {}, "dashed line = usual")));
+  return h("div", { class: "spark" }, svg, compact ? null : h("div", { class: "spark-legend" }, h("span", {}, "Daily views, last 12 months"), h("span", {}, "dashed line = usual")));
 }
 
 function focusGroup(g) {
