@@ -1689,9 +1689,19 @@ function weekPage() {
     const W = await loadOnce(`data/weekly/${key}.json`);
     const pickWeek = h("select", { "aria-label": "Choose a week" }, weeks.map((k) => h("option", { value: k, selected: k === key ? "" : null }, k === weeks[0] ? `This week` : `Week of ${k}`)));
     pickWeek.addEventListener("change", () => { state.weekId = pickWeek.value; render(); });
+    // Each of the 5 biggest gets a small chart of its last three weeks: still climbing, or fading?
+    const trend = (x) => {
+      if (!x.trend || !x.trend.length) return null;
+      const vals = x.trend, peak = Math.max(...vals), pi = vals.indexOf(peak);
+      const start = addDays(x.trend_end, -(vals.length - 1));
+      const last = vals.at(-1), now = last >= peak * 0.8 ? "still near its peak" : last >= (x.baseline || 1) * 2 ? "cooling off" : "back toward usual";
+      return h("div", { class: "rank-trend" }, sparkline({ spark: vals, baseline: x.baseline || 1, spark_start: start, spike_start: x.start >= start ? x.start : start,
+        peak, peak_day: addDays(start, pi), label: x.label }, true),
+        h("div", { class: "rank-trend-cap" }, `Last 3 weeks · ${now}`));
+    };
     const rank = (x, i) => h("li", {}, h("span", { class: "rank" }, String(i + 1)), h("div", {},
       h("b", {}, titleLink(x.qid, `${plain(x.label)} (${x.year})`)), x.more ? h("span", { class: "small muted" }, ` and ${x.more} more`) : null,
-      h("div", { class: "small muted" }, scoreDot(x.score), " ", `${fmtX(x.lift || x.peak_lift)} usual interest`, x.why ? ` · ${x.why}` : "")));
+      h("div", { class: "small muted" }, scoreDot(x.score), " ", `${fmtX(x.lift || x.peak_lift)} usual interest`, x.why ? ` · ${x.why}` : "")), trend(x));
     const leadRow = (x) => h("tr", {}, h("td", {}, h("b", {}, titleLink(x.qid, plain(x.label))), x.more ? h("span", { class: "small muted" }, ` +${x.more} more`) : null,
       h("div", { class: "small muted" }, `${x.kind}, ${x.year}`)), h("td", { class: "nowrap" }, fmtDate(x.start)),
       h("td", { class: "num nowrap" }, fmtX(x.peak_lift)), h("td", { class: "num" }, scoreDot(x.score)));

@@ -461,3 +461,8 @@ p, li, .dek, .about .mission { text-wrap: pretty; }
   .story.has-media:has(> .media.panel) { display: flex; }
   .story .hed { font-size: 19px; }
 }
+/* This week: small charts on the 5 biggest */
+.ranked li:has(.rank-trend) { grid-template-columns: 34px 1fr 240px; align-items: center; }
+.rank-trend .spark svg { height: 44px; }
+.rank-trend-cap { font-size: 11px; color: var(--muted); margin-top: 2px; }
+@media (max-width: 720px) { .ranked li:has(.rank-trend) { grid-template-columns: 34px 1fr; } .rank-trend { grid-column: 2; } }
