@@ -391,7 +391,12 @@ function sectionHead(title, sub, moreLabel, moreView) {
 }
 
 const SCORE_HELP = "Rallyback Score, 0 to 100: how big the jump is, how many people usually care, how many other places confirm it, and how long it has lasted.";
-const scorePill = (r) => (r.rally_score != null ? h("span", { class: "score", title: SCORE_HELP }, h("small", {}, "Rallyback Score"), String(r.rally_score)) : null);
+// The Rallyback Score is always just the number in a yellow circle; scoreKey() explains it.
+const scoreDot = (n, big, label = "Rallyback Score") => (n == null ? null
+  : h("span", { class: `score-dot${big ? " big" : ""}`, title: `${label}: ${n}. ${SCORE_HELP}`, "aria-label": `${label} ${n} out of 100`, role: "img" }, String(n)));
+const scorePill = (r) => scoreDot(r.rally_score, true);
+const scoreKey = () => h("p", { class: "score-key small muted" }, scoreDot(72),
+  h("span", {}, h("b", {}, "Rallyback Score"), ", 0 to 100: how big the jump is, how many people usually care, how many other places confirm it, and how long it has lasted."));
 
 function bigstat(r, withSpark = true) {
   return h("div", { class: "bigstat" }, scorePill(r), h("b", {}, mult(r)),
@@ -556,7 +561,8 @@ function howItWorks() {
     h("ol", {},
       h("li", {}, h("b", {}, "We watch."), " Every day we track how much attention older movies, shows, songs, games and books are getting."),
       h("li", {}, h("b", {}, "We spot comebacks."), " When an old favorite suddenly gets far more attention than usual, it's back."),
-      h("li", {}, h("b", {}, "We find out why."), " A new release, the news, a death, an anniversary. When we can't tell, it's ", h("i", {}, "Unexplained"), ", and you can tip us off.")));
+      h("li", {}, h("b", {}, "We find out why."), " A new release, the news, a death, an anniversary. When we can't tell, it's ", h("i", {}, "Unexplained"), ", and you can tip us off."),
+      h("li", {}, h("b", {}, "We score them."), " The number in the yellow circle ", scoreDot(72), " is the Rallyback Score, 0 to 100: the size of the jump, how many people usually care, confirmation elsewhere and staying power.")));
 }
 
 // ---------- one row per cause ----------
@@ -615,7 +621,7 @@ function groupCard(g, members) {
       h("p", { class: "dek" }, g.story.dek),
       h("div", { class: "tags" },
         h("span", { class: "tagx" }, `${members.length} titles`),
-        scores.length ? h("span", { class: "tagx", title: SCORE_HELP }, `Top Rallyback Score ${Math.max(...scores)}`) : null,
+        scores.length ? scoreDot(Math.max(...scores), false, "Top Rallyback Score in this group") : null,
         best.stage === "emerging" ? h("span", { class: "tagx hot" }, "Just starting") : null),
       inside));
 }
@@ -693,12 +699,11 @@ function todayPage() {
         sourcesBox(sourcesFor(lead))),
       h("aside", { class: "index" },
         h("h2", {}, "Top 10 comebacks"),
-        h("p", {}, "Ranked by Rallyback Score: the size of the jump, how many people usually care, confirmation elsewhere and staying power."),
+        h("p", {}, "Ranked by Rallyback Score, the number in the yellow circle."),
         h("ol", {}, topStories(lead, rest, 10).map(({ r, g }) => h("li", {}, h("div", {},
           h("div", { class: "t" }, g ? h("a", { href: `#${g.id}`, onclick: (e) => { e.preventDefault(); focusGroup(g); } }, oldNames(g.works))
             : link(r, r.label)),
-          h("div", { class: "s" }, r.rally_score != null ? h("b", { class: "sc", title: SCORE_HELP }, `${r.rally_score}`) : null,
-            r.rally_score != null ? " · " : null,
+          h("div", { class: "s" }, scoreDot(r.rally_score), " ",
             g ? `${g.works.length} titles · ${g.story.kicker}` : `${mult(r)} usual interest · ${story(r).kicker}`))))))),
   ];
   // Works already shown in a group feature aren't repeated as cards.
@@ -806,6 +811,7 @@ function mysteriesPage() {
     threads.length ? sectionHead("Linked by one person", "Several titles with the same person, all rising at the same time, for no reason we can find.") : null,
     threads.length ? h("div", {}, threads.map(threadFeature)) : null,
     sectionHead("Open cases", "Newest first."),
+    scoreKey(),
     h("div", { class: "grid" }, L.map(storyCard)),
   ].filter(Boolean);
 }
@@ -877,6 +883,7 @@ function listSection() {
   q.addEventListener("input", (e) => { state.q = e.target.value.trim().toLowerCase(); renderList(); });
   return h("section", { id: "list-section" },
     h("div", { class: "filters" }, q, kindSel, stageSel, sortSel),
+    scoreKey(),
     h("div", { id: "chips", class: "chips", role: "group", "aria-label": "Filter by type of story" }),
     h("p", { id: "count", class: "small muted" }),
     h("div", { id: "cards", class: "cards" }));
@@ -1029,7 +1036,7 @@ function card(r, open, inGroup) {
         inGroup ? null : h("span", { class: "tagx" }, `${r.label} · ${r.release_year}`),
         r.stage === "emerging" ? h("span", { class: "tagx hot" }, "Just starting") : r.stage ? h("span", { class: "tagx" }, STAGES[r.stage]) : null,
         r.early ? h("span", { class: "tagx", title: "Spotted by our watchlist before it reached Wikipedia's top 1,000" }, "Caught early") : null,
-        r.rally_score != null ? h("span", { class: "tagx", title: SCORE_HELP }, `Rallyback Score ${r.rally_score}`) : null),
+        scoreDot(r.rally_score)),
       isOpen(r) ? h("div", { class: "card-ask" }, tipLink(r)) : null,
       h("details", { class: "more-info", open: open ? "" : null }, h("summary", {}, "Numbers & sources"),
         sparkline(r),
