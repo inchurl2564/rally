@@ -194,7 +194,7 @@ const VIEWS = {
   alerts: { label: "Get Alerts", page: "alerts" },
   // professional views
   journalists: { pro: true, label: "Journalists",
-    intro: "Story leads: big revivals nobody has explained, works that rose together around one person, and causes suggested by news and Wikipedia edits.",
+    intro: "Story leads: big comebacks nobody has explained, works that rose together around one person, and causes suggested by news and Wikipedia edits.",
     panels: ["threads"], preset: { verdicts: ["unexplained", "coverage", "common thread", "weak link"], sort: "start" }, feeds: ["unexplained"] },
   rights: { pro: true, label: "Rights holders",
     intro: "Catalog titles gaining attention now, and what's coming. Titles that are just starting to rise are the ones to promote, reissue, pitch or license.",
@@ -456,7 +456,7 @@ window.addEventListener("resize", () => {
 // ---------- Today ----------
 function todayPage() {
   const L = live();
-  if (!L.length) return [h("p", { class: "status" }, "A quiet day: no revivals in this edition.")];
+  if (!L.length) return [h("p", { class: "status" }, "A quiet day: no comebacks in this edition.")];
   // Lead with a story people will recognise: a real everyday audience, ideally a picture.
   const known = L.slice(0, 12).filter((r) => r.baseline >= 100);
   const lead = known.find((r) => r.image) || known[0] || L.find((r) => r.image) || L[0];
@@ -472,7 +472,7 @@ function todayPage() {
         sourceLine(lead.editor_note),
         bigstat(lead)),
       h("aside", { class: "index" },
-        h("h2", {}, "The Revival Index"),
+        h("h2", {}, "The Comeback Index"),
         h("p", {}, "The biggest comebacks in this edition"),
         h("ol", {}, rest.slice(0, 10).map((r) => h("li", {}, h("div", {},
           h("div", { class: "t" }, link(r, r.label)),
@@ -515,7 +515,7 @@ function todayPage() {
     out.push(sectionHead("Happy Anniversary", "Big birthdays in the next two months.", "Full calendar", "coming"));
     out.push(h("div", { class: "rail" }, cu.anniversaries.slice(0, 10).map(annMini)));
   }
-  out.push(sectionHead(`Every Revival (${state.data.results.length})`, "Search, filter and dig into the numbers."));
+  out.push(sectionHead(`Every Comeback (${state.data.results.length})`, "Search, filter and dig into the numbers."));
   out.push(listSection());
   return out.filter(Boolean);
 }
@@ -545,7 +545,7 @@ function derivMini(c) {
     : pic(wikipedia(c.old_title), c.old_image, c.old_label, 480),
     h("div", { class: "when" }, `Due ${short(c.date)}`),
     h("h3", { class: "hed" }, c.new_label),
-    h("p", { class: "dek" }, `${c.rel[0].toUpperCase()}${c.rel.slice(1)} `, ext(wikipedia(c.old_title), c.old_label), ` (${c.old_release.slice(0, 4)}). Expect a revival.`));
+    h("p", { class: "dek" }, `${c.rel[0].toUpperCase()}${c.rel.slice(1)} `, ext(wikipedia(c.old_title), c.old_label), ` (${c.old_release.slice(0, 4)}). Expect a comeback.`));
 }
 function annMini(a) {
   return withPic("article", "mini", pic(wikipedia(a.title), a.image, a.label, 480),
@@ -575,7 +575,7 @@ function proPage(v) {
     h("p", { class: "intro" }, v.intro),
     v.feeds ? feedStrip(v.feeds) : null,
     ...panels,
-    sectionHead("Revivals", null),
+    sectionHead("Comebacks", null),
     listSection(),
   ].filter(Boolean);
 }
@@ -594,7 +594,7 @@ function panel(name) {
       h("div", { class: "rail" }, cu.anniversaries.slice(0, 10).map(annMini)));
   if (name === "downloads") {
     const run = $("run").value;
-    return h("div", { class: "block" }, sectionHead("Downloads", "Data is derived from CC0 sources. Please cite as “Revival Radar (open data from Wikimedia and Wikidata)”."),
+    return h("div", { class: "block" }, sectionHead("Downloads", "Data is derived from CC0 sources. Please cite as “Rally (open data from Wikimedia and Wikidata)”."),
       h("ul", { class: "plain" },
         h("li", {}, h("a", { href: "data/latest.csv", download: "" }, h("b", {}, "latest.csv")), " · spreadsheet of this edition"),
         h("li", {}, h("a", { href: `data/runs/${run}.json` }, h("b", {}, `runs/${run}.json`)), " · full snapshot with 12-month series, triggers and evidence"),
@@ -672,7 +672,7 @@ function renderList() {
     if (!state.verdicts.size) { const fa = FILTERED.has(a.verdict), fb = FILTERED.has(b.verdict); if (fa !== fb) return fa ? 1 : -1; }
     return SORTS[state.sort](a, b);
   });
-  $("count").textContent = list.length === all.length ? `${all.length} revivals` : `${list.length} of ${all.length} revivals`;
+  $("count").textContent = list.length === all.length ? `${all.length} comebacks` : `${list.length} of ${all.length} comebacks`;
   const open = !!VIEWS[state.view].pro;
   $("cards").replaceChildren(...(list.length ? list.map((r) => card(r, open)) : [h("p", { class: "status" }, "Nothing matches these filters.")]));
 }

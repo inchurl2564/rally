@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Revival Radar: find old pop-culture works that are suddenly getting attention
+Rally (the comeback report): find old pop-culture works that are suddenly getting attention
 again, and guess why.
 
 Uses only open, unrestricted sources:
@@ -45,7 +45,7 @@ import urllib.request
 
 _contact = os.environ.get("RADAR_CONTACT") or (
     f"https://github.com/{os.environ['GITHUB_REPOSITORY']}" if os.environ.get("GITHUB_REPOSITORY") else "")
-UA = f"RevivalRadar/0.2 ({_contact or 'open-data prototype'}; python-urllib)"
+UA = f"Rally/0.3 ({_contact or 'open-data prototype'}; python-urllib)"
 HEALTH = {"pages_skipped": 0, "lookups_failed": 0, "requests": 0}
 PV = "https://wikimedia.org/api/rest_v1/metrics/pageviews"
 SPARQL = "https://query.wikidata.org/sparql"
@@ -692,7 +692,7 @@ def write_html(results: list[dict], meta: dict, path: str, clusters=(), threads=
     doc = f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Revival Radar</title>
+<title>Rally</title>
 <style>
 :root {{ --bg:#fbfaf7; --fg:#1d1d1b; --muted:#6b6a65; --card:#fff; --line:#e6e3dc;
   --accent:#2d5bd7; --base:#b9b5ab;
@@ -735,7 +735,7 @@ footer {{ margin-top:32px; font-size:12px; color:var(--muted); max-width:72ch }}
 @media (max-width:560px) {{ dl {{ grid-template-columns:repeat(2, auto) }} .head {{ flex-direction:column }} }}
 </style></head>
 <body><main>
-<h1>Revival Radar</h1>
+<h1>Rally</h1>
 <p class="lede">Creative works released at least {meta['min_age']} years ago that reached English Wikipedia's daily top 1,000
 between {esc(meta['window_start'])} and {esc(meta['window_end'])}, ranked by how far their recent attention sits above
 their own 12-month baseline. Each is checked against Wikidata for a likely trigger.</p>

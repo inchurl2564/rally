@@ -1,4 +1,6 @@
-# Revival Radar
+# Rally
+
+*The comeback report.*
 
 Finds older films, TV shows, songs, albums, games and books that are suddenly getting attention again, explains why, and forecasts which ones are likely to come back next.
 
@@ -47,7 +49,7 @@ Every card has a **Report a correction** link that opens a pre-filled issue labe
 ## Setup (one time)
 
 1. **Settings → Pages → Build and deployment → Source: GitHub Actions.**
-2. **Actions → Update Revival Radar → Run workflow** to run it immediately.
+2. **Actions → Update Rally → Run workflow** to run it immediately.
    After that it runs daily at 04:23 UTC.
 
 The first run takes longer (up to ~1 hour) because it builds the watchlist and downloads about 4 weeks of bulk pageview files. Early detection switches on once 8 days of bulk data exist. Later runs reuse the cache and take a few minutes.

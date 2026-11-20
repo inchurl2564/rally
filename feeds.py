@@ -17,14 +17,14 @@ import json
 import os
 
 FEEDS = {
-    "all": ("Revival Radar: all new findings", lambda e: True),
-    "unexplained": ("Revival Radar: unexplained spikes & common threads (for journalists)",
+    "all": ("Rally: all new comebacks", lambda e: True),
+    "unexplained": ("Rally: the mysteries (unexplained comebacks, for journalists)",
                     lambda e: e["verdict"] in ("unexplained", "common thread", "coverage") or e["kind_of"] == "thread"),
-    "coming-up": ("Revival Radar: coming up", lambda e: e["kind_of"] == "forecast"),
-    "film-tv": ("Revival Radar: film & TV", lambda e: e.get("medium") in ("film", "TV series")),
-    "music": ("Revival Radar: music", lambda e: e.get("medium") in ("song", "album", "musical")),
-    "games": ("Revival Radar: video games", lambda e: e.get("medium") == "video game"),
-    "books": ("Revival Radar: books & comics", lambda e: e.get("medium") in ("book", "manga/comic")),
+    "coming-up": ("Rally: coming soon", lambda e: e["kind_of"] == "forecast"),
+    "film-tv": ("Rally: film & TV", lambda e: e.get("medium") in ("film", "TV series")),
+    "music": ("Rally: music", lambda e: e.get("medium") in ("song", "album", "musical")),
+    "games": ("Rally: video games", lambda e: e.get("medium") == "video game"),
+    "books": ("Rally: books & comics", lambda e: e.get("medium") in ("book", "manga/comic")),
 }
 KEEP = 300
 
@@ -96,7 +96,7 @@ def _atom(name: str, title: str, entries: list[dict], site_url: str) -> str:
   <link rel="self" href="{_x(site_url)}feeds/{name}.xml"/>
   <link href="{_x(site_url)}"/>
   <updated>{updated}</updated>
-  <author><name>Revival Radar</name></author>{items}
+  <author><name>Rally</name></author>{items}
 </feed>
 """
 
@@ -124,9 +124,9 @@ def write(site: str, data: dict, prev: dict | None, site_url: str, labels: dict)
 
 def _digest(site: str, data: dict, new: list[dict], site_url: str) -> None:
     run = data["meta"]["window_end"]
-    sections = [("Shared triggers", "shared"), ("Common threads", "thread"), ("New revivals", "work"),
+    sections = [("Shared triggers", "shared"), ("Common threads", "thread"), ("New comebacks", "work"),
                 ("Coming up", "forecast")]
-    lines = [f"Daily Revival Radar for **{run}**: {len(new)} new findings. "
+    lines = [f"Rally, the comeback report, for **{run}**: {len(new)} new findings. "
              f"[Open the site]({site_url}?run={run}).", ""]
     for head, k in sections:
         items = [e for e in new if e["kind_of"] == k][:12]

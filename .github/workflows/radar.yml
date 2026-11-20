@@ -1,4 +1,4 @@
-name: Update Revival Radar
+name: Update Rally
 
 on:
   schedule:
@@ -80,14 +80,14 @@ jobs:
         run: |
           [ -s site/data/digest.md ] || exit 0
           grep -q "0 new findings" site/data/digest.md && { echo "Nothing new today."; exit 0; }
-          gh label create digest --color 2d5bd7 --description "Daily Revival Radar digest" 2>/dev/null || true
+          gh label create digest --color 2d5bd7 --description "Daily Rally digest" 2>/dev/null || true
           gh label create feedback --color b4462c --description "Reader correction" 2>/dev/null || true
           gh label create verified-correct --color 2d6f4f 2>/dev/null || true
           gh label create verified-wrong --color 8a877f 2>/dev/null || true
           for n in $(gh issue list --label digest --state open --json number --jq '.[].number'); do
             gh issue close "$n" --reason completed >/dev/null
           done
-          gh issue create --title "Revival Radar digest: $(date -u -d yesterday '+%b %-d, %Y')" \
+          gh issue create --title "Rally: the comeback report, $(date -u -d yesterday '+%b %-d, %Y')" \
             --label digest --body-file site/data/digest.md
 
       - uses: actions/configure-pages@v5
