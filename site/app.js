@@ -1404,6 +1404,7 @@ function comingPage() {
       { n: due.length, label: "recently due", title: "Recently due" }]),
     [...dAll, ...aAll].some((x) => x.prediction) ? h("p", { class: "small muted outlook-key" }, h("b", {}, "Expect about 3× · 70% chance"),
       " is our prediction, learned from over 10,000 past sequels, adaptations, series entries and anniversaries since 2016: the usual size of the comeback, and how often similar cases reached at least 2× their usual interest.") : null,
+    comingCalendar(cu),
     ...pageSection("Due for a comeback", "A sequel, remake or adaptation is on the way. Release dates can slip.",
       { cards: dCards, rest: dAll.filter((c) => !dCards.includes(c)), all: dAll, card: derivCard, row: dRow }, ["Due", "The original", "What's bringing it back", "Outlook"], "comebacks due"),
     ...pageSection("Big anniversaries", "Round-number birthdays of well-known older works.",
@@ -1689,9 +1690,19 @@ function weekPage() {
     const W = await loadOnce(`data/weekly/${key}.json`);
     const pickWeek = h("select", { "aria-label": "Choose a week" }, weeks.map((k) => h("option", { value: k, selected: k === key ? "" : null }, k === weeks[0] ? `This week` : `Week of ${k}`)));
     pickWeek.addEventListener("change", () => { state.weekId = pickWeek.value; render(); });
+    // Each of the 5 biggest gets a small chart of its last three weeks: still climbing, or fading?
+    const trend = (x) => {
+      if (!x.trend || !x.trend.length) return null;
+      const vals = x.trend, peak = Math.max(...vals), pi = vals.indexOf(peak);
+      const start = addDays(x.trend_end, -(vals.length - 1));
+      const last = vals.at(-1), now = last >= peak * 0.8 ? "still near its peak" : last >= (x.baseline || 1) * 2 ? "cooling off" : "back toward usual";
+      return h("div", { class: "rank-trend" }, sparkline({ spark: vals, baseline: x.baseline || 1, spark_start: start, spike_start: x.start >= start ? x.start : start,
+        peak, peak_day: addDays(start, pi), label: x.label }, true),
+        h("div", { class: "rank-trend-cap" }, `Last 3 weeks · ${now}`));
+    };
     const rank = (x, i) => h("li", {}, h("span", { class: "rank" }, String(i + 1)), h("div", {},
       h("b", {}, titleLink(x.qid, `${plain(x.label)} (${x.year})`)), x.more ? h("span", { class: "small muted" }, ` and ${x.more} more`) : null,
-      h("div", { class: "small muted" }, scoreDot(x.score), " ", `${fmtX(x.lift || x.peak_lift)} usual interest`, x.why ? ` · ${x.why}` : "")));
+      h("div", { class: "small muted" }, scoreDot(x.score), " ", `${fmtX(x.lift || x.peak_lift)} usual interest`, x.why ? ` · ${x.why}` : "")), trend(x));
     const leadRow = (x) => h("tr", {}, h("td", {}, h("b", {}, titleLink(x.qid, plain(x.label))), x.more ? h("span", { class: "small muted" }, ` +${x.more} more`) : null,
       h("div", { class: "small muted" }, `${x.kind}, ${x.year}`)), h("td", { class: "nowrap" }, fmtDate(x.start)),
       h("td", { class: "num nowrap" }, fmtX(x.peak_lift)), h("td", { class: "num" }, scoreDot(x.score)));
@@ -1842,6 +1853,52 @@ function mysteryMap(L) {
       chart.querySelector("svg")?.remove();
       chart.append(svg.node());
     });
+}
+
+
+// ---------- Coming up: the next six months, as a planner ----------
+const CAL_KINDS = {
+  release: { label: "Sequel, remake or adaptation", color: "var(--s2)", sec: "Due for a comeback" },
+  subject: { label: "Documentary or biopic", color: "var(--s1)", sec: "Documentaries and biopics" },
+  anniversary: { label: "Anniversary", color: "var(--s5)", sec: "Big anniversaries" },
+  seasonal: { label: "Back every year", color: "var(--s6)", sec: "Back every year" },
+};
+function comingCalendar(cu) {
+  const today = new Date().toISOString().slice(0, 10), end = addDays(today, 183);
+  const items = [
+    ...(cu.derivatives || []).map((c) => ({ kind: "release", date: c.date, name: plain(c.old_label), what: c.new_label, p: c.prediction })),
+    ...(cu.subjects || []).map((sj) => ({ kind: "subject", date: sj.date, name: sj.who_label, what: sj.new_label, p: null })),
+    ...(cu.anniversaries || []).map((a) => ({ kind: "anniversary", date: a.date, name: plain(a.label), what: `turns ${a.years}`, p: a.prediction })),
+    ...(cu.seasonal || []).map((a) => ({ kind: "seasonal", date: a.date, name: plain(a.label), what: a.holiday || "back every year", p: a.prediction })),
+  ].filter((i) => i.date >= today && i.date <= end);
+  if (!items.length) return null;
+  const months = [];
+  for (let i = 0; i < 6; i++) {
+    const d = new Date(today + "T12:00:00"); d.setDate(1); d.setMonth(d.getMonth() + i);
+    months.push(d.toISOString().slice(0, 7));
+  }
+  // Each month: its biggest expected comebacks, at most 2 of any one kind so a month isn't all Christmas.
+  const col = (m) => {
+    const all = items.filter((i) => i.date.startsWith(m)).sort((a, b) => ((b.p || {}).expected || 0) - ((a.p || {}).expected || 0) || a.date.localeCompare(b.date));
+    const pick = [], per = {};
+    for (const i of all) { if ((per[i.kind] || 0) < 2 && pick.length < 5) { pick.push(i); per[i.kind] = (per[i.kind] || 0) + 1; } }
+    for (const i of all) { if (pick.length >= 5) break; if (!pick.includes(i)) pick.push(i); }
+    pick.sort((a, b) => a.date.localeCompare(b.date));
+    const name = new Date(m + "-15T12:00:00").toLocaleDateString("en-US", { month: "long" });
+    return h("div", { class: "cal-month" },
+      h("h3", {}, name, h("span", { class: "cal-n" }, all.length ? ` · ${all.length}` : "")),
+      all.length ? h("ul", {}, pick.map((i) => h("li", {},
+        h("i", { class: "cal-dot", style: `background:${CAL_KINDS[i.kind].color}`, title: CAL_KINDS[i.kind].label }),
+        h("div", {}, h("a", { href: `#${secId(CAL_KINDS[i.kind].sec)}`, onclick: (e) => { e.preventDefault(); $(secId(CAL_KINDS[i.kind].sec))?.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); } }, i.name),
+          h("div", { class: "small muted" }, `${short(i.date)} · ${i.what}${i.p ? ` · expect about ${fmtX(i.p.expected)}` : ""}`))))) : h("p", { class: "small muted" }, "Nothing on record yet."),
+      all.length > pick.length ? h("p", { class: "cal-more small muted" }, `+${all.length - pick.length} more`) : null);
+  };
+  return h("section", { class: "cal", "aria-label": "The next six months" },
+    h("div", { class: "stream-head" }, h("div", {}, h("h2", {}, "The next six months"),
+      h("p", {}, "The biggest comebacks we expect each month. The full lists are below."))),
+    h("div", { class: "legend", role: "list" }, Object.values(CAL_KINDS).filter((k) => items.some((i) => CAL_KINDS[i.kind] === k)).map((k) =>
+      h("span", { role: "listitem" }, h("i", { style: `background:${k.color}` }), k.label))),
+    h("div", { class: "cal-grid" }, months.map(col)));
 }
 
 // ---------- corrections log (site/data/corrections.json, edited by hand) ----------

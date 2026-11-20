@@ -326,6 +326,14 @@ def weekly(site: str, hist: dict, runs: list[str], latest: dict) -> None:
                            "why": (_causes(row.get("causes") or [], hist["names"], notes) or [None])[0]}
     notes = {n["id"]: n.get("note") for n in _load("annotations.json", []) if isinstance(n, dict) and n.get("id")}
     top5 = _one_per_story([pick(q, row) for q, row in ranked if row.get("verdict") not in UNEXPLAINED], 5)
+    # The last three weeks of each one's daily interest, for the small charts on This week.
+    R = {r["qid"]: r for r in latest.get("results", [])}
+    for t in top5:
+        r = R.get(t["qid"])
+        if r and r.get("spark"):
+            t["trend"] = r["spark"][-21:]
+            t["trend_end"] = (dt.date.fromisoformat(r["spark_start"]) + dt.timedelta(days=len(r["spark"]) - 1)).isoformat()
+            t["baseline"] = r.get("baseline")
     mystery = next((pick(q, row) for q, row in ranked if row.get("verdict") in UNEXPLAINED), None)
     if mystery:
         mystery.pop("_key", None)
