@@ -384,6 +384,10 @@ tr.card-row .story { max-width: 560px; margin: 0; }
 .contents a.toggle::after { content: " +"; color: var(--muted); }
 .contents a.toggle[aria-expanded="true"]::after { content: " –"; }
 .case-closed[hidden] { display: none; }
+/* Predictions on Coming up */
+.outlook { font-size: 13.5px; color: var(--muted); margin: 8px 0 0; }
+.outlook b { color: var(--ink); }
+.outlook-key { margin: 8px 0 0; max-width: 80ch; }
 /* About us */
 .about { }
 .about .mission { font: 400 18px/1.6 var(--sans); margin: 0 0 8px; }

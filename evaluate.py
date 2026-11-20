@@ -41,7 +41,8 @@ def check_forecasts(site: str, project: str) -> dict:
     for f in sorted(os.listdir(rdir)) if os.path.isdir(rdir) else []:
         run = _load(os.path.join(rdir, f), {})
         cu = run.get("coming_up", {})
-        for kind, items in (("derivative", cu.get("derivatives", [])), ("anniversary", cu.get("anniversaries", []))):
+        for kind, items in (("derivative", cu.get("derivatives", [])), ("anniversary", cu.get("anniversaries", [])),
+                            ("seasonal", cu.get("seasonal", []))):
             for it in items:
                 title = it.get("old_title") or it.get("title")
                 key = f"{kind}|{title}|{it['date']}"
@@ -60,13 +61,16 @@ def check_forecasts(site: str, project: str) -> dict:
         checks[key] = {"kind": kind, "title": title, "date": d.isoformat(), "ratio": ratio,
                        "hit": ratio >= 2.0, "label": it.get("old_label") or it.get("label"),
                        "detail": (f"{it['rel']} {it['new_label']}" if kind == "derivative"
-                                  else f"{it['years']}th anniversary"),
+                                  else f"{it['years']}th anniversary" if kind == "anniversary"
+                                  else "back every year"),
                        # Kept for "expected bump" research: what kind of release, how old the original,
                        # and the Wikidata IDs to look up series order later.
                        "rel": it.get("rel"), "new_kind": it.get("new_kind"), "new": it.get("new"),
                        "old": it.get("old") or it.get("qid"), "old_kind": it.get("old_kind") or it.get("kind"),
                        "old_year": (it.get("old_release") or it.get("release") or "")[:4],
-                       "years": it.get("years"), "audience": it.get("audience"), "baseline": round(med)}
+                       "years": it.get("years"), "audience": it.get("audience"), "baseline": round(med),
+                       # what we predicted at the time, so the result can be shown next to it
+                       "predicted": {k: (it.get("prediction") or {}).get(k) for k in ("expected", "chance")} if it.get("prediction") else None}
     with open(path, "w") as f:
         json.dump(checks, f, separators=(",", ":"))
     return checks
@@ -85,6 +89,7 @@ def summarize(site: str, project: str) -> dict:
     forecasts = {"all": rate(fc),
                  "derivative": rate([x for x in fc if x["kind"] == "derivative"]),
                  "anniversary": rate([x for x in fc if x["kind"] == "anniversary"]),
+                 "seasonal": rate([x for x in fc if x["kind"] == "seasonal"]),
                  "recent": sorted(fc, key=lambda x: x["date"], reverse=True)[:30]}
 
     # Corroboration and persistence from the archive of runs.

@@ -889,7 +889,8 @@ def write_site_data(site: str, results, meta, clusters, threads, keep_runs: int,
     want = {r["qid"] for r in results} | {t["qid"] for t in threads} | \
            {g["trigger"].get("qid") for g in clusters} | \
            {c[k] for c in (coming_up or {}).get("derivatives", []) for k in ("new", "old")} | \
-           {a["qid"] for a in (coming_up or {}).get("anniversaries", [])}
+           {a["qid"] for a in (coming_up or {}).get("anniversaries", [])} | \
+           {a["qid"] for a in (coming_up or {}).get("seasonal", [])}
     want |= {(r.get("ripple") or {}).get("qid") for r in results}
     images = fetch_images(want)
     for r in results:
@@ -899,7 +900,8 @@ def write_site_data(site: str, results, meta, clusters, threads, keep_runs: int,
             r["image"], r["image_of"] = images[rp["qid"]], rp.get("name")
     people = fetch_people_images({r["qid"] for r in results if not r["image"]} |
                                  {c["old"] for c in (coming_up or {}).get("derivatives", []) if not images.get(c["old"])} |
-                                 {a["qid"] for a in (coming_up or {}).get("anniversaries", []) if not images.get(a["qid"])})
+                                 {a["qid"] for a in (coming_up or {}).get("anniversaries", []) if not images.get(a["qid"])} |
+                                 {a["qid"] for a in (coming_up or {}).get("seasonal", []) if not images.get(a["qid"])})
     for r in results:
         if not r["image"] and r["qid"] in people:
             r["image"], r["image_of"] = people[r["qid"]]
@@ -907,7 +909,7 @@ def write_site_data(site: str, results, meta, clusters, threads, keep_runs: int,
         c["new_image"], c["old_image"], c["old_image_of"] = images.get(c["new"]), images.get(c["old"]), None
         if not c["old_image"] and c["old"] in people:
             c["old_image"], c["old_image_of"] = people[c["old"]]
-    for a in (coming_up or {}).get("anniversaries", []):
+    for a in (coming_up or {}).get("anniversaries", []) + (coming_up or {}).get("seasonal", []):
         a["image"], a["image_of"] = images.get(a["qid"]), None
         if not a["image"] and a["qid"] in people:
             a["image"], a["image_of"] = people[a["qid"]]
@@ -1162,6 +1164,26 @@ def main():
         except Exception as e:
             log(f"      derivative forecast failed: {e}")
         coming_up["anniversaries"] = forecast.anniversaries(watch, audience)
+        # Predictions: learn from past releases and anniversaries how big a comeback to expect,
+        # and find works that come back around the same date every year.
+        try:
+            import calibrate
+            # The past is measured once (calibrate.py, via the "Backfill predictions" workflow);
+            # nightly we only add our own newly checked forecasts and apply the model.
+            calibrate.refresh(args.site)
+            calibrate.annotate(args.site, coming_up, audience)
+            by_qid = {w["qid"]: t for t, w in watch.items()}
+            seasonal_seen = {r["title"] for r in results if (r.get("last_year_lift") or 0) >= 2 or r["verdict"] == "seasonal"}
+            hdir = os.path.join(args.site, "data", "history")
+            for f in sorted(os.listdir(hdir)) if os.path.isdir(hdir) else []:
+                with open(os.path.join(hdir, f)) as fh:
+                    month = json.load(fh)
+                for day in month.get("days", {}).values():
+                    seasonal_seen |= {by_qid[q] for q, row in day.items() if row[3] == "seasonal" and q in by_qid}
+            coming_up["seasonal"] = calibrate.seasonal(args.site, args.project, watch, audience, seasonal_seen,
+                                                       budget_s=3 * 60)
+        except Exception as e:
+            log(f"      predictions failed: {e}")
     for r in results:
         r["label"] = nice_label(r["label"], r["title"])
         for t in r["triggers"]:
