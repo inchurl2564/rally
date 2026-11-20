@@ -7,7 +7,8 @@ Updated as items move. Last updated: 2026-11-20 (prediction backfill done: 10,41
 
 | Item | Waiting for | Then |
 | --- | --- | --- |
-| Own domain (therallyback.com) and move to Cloudflare Pages | Buying the domain; a free Cloudflare account | Point the domain at Cloudflare, move hosting (about a day). Needed before anything commercial: GitHub Pages doesn't allow it |
+| Move hosting to Cloudflare Pages (can happen now, before the domain) | A free Cloudflare account, connected to the GitHub repo (steps below) | Site served at therallyback.pages.dev alongside the GitHub Pages copy; feeds and share links switch to it |
+| Own domain (therallyback.com) | Buying the domain | Add it to the Cloudflare project; GitHub Pages copy becomes a pointer to it. Needed before anything commercial: GitHub Pages doesn't allow it |
 | "Where to watch / listen / read / play" links (affiliate) | The domain move above; joining Apple, Amazon, Bookshop.org and a game-store affiliate program | Buttons on every title and story card, plus the disclosure line |
 | Newsletter sign-up and the weekly issue | Picking a newsletter service (Beehiiv suggested, free to 2,500 subscribers) | Sign-up boxes on the site; the This week page becomes the Friday issue |
 | Reader tips going to a form instead of GitHub | A Google Form (or Formspree) link | Set `TIPS_FORM` in `site/app.js`; tips stop opening GitHub issues |
@@ -54,3 +55,22 @@ Updated as items move. Last updated: 2026-11-20 (prediction backfill done: 10,41
 - Hide weak two-title "linked by one person" groups (show only 3+).
 - Group headlines that use the editor's note ("Robert Pattinson's Bond casting brings back 39 titles").
 - Fix headlines where the new release has the same name as the original ("Zelda … thanks to Zelda").
+
+## Moving to Cloudflare Pages: steps
+
+1. Create a free account at cloudflare.com.
+2. Workers & Pages → Create → Pages → Connect to Git → sign in with GitHub → pick `inchurl2564/rally`.
+3. Settings: project name `therallyback` (gives therallyback.pages.dev); production branch `main`;
+   framework preset None; build output directory `site`; build command:
+
+   ```
+   sed -i "s|src=\"app.js\"|src=\"app.js?v=$CF_PAGES_COMMIT_SHA\"|; s|href=\"style.css\"|href=\"style.css?v=$CF_PAGES_COMMIT_SHA\"|" site/index.html
+   ```
+
+4. Save and Deploy, then send Claude the address.
+5. Claude switches the site's address (feeds, share links) to the new one. GitHub Pages keeps running in
+   parallel until the domain is bought; then it becomes a pointer to therallyback.com.
+
+After the move: Claude pushes to GitHub as now; Cloudflare publishes every push to `main` (including the
+nightly edition) within a minute or two, and publishes each branch at its own preview address.
+
