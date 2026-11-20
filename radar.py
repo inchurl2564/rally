@@ -1244,6 +1244,11 @@ def main():
             evaluate.summarize(args.site, args.project)
         except Exception as e:
             log(f"      accuracy summary failed: {e}")
+        try:
+            import archive      # title pages, search index, leaderboards, weekly roundup
+            archive.build(args.site, args.site_url)
+        except Exception as e:
+            log(f"      archive build failed: {e}")
 
     print(f"\n{'Work':42} {'Kind':11} {'Year':>4} {'Lift':>6}  Verdict / top trigger")
     for r in results[:40]:

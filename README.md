@@ -133,3 +133,20 @@ feeds.py      Atom feeds + daily digest
 site/         static site (index.html, app.js, style.css) and data/, feeds/
 .github/workflows/radar.yml   daily run, digest issue, Pages deploy
 ```
+
+## The archive
+
+Each night `archive.py` turns the permanent record into:
+
+- `site/data/works/<qid>.json`: a page per title, with every comeback (when, how big, why), its chart,
+  what's coming for it and related titles. Opened on the site at `?work=<qid>`.
+- `site/data/works/index.json`: every title we've tracked, for the "Search all titles" box.
+- `site/w/<qid>.html`: a share link per title, with a proper title, description and picture for link
+  previews; it opens the title page.
+- `site/data/leaders.json` and `site/data/weekly/<week>.json`: the **This week** page (the 5 biggest,
+  the best mystery, what's due next week, how predictions did, leaderboards, decades and franchises).
+
+Also on the site: **Follow** (kept in the reader's browser), a confidence label on each story
+(Confirmed / Likely / Possible), a corrections log on Track record (edit `site/data/corrections.json`:
+`[{"date": "2026-12-01", "said": "...", "fixed": "..."}]`), and an embeddable chart at `embed.html?n=10`.
+

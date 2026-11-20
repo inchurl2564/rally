@@ -199,7 +199,8 @@ function elsewhere(r) {
 }
 
 function sourcesFor(r) {
-  const out = [h("p", { class: "small" }, ext(wikipedia(r.title), `${r.label} on Wikipedia →`))];
+  const out = [h("p", { class: "small" }, titleLink(r.qid, `Every comeback of ${plain(r.label)} →`)),
+    h("p", { class: "small" }, ext(wikipedia(r.title), `${r.label} on Wikipedia →`))];
   if (r.editor_note) out.push(sourceLine(r.editor_note));
   const rp = r.ripple;
   if (rp) out.push(h("p", { class: "small" }, `${rp.name}'s Wikipedia page jumped ${rp.ratio}× on ${short(rp.date)} (${fmt(rp.peak)} views in a day), as interest in this ${noun(r.kind)} took off.`));
@@ -271,10 +272,15 @@ function withPic(tag, cls, photo, ...kids) {
 const PHYSICAL = ["album", "video game", "book", "manga/comic", "film"];
 const VIEWS = {
   today: { label: "Today", page: "today" },
+  week: { label: "This week", page: "week" },
   mysteries: { label: "Unexplained", page: "mysteries" },
   coming: { label: "Coming up", page: "coming" },
   accuracy: { label: "Track record", page: "accuracy" },
   about: { label: "About us", page: "about" },
+  // reached from links, not the menu
+  work: { hidden: true, label: "Title", page: "work" },
+  search: { hidden: true, label: "Search", page: "search" },
+  following: { hidden: true, label: "Following", page: "following" },
   // professional views
   journalists: { pro: true, label: "Journalists",
     intro: "Story leads: big comebacks nobody has explained, works that rose together around one person, and causes suggested by news and Wikipedia edits.",
@@ -319,6 +325,10 @@ async function init() {
   const tab = params.get("tab");
   // Old links: ?tab=alerts now opens About us (where the feeds moved).
   state.view = VIEWS[tab] ? tab : tab === "alerts" ? "about" : "today";
+  if (params.get("work")) { state.view = "work"; state.workId = params.get("work"); }
+  if (params.get("q")) state.searchQ = params.get("q");
+  const ms = $("msearch");
+  if (ms) ms.closest("form").addEventListener("submit", (e) => { e.preventDefault(); state.searchQ = ms.value.trim(); goto("search"); });
   renderTabs();
   await loadRun(first);
 }
@@ -340,7 +350,9 @@ async function loadRun(id) {
 function syncURL() {
   const p = new URLSearchParams();
   if ($("run").value && $("run").value !== (state.index.runs[0] || {}).id) p.set("run", $("run").value);
-  if (state.view !== "today") p.set("tab", state.view);
+  if (state.view === "work" && state.workId) p.set("work", state.workId);
+  else if (state.view !== "today") p.set("tab", state.view);
+  if (state.view === "search" && state.searchQ) p.set("q", state.searchQ);
   const q = p.toString();
   history.replaceState(null, "", (q ? `?${q}` : location.pathname) + location.hash);
 }
@@ -350,7 +362,8 @@ const fail = (msg) => setStatus(msg, true);
 function renderTabs() {
   const tab = (key) => h("button", { type: "button", class: "tab", "aria-current": key === state.view ? "page" : null, onclick: () => goto(key) }, VIEWS[key].label);
   // The main menu is for everyone; the professional views are linked from the footer.
-  $("tabs").replaceChildren(...Object.keys(VIEWS).filter((k) => !VIEWS[k].pro).map(tab));
+  $("tabs").replaceChildren(...Object.keys(VIEWS).filter((k) => !VIEWS[k].pro && !VIEWS[k].hidden).map(tab));
+  updateFollowLink();
   const foot = $("pro-links");
   if (foot) foot.replaceChildren("For professionals: ", ...Object.keys(VIEWS).filter((k) => VIEWS[k].pro).flatMap((k, i) => [
     i ? " · " : "", h("a", { href: `?tab=${k}`, onclick: (e) => { e.preventDefault(); goto(k); } }, VIEWS[k].label)]));
@@ -374,7 +387,8 @@ function applyPreset() {
 function render() {
   if (!state.data) return;
   const v = VIEWS[state.view];
-  const page = { today: todayPage, mysteries: mysteriesPage, coming: comingPage, accuracy: accuracyPage, about: aboutPage }[v.page];
+  const page = { today: todayPage, mysteries: mysteriesPage, coming: comingPage, accuracy: accuracyPage, about: aboutPage,
+    week: weekPage, work: workPage, search: searchPage, following: followingPage }[v.page];
   $("view").replaceChildren(...(page ? page() : proPage(v)));
   if ($("cards")) renderList();
   const { meta } = state.data, health = meta.health || {};
@@ -793,6 +807,7 @@ function storyCard(r) {
     h("p", { class: "dek" }, st.dek),
     h("div", { class: "story-foot" },
       bigstat(r),
+      h("div", { class: "foot-row" }, confidenceTag(r), followBtn(r.qid, plain(r.label))),
       sourcesBox(sourcesFor(r)),
       isOpen(r) ? h("div", {}, tipLink(r)) : null));
 }
@@ -1236,7 +1251,7 @@ function card(r, open, inGroup) {
         inGroup ? null : h("span", { class: "tagx" }, `${r.label} · ${r.release_year}`),
         r.stage === "emerging" ? h("span", { class: "tagx hot" }, "Just starting") : r.stage ? h("span", { class: "tagx" }, STAGES[r.stage]) : null,
         r.early ? h("span", { class: "tagx", title: "Spotted by our watchlist before it reached Wikipedia's top 1,000" }, "Caught early") : null,
-        scoreDot(r.rally_score)),
+        scoreDot(r.rally_score), confidenceTag(r), followBtn(r.qid, plain(r.label))),
       isOpen(r) ? h("div", { class: "card-ask" }, tipLink(r)) : null,
       h("details", { class: "more-info", open: open ? "" : null }, h("summary", {}, "Numbers & sources"),
         sparkline(r),
@@ -1430,6 +1445,8 @@ function accuracyPage() {
     h("p", {}, "Every story has a ", h("b", {}, "Report a correction"), " link. Reports become GitHub issues; once reviewed and labelled ",
       h("code", {}, "verified-correct"), " or ", h("code", {}, "verified-wrong"), ", they count above. ",
       ext(`https://github.com/${REPO}/issues?q=label%3Afeedback`, h("b", {}, "See all reports →"))),
+    sectionHead("Corrections", "When we get something wrong, we fix it and say so here."),
+    correctionsList(),
   ];
 }
 
@@ -1458,6 +1475,8 @@ function aboutPage() {
         h("li", {}, h("b", {}, "Honest about what we don't know. "), "When we can't find the reason, a comeback goes on the ", go("mysteries", "Unexplained"), " page, and we say so."),
         h("li", {}, h("b", {}, "Keeping score in public. "), "We predict comebacks before they happen and check afterwards whether we were right. See the ", go("accuracy", "Track record"), "."),
         h("li", {}, h("b", {}, "Readers help. "), "Know why something is back, or spotted a mistake? Use ", h("i", {}, "Know why? Tell us"), " on any story. Tips that check out become editor's notes."))),
+    sectionHead("Embed the chart", "Put today's top comebacks on your own site. It updates itself every morning."),
+    embedBox(base),
     sectionHead("Feeds", "Get new comebacks every morning. Copy a link into any feed reader: Feedly, Inoreader, NetNewsWire, Outlook, Slack and others."),
     h("ul", { class: "plain" }, feeds.map(([n, d]) => h("li", {},
       h("a", { href: `feeds/${n}.xml` }, h("b", {}, `${n}.xml`)),
@@ -1483,6 +1502,218 @@ function method() {
       h("li", {}, h("b", {}, "Filter."), " Set aside seasonal items (also up this time last year), spikes that are almost all desktop traffic (likely bots), and one-day surges from a feature on Wikipedia's front page."),
       h("li", {}, h("b", {}, "Predict and check."), " List upcoming sequels, adaptations and anniversaries, then check later whether attention rose.")),
     h("p", { class: "muted" }, h("b", {}, "Limits. "), "Wikipedia attention isn't sales or streams. Wikidata is volunteer-edited. News and edit lookups are best-effort and sometimes rate-limited. Two-title threads can be coincidence. Headlines are generated from the data. Verify before publishing or acting."));
+}
+
+
+// ================= the archive: title pages, search, follow, this week =================
+const titleHref = (qid) => `?work=${encodeURIComponent(qid)}`;
+function openWork(qid) { state.workId = qid; goto("work"); }
+const titleLink = (qid, label) => h("a", { href: titleHref(qid), onclick: (e) => { e.preventDefault(); openWork(qid); } }, label);
+const cached = {};
+const loadOnce = (url) => (cached[url] = cached[url] || getJSON(url).catch((e) => { delete cached[url]; throw e; }));
+
+// How sure we are about the reason, in one word.
+const CONFIDENCE = {
+  Confirmed: "An editor checked the reason against a published source.",
+  Likely: "A matching event is on record: a new release, a death or an anniversary, at the right time.",
+  Possible: "Inferred from news headlines, Wikipedia edits or a related page jumping. Not yet confirmed.",
+};
+function confidenceOf(r) {
+  if (r.editor_note) return "Confirmed";
+  const k = reasonOf(r).key;
+  if (k === "unexplained" || FILTERED.has(r.verdict)) return null;
+  return ["death", "derivative", "same-creator", "anniversary"].includes(r.verdict) ? "Likely" : "Possible";
+}
+const confidenceTag = (r) => { const c = confidenceOf(r); return c ? h("span", { class: `conf conf-${c.toLowerCase()}`, title: CONFIDENCE[c] }, c) : null; };
+
+// ---------- follow (kept in this browser only) ----------
+const FOLLOW_KEY = "rb-follow";
+const following = () => { try { return JSON.parse(localStorage.getItem(FOLLOW_KEY) || "[]"); } catch (e) { return []; } };
+const isFollowing = (qid) => following().some((x) => x.qid === qid);
+function setFollow(qid, label, on) {
+  const list = following().filter((x) => x.qid !== qid);
+  if (on) list.unshift({ qid, label, since: new Date().toISOString().slice(0, 10) });
+  try { localStorage.setItem(FOLLOW_KEY, JSON.stringify(list)); } catch (e) { /* private mode: not saved */ }
+  updateFollowLink();
+}
+function followBtn(qid, label) {
+  const b = h("button", { type: "button", class: "follow", "aria-pressed": String(isFollowing(qid)) });
+  const paint = () => { const on = isFollowing(qid); b.setAttribute("aria-pressed", String(on)); b.textContent = on ? "★ Following" : "☆ Follow"; b.title = on ? "Stop following" : "Follow: we'll flag it on the site when it comes back or something is coming for it"; };
+  b.addEventListener("click", () => { setFollow(qid, label, !isFollowing(qid)); paint(); });
+  paint();
+  return b;
+}
+function updateFollowLink() {
+  const a = $("follow-link");
+  if (!a) return;
+  const n = following().length;
+  a.hidden = !n;
+  a.textContent = `★ Following (${n})`;
+  a.onclick = (e) => { e.preventDefault(); goto("following"); };
+}
+
+// ---------- a title's page ----------
+function workPage() {
+  const qid = state.workId;
+  const box = h("div", { class: "workpage" }, h("p", { class: "status" }, "Loading…"));
+  loadOnce(`data/works/${encodeURIComponent(qid)}.json`).then((w) => box.replaceChildren(...workView(w)))
+    .catch(() => box.replaceChildren(h("p", { class: "status" }, "We haven't tracked a comeback for this title yet."), searchBox()));
+  return [box];
+}
+function workView(w) {
+  const eps = [...w.episodes].reverse();
+  const last = eps[0], r = state.byQid[w.qid];
+  const times = w.episodes.length === 1 ? "once" : `${w.episodes.length} times`;
+  const peakI = w.spark ? w.spark.indexOf(Math.max(...w.spark)) : -1;
+  const chart = w.spark ? sparkline({ spark: w.spark, baseline: w.baseline || 1, spark_start: w.spark_start, spike_start: last.start,
+    peak: Math.max(...w.spark), peak_day: addDays(w.spark_start, peakI), label: w.label }) : null;
+  const epRow = (e) => h("tr", {},
+    h("td", { class: "nowrap" }, fmtDate(e.start)),
+    h("td", {}, e.causes.length ? e.causes.join(" · ") : h("span", { class: "muted" }, "Reason unknown")),
+    h("td", { class: "num nowrap" }, `${fmtX(e.peak_lift)}`),
+    h("td", { class: "num" }, scoreDot(e.score)),
+    h("td", { class: "num nowrap" }, `${e.days} day${e.days === 1 ? "" : "s"}`));
+  const comeRow = (c) => h("tr", {}, h("td", { class: "nowrap" }, fmtDate(c.date)), h("td", {}, c.text), outlookCell(c.prediction));
+  const shareUrl = new URL(`w/${w.qid}.html`, location.href.split("?")[0]).href;
+  return [
+    h("div", { class: "work-head" },
+      w.image ? pic(null, w.image, w.label, 480, w.image_of) : null,
+      h("div", {},
+        h("div", { class: "when" }, `${w.kind}, ${w.year}`),
+        h("h2", { class: "work-title" }, plain(w.label)),
+        h("p", { class: "dek" }, `Back ${times} since we started tracking in ${fmtDate(state.index.runs.at(-1).id).replace(/ \d+,/, "")}. ` +
+          `Most recently from ${fmtDate(last.start)}, at ${fmtX(last.peak_lift)} its usual interest.`),
+        h("div", { class: "foot-row" }, followBtn(w.qid, plain(w.label)),
+          h("button", { type: "button", class: "copy", onclick: (e) => copy(shareUrl, e.target) }, "Copy link"),
+          w.on_today && r ? h("button", { type: "button", class: "linkish", onclick: () => { goto("today"); setTimeout(() => focusCard(w.qid), 60); } }, "On today's list →") : null),
+        w.franchises.length ? h("p", { class: "small muted" }, "Part of ", w.franchises.map((f) => f.name).join(", "), ".") : null)),
+    chart ? h("div", { class: "work-chart" }, chart) : null,
+    sectionHead("Every comeback", "Each time it came back since we started keeping the record, newest first."),
+    table(["Started", "Why", "Peak", "Score", "On our list"], eps.map(epRow), 12, "comebacks"),
+    w.coming.length ? sectionHead("Coming up", "What could bring it back next.") : null,
+    w.coming.length ? table(["When", "What", "Outlook"], w.coming.map(comeRow)) : null,
+    w.related.length ? sectionHead("Related", "Back around the same time, or part of the same series.") : null,
+    w.related.length ? h("ul", { class: "plain related" }, w.related.map((x) => h("li", {}, titleLink(x.qid, `${plain(x.label)} (${x.year})`), h("span", { class: "small muted" }, ` · ${x.why}`)))) : null,
+    h("p", { class: "small muted work-src" }, w.title ? ext(wikipedia(w.title), "Wikipedia →") : null, w.title ? " · " : null, ext(wikidata(w.qid), "Wikidata →")),
+  ].filter(Boolean);
+}
+
+// ---------- search the archive ----------
+function searchBox(value = state.searchQ || "") {
+  const q = h("input", { type: "search", value, placeholder: "Search every title we've tracked", "aria-label": "Search every title we've tracked" });
+  return h("form", { class: "archive-search", role: "search", onsubmit: (e) => { e.preventDefault(); state.searchQ = q.value.trim(); goto("search"); } },
+    q, h("button", { type: "submit", class: "btn" }, "Search"));
+}
+function searchPage() {
+  const results = h("div", {}, h("p", { class: "status" }, "Loading…"));
+  loadOnce("data/works/index.json").then((ix) => {
+    const F = Object.fromEntries(ix.fields.map((f, i) => [f, i]));
+    const q = (state.searchQ || "").toLowerCase();
+    const norm = (t) => t.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+    const hits = q ? ix.works.filter((w) => norm(w[F.label]).includes(norm(q))) : ix.works.slice(0, 30);
+    const row = (w) => h("tr", {},
+      h("td", {}, h("b", {}, titleLink(w[F.qid], plain(w[F.label]))), h("div", { class: "small muted" }, `${w[F.kind]}, ${w[F.year]}`)),
+      h("td", { class: "num" }, String(w[F.comebacks])),
+      h("td", { class: "nowrap" }, fmtDate(w[F.last_seen])),
+      h("td", { class: "num" }, scoreDot(w[F.best_score])));
+    results.replaceChildren(
+      h("p", { class: "small muted" }, q ? `${hits.length} title${hits.length === 1 ? "" : "s"} matching “${state.searchQ}”, out of ${fmt(ix.works.length)} we've tracked.`
+        : `The titles that have come back most, out of ${fmt(ix.works.length)} we've tracked.`),
+      hits.length ? table(["Title", "Comebacks", "Last back", "Best score"], hits.slice(0, 200).map(row), 25, "titles")
+        : h("p", {}, "No comeback on record for that yet. We only list titles once they come back, so check again later."));
+  }).catch(() => results.replaceChildren(h("p", { class: "status" }, "The archive isn't available yet.")));
+  return [h("p", { class: "intro" }, "Has it come back before?"), searchBox(), results];
+}
+
+// ---------- following ----------
+function followingPage() {
+  const list = following();
+  if (!list.length) return [h("p", { class: "intro" }, "Follow titles to keep an eye on them."),
+    h("p", {}, "Tap ", h("b", {}, "☆ Follow"), " on any story or title page. We'll show here when it comes back or something is coming for it. It's kept in this browser only, no account needed.")];
+  const rows = h("tbody", {});
+  for (const f of list) {
+    const tr = h("tr", {}, h("td", {}, h("b", {}, titleLink(f.qid, f.label))), h("td", { class: "muted" }, "…"), h("td", {}, followBtn(f.qid, f.label)));
+    rows.append(tr);
+    loadOnce(`data/works/${encodeURIComponent(f.qid)}.json`).then((w) => {
+      const r = state.byQid[f.qid], next = (w.coming || [])[0], last = w.episodes.at(-1);
+      tr.children[1].replaceChildren(r ? h("span", { class: "ok" }, `Back now: ${mult(r)} its usual interest`)
+        : next ? `Coming up ${short(next.date)}: ${next.text}` : `Last back ${fmtDate(last.last_seen)}`);
+      tr.children[1].className = "";
+    }).catch(() => { tr.children[1].textContent = "Not back since you followed it."; });
+  }
+  return [h("p", { class: "intro" }, "Titles you follow."),
+    h("p", { class: "small muted" }, "Kept in this browser only. Titles that are back right now say so."),
+    h("div", { class: "tablewrap" }, h("table", {}, h("thead", {}, h("tr", {}, h("th", {}, "Title"), h("th", {}, "Status"), h("th", {}, ""))), rows))];
+}
+
+// ---------- this week ----------
+function weekPage() {
+  const box = h("div", {}, h("p", { class: "status" }, "Loading…"));
+  Promise.all([loadOnce("data/weekly/index.json"), loadOnce("data/leaders.json")]).then(async ([weeks, L]) => {
+    const key = state.weekId && weeks.includes(state.weekId) ? state.weekId : weeks[0];
+    const W = await loadOnce(`data/weekly/${key}.json`);
+    const pickWeek = h("select", { "aria-label": "Choose a week" }, weeks.map((k) => h("option", { value: k, selected: k === key ? "" : null }, k === weeks[0] ? `This week` : `Week of ${k}`)));
+    pickWeek.addEventListener("change", () => { state.weekId = pickWeek.value; render(); });
+    const rank = (x, i) => h("li", {}, h("span", { class: "rank" }, String(i + 1)), h("div", {},
+      h("b", {}, titleLink(x.qid, `${plain(x.label)} (${x.year})`)), x.more ? h("span", { class: "small muted" }, ` and ${x.more} more`) : null,
+      h("div", { class: "small muted" }, scoreDot(x.score), " ", `${fmtX(x.lift || x.peak_lift)} usual interest`, x.why ? ` · ${x.why}` : "")));
+    const leadRow = (x) => h("tr", {}, h("td", {}, h("b", {}, titleLink(x.qid, plain(x.label))), x.more ? h("span", { class: "small muted" }, ` +${x.more} more`) : null,
+      h("div", { class: "small muted" }, `${x.kind}, ${x.year}`)), h("td", { class: "nowrap" }, fmtDate(x.start)),
+      h("td", { class: "num nowrap" }, fmtX(x.peak_lift)), h("td", { class: "num" }, scoreDot(x.score)));
+    const maxShare = Math.max(...L.decades.map((d) => d.share), 0.01);
+    box.replaceChildren(
+      h("p", { class: "intro" }, `This week in comebacks: ${fmtDate(W.from).replace(/, \d{4}/, "")} to ${fmtDate(W.to)}.`),
+      h("p", { class: "contents" }, h("b", {}, fmt(W.comebacks)), " comebacks so far this week · ", pickWeek),
+      sectionHead("The 5 biggest", "One per story, by Rallyback Score."),
+      h("ol", { class: "ranked" }, W.top.map(rank)),
+      W.mystery ? sectionHead("Best mystery", "The biggest comeback we still can't explain. Know why?") : null,
+      W.mystery ? h("div", { class: "mystery" }, h("b", {}, titleLink(W.mystery.qid, `${plain(W.mystery.label)} (${W.mystery.year})`)),
+        ` · ${fmtX(W.mystery.lift)} its usual interest since ${fmtDate(W.mystery.start)}. `,
+        state.byQid[W.mystery.qid] ? tipLink(state.byQid[W.mystery.qid]) : null) : null,
+      W.coming.length ? sectionHead("Coming up next week", "Due in the next 8 days, biggest expected comebacks first.") : null,
+      W.coming.length ? table(["When", "Title", "What", "Outlook"], W.coming.map((c) => h("tr", {}, h("td", { class: "nowrap" }, fmtDate(c.date)),
+        h("td", {}, h("b", {}, titleLink(c.qid, plain(c.label)))), h("td", {}, c.what), outlookCell(c.prediction)))) : null,
+      sectionHead("How our predictions did", "Checked about a week after each date."),
+      W.results.length ? table(["Date", "Prediction", "Predicted", "What happened", ""], W.results.map((x) => h("tr", {},
+        h("td", { class: "nowrap" }, fmtDate(x.date)), h("td", {}, h("b", {}, x.label), h("div", { class: "small muted" }, x.detail)),
+        h("td", { class: "num nowrap" }, x.predicted && x.predicted.expected != null ? fmtX(x.predicted.expected) : "–"),
+        h("td", { class: "num nowrap" }, fmtX(x.ratio)), h("td", {}, x.hit ? h("span", { class: "ok" }, "✓ Came true") : h("span", { class: "muted" }, "No bump")))))
+        : h("p", { class: "muted" }, "The first predictions are checked about a week after their dates. Results start appearing here in late November."),
+      sectionHead("Biggest this month", "One per story."),
+      table(["Title", "Started", "Peak", "Score"], L.month.map(leadRow), 10, "comebacks"),
+      // Shown once the year holds more than this month (the record starts in November 2026).
+      L.covers_from < L.updated.slice(0, 8) + "01" ? sectionHead("Biggest this year", "One per story.") : null,
+      L.covers_from < L.updated.slice(0, 8) + "01" ? table(["Title", "Started", "Peak", "Score"], L.year.map(leadRow), 10, "comebacks") : null,
+      sectionHead("Decades this week", "Which eras people are going back to: comebacks this week by when the work came out."),
+      h("div", { class: "bars" }, L.decades.slice(0, 10).map((d) => h("div", { class: "bar-row" },
+        h("span", { class: "bar-label" }, d.decade), h("span", { class: "bar" }, h("i", { style: `width:${(100 * d.share / maxShare).toFixed(1)}%` })),
+        h("span", { class: "bar-val" }, `${Math.round(d.share * 100)}%${d.usual_share != null ? ` (usually ${Math.round(d.usual_share * 100)}%)` : ""}`)))),
+      L.franchises.length ? sectionHead("Franchises this week", "Series with more than one title back at once.") : null,
+      L.franchises.length ? h("ul", { class: "plain related" }, L.franchises.map((f) => h("li", {}, h("b", {}, f.name), ` · ${f.titles} titles: `,
+        ...f.top.flatMap((x, i) => [i ? ", " : "", titleLink(x.qid, plain(x.label))])))) : null);
+  }).catch(() => box.replaceChildren(h("p", { class: "status" }, "This week's roundup isn't ready yet. It's built with each morning's edition.")));
+  return [box];
+}
+
+// ---------- corrections log (site/data/corrections.json, edited by hand) ----------
+function correctionsList() {
+  const box = h("div", {}, h("p", { class: "muted" }, "No corrections yet."));
+  loadOnce("data/corrections.json").then((xs) => {
+    if (!xs.length) return;
+    box.replaceChildren(table(["Date", "What we said", "What's right"], xs.map((x) => h("tr", {},
+      h("td", { class: "nowrap" }, fmtDate(x.date)), h("td", {}, x.said), h("td", {}, x.fixed))), 12, "corrections"));
+  }).catch(() => {});
+  return box;
+}
+
+// ---------- embed ----------
+function embedBox(base) {
+  const code = `<iframe src="${base}embed.html?n=10" title="The Rallyback: today's top comebacks" width="100%" height="460" style="border:0;max-width:480px"></iframe>`;
+  return h("div", { class: "embed-box" },
+    h("p", {}, "Copy this into any web page. It shows the 10 biggest comebacks of the day, with credit and a link back."),
+    h("pre", { class: "code" }, code),
+    h("button", { type: "button", class: "copy", onclick: (e) => copy(code, e.target) }, "Copy code"),
+    " ", h("a", { href: "embed.html?n=10", target: "_blank", rel: "noopener" }, "Preview →"));
 }
 
 // Floating "back to top": shows once the reader is well down the page.
