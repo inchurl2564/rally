@@ -13,18 +13,21 @@
   --sans: "Libre Franklin", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --t-film: #1f2937; --t-tv: #4338ca; --t-song: #be123c; --t-album: #9d174d; --t-game: #047857;
   --t-book: #92400e; --t-comic: #b45309; --t-musical: #6d28d9;
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s5: #e87ba4; --s6: #008300; --s-other: #d9d6ce;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --paper: #121211; --paper-2: #1b1b19; --ink: #f1f0ec; --muted: #a3a29b; --rule: #f1f0ec; --hair: #33322e;
     --red: #ff4b3a; --red-ink: #121211; --tint: rgba(255, 75, 58, .12); --ok: #6fcf9f;
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #0ca30c; --s-other: #3d3c38;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --paper: #121211; --paper-2: #1b1b19; --ink: #f1f0ec; --muted: #a3a29b; --rule: #f1f0ec; --hair: #33322e;
   --red: #ff4b3a; --red-ink: #121211; --tint: rgba(255, 75, 58, .12); --ok: #6fcf9f;
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #0ca30c; --s-other: #3d3c38;
   color-scheme: dark;
 }
 
@@ -246,3 +249,29 @@ code { font-size: 13px; background: var(--paper-2); padding: 1px 5px; }
   .tabs { justify-content: flex-start; }
   .bigstat b { font-size: 38px; }
 }
+
+/* ---------- streamgraph: The Month in Comebacks ---------- */
+.stream { margin: 28px 0 8px; }
+.stream-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
+.stream-head h2 { font: 900 clamp(28px, 4vw, 40px)/1.05 var(--serif); letter-spacing: -.02em; margin: 0; }
+.stream-head p { margin: 6px 0 0; font-size: 15px; max-width: 64ch; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 14px 0 6px; font-size: 12.5px; font-weight: 600; color: var(--ink); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+.stream-chart { position: relative; overflow: visible; }
+.stream { overflow-x: clip; }
+.stream-chart svg { display: block; width: 100%; overflow: visible; }
+.stream-chart .band { stroke: var(--paper); stroke-width: 2; cursor: pointer; transition: opacity .15s; }
+.stream-chart .band.dim { opacity: .28; }
+.stream-chart .lbl { font: 600 12px var(--sans); fill: var(--ink); paint-order: stroke; stroke: var(--paper); stroke-width: 3px;
+  stroke-linejoin: round; pointer-events: none; }
+.stream-chart .tick text { font: 500 11px var(--sans); fill: var(--muted); }
+.stream-chart .tick line, .stream-chart .axis-line { stroke: var(--hair); }
+.stream-chart .xhair { stroke: var(--ink); stroke-width: 1; pointer-events: none; }
+.stream-note { font-size: 12px; color: var(--muted); margin: 6px 0 0; }
+.stream details { margin-top: 8px; font-size: 13.5px; }
+.stream details summary { cursor: pointer; font: 800 11.5px var(--sans); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.stream .tip2 { position: absolute; pointer-events: none; background: var(--ink); color: var(--paper); font: 500 12.5px/1.4 var(--sans);
+  padding: 6px 10px; white-space: normal; max-width: min(340px, 92vw); transform: translate(-50%, calc(-100% - 12px)); z-index: 5; }
+.stream .tip2 b { font-weight: 700; }
+.stream .tip2 small { display: block; opacity: .75; font-size: 11.5px; }

@@ -313,6 +313,141 @@ function bigstat(r, withSpark = true) {
 
 function link(r, ...kids) { return h("a", { href: `#w-${r.qid}`, onclick: (e) => { e.preventDefault(); focusCard(r.qid); } }, ...kids); }
 
+// ---------- The Month in Comebacks (streamgraph) ----------
+// Fixed type → palette slot mapping (validated order; never re-assigned by rank).
+const STREAM_TYPES = [
+  { key: "ripple", label: "Ripple Effect", color: "var(--s1)", verdicts: ["ripple"] },
+  { key: "release", label: "New release", color: "var(--s2)", verdicts: ["derivative", "same-creator"] },
+  { key: "mystery", label: "Mystery", color: "var(--s3)", verdicts: ["unexplained", "weak link", "lookup failed", "common thread"] },
+  { key: "memoriam", label: "In Memoriam", color: "var(--s4)", verdicts: ["death"] },
+  { key: "birthday", label: "Birthday", color: "var(--s5)", verdicts: ["anniversary"] },
+  { key: "explained", label: "Explained", color: "var(--s6)", verdicts: ["editor", "coverage"] },
+];
+const OTHER = { key: "other", label: "Everything else", color: "var(--s-other)" };
+const typeOf = (r) => STREAM_TYPES.find((t) => t.verdicts.includes(r.verdict)) || OTHER;
+
+function streamData(days = 45, top = 15) {
+  const { meta } = state.data;
+  const end = meta.window_end;
+  const dates = Array.from({ length: days }, (_, i) => addDays(end, i - days + 1));
+  const rows = live().map((r) => {
+    const off = daysBetween(r.spark_start, dates[0]);
+    const extra = dates.map((_, i) => Math.max(0, (r.spark[off + i] || 0) - r.baseline));
+    return { r, extra, total: extra.reduce((a, b) => a + b, 0), type: typeOf(r) };
+  }).filter((x) => x.total > 0).sort((a, b) => b.total - a.total);
+  const bands = rows.slice(0, top);
+  const rest = rows.slice(top);
+  // Group bands by type in palette order (so only validated-adjacent hues touch), biggest first within a type.
+  bands.sort((a, b) => STREAM_TYPES.indexOf(a.type) - STREAM_TYPES.indexOf(b.type) || b.total - a.total);
+  const series = bands.map((b) => ({ key: b.r.qid, label: b.r.label, r: b.r, type: b.type, extra: b.extra, total: b.total }));
+  // Smaller comebacks are left out rather than merged: combined, they'd swamp the stories.
+  return { dates, series, omitted: rest.length };
+}
+
+function streamSection() {
+  if (typeof d3 === "undefined") return null;
+  const { dates, series, omitted } = streamData();
+  if (!series.length) return null;
+  const main = series.filter((x) => x.r);
+  // Biggest single-day wave, for the headline.
+  let best = null;
+  for (const x of main) x.extra.forEach((v, i) => { if (!best || v > best.v) best = { x, v, i }; });
+  const chart = h("div", { class: "stream-chart" });
+  const tip = h("div", { class: "tip2", hidden: "" });
+  chart.append(tip);
+  const present = STREAM_TYPES.filter((t) => series.some((x) => x.type === t));
+  if (series.some((x) => x.type === OTHER)) present.push(OTHER);
+  const table = h("table", {},
+    h("thead", {}, h("tr", {}, ["Title", "Story", "Biggest day", "Extra readers that day", "Extra readers, 45 days"].map((x) => h("th", {}, x)))),
+    h("tbody", {}, series.map((x) => {
+      const i = x.extra.indexOf(Math.max(...x.extra));
+      return h("tr", {}, h("td", {}, x.r ? link(x.r, x.label) : x.label), h("td", {}, x.type.label),
+        h("td", { class: "nowrap" }, short(dates[i])), h("td", { class: "num" }, fmt(x.extra[i])), h("td", { class: "num" }, fmt(x.total)));
+    })));
+  const sec = h("section", { class: "stream", "aria-label": "The Month in Comebacks" },
+    h("div", { class: "stream-head" }, h("div", {},
+      h("span", { class: "kicker" }, "The Big Picture"),
+      h("h2", {}, "The Month in Comebacks"),
+      best ? h("p", {}, `Every band is an old favorite drawing extra readers. The biggest wave: `, h("b", {}, best.x.label),
+        `, with ${fmt(best.v)} extra readers on ${fmtDate(dates[best.i])}.`) : null)),
+    h("div", { class: "legend", role: "list" }, present.map((t) =>
+      h("span", { role: "listitem" }, h("i", { style: `background:${t.color}` }), t.label))),
+    chart,
+    h("p", { class: "stream-note" }, `The ${series.length} biggest comebacks of the last 45 days${omitted ? ` (${omitted} smaller ones not shown)` : ""}. Band thickness = extra daily Wikipedia readers above each title's usual level. Hover or tap for numbers; click to read the story.`),
+    h("details", {}, h("summary", {}, "View as table"), h("div", { class: "tablewrap" }, table)));
+  requestAnimationFrame(() => drawStream(chart, tip, dates, series));
+  return sec;
+}
+
+function drawStream(chart, tip, dates, series) {
+  const W = chart.clientWidth || 800;
+  const narrow = W < 600;
+  const H = narrow ? 240 : 340, M = { t: 8, r: 4, b: 26, l: 4 };
+  const rows = dates.map((d, i) => Object.fromEntries([["date", d], ...series.map((x) => [x.key, x.extra[i]])]));
+  const stack = d3.stack().keys(series.map((x) => x.key)).offset(d3.stackOffsetWiggle).order(d3.stackOrderNone)(rows);
+  const x = d3.scaleLinear().domain([0, dates.length - 1]).range([M.l, W - M.r]);
+  const y = d3.scaleLinear().domain([d3.min(stack, (l) => d3.min(l, (d) => d[0])), d3.max(stack, (l) => d3.max(l, (d) => d[1]))]).range([H - M.b, M.t]);
+  const area = d3.area().x((d, i) => x(i)).y0((d) => y(d[0])).y1((d) => y(d[1])).curve(d3.curveBasis);
+  chart.querySelector("svg")?.remove();
+  const svg = d3.create("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("height", H).attr("role", "img")
+    .attr("aria-label", `Streamgraph of extra daily Wikipedia readers for the ${series.length} biggest comebacks over the last ${dates.length} days. A table view follows.`);
+  // weekly ticks
+  const ax = svg.append("g");
+  ax.append("line").attr("class", "axis-line").attr("x1", M.l).attr("x2", W - M.r).attr("y1", H - M.b + 0.5).attr("y2", H - M.b + 0.5);
+  dates.forEach((d, i) => {
+    if ((dates.length - 1 - i) % (narrow ? 14 : 7)) return;
+    const g = ax.append("g").attr("class", "tick").attr("transform", `translate(${x(i)},${H - M.b})`);
+    g.append("line").attr("y2", 4);
+    g.append("text").attr("y", 17).attr("text-anchor", i === dates.length - 1 ? "end" : "middle").text(short(d));
+  });
+  const bands = svg.append("g").selectAll("path").data(stack).join("path")
+    .attr("class", "band").attr("d", area)
+    .attr("fill", (l) => series[l.index].type.color)
+    .on("click", (e, l) => { const r = series[l.index].r; if (r) focusCard(r.qid); });
+  // Direct labels at each band's thickest point, skipping collisions.
+  const placed = [];
+  const labelled = series.map((s, i) => ({ s, i })).filter((o) => o.s.r).sort((a, b) => b.s.total - a.s.total).slice(0, narrow ? 5 : 12);
+  const lg = svg.append("g");
+  for (const { s, i } of labelled) {
+    const layer = stack[i];
+    let bi = 0, bt = 0;
+    layer.forEach((d, j) => { const t = y(d[0]) - y(d[1]); if (t > bt) { bt = t; bi = j; } });
+    if (bt < 15) continue;
+    const text = s.label.length > 28 ? s.label.slice(0, 26) + "…" : s.label;
+    const w = text.length * 6.6, cx = Math.min(Math.max(x(bi), M.l + w / 2), W - M.r - w / 2);
+    const cy = (y(layer[bi][0]) + y(layer[bi][1])) / 2;
+    const box = [cx - w / 2 - 4, cy - 9, cx + w / 2 + 4, cy + 9];
+    if (placed.some((b) => !(box[2] < b[0] || box[0] > b[2] || box[3] < b[1] || box[1] > b[3]))) continue;
+    placed.push(box);
+    lg.append("text").attr("class", "lbl").attr("x", cx).attr("y", cy + 4).attr("text-anchor", "middle").text(text);
+  }
+  const xhair = svg.append("line").attr("class", "xhair").attr("y1", M.t).attr("y2", H - M.b).attr("visibility", "hidden");
+  const hide = () => { bands.classed("dim", false); xhair.attr("visibility", "hidden"); tip.hidden = true; };
+  svg.on("pointermove pointerdown", (e) => {
+    const [px, py] = d3.pointer(e);
+    const i = Math.max(0, Math.min(dates.length - 1, Math.round(x.invert(px))));
+    const v = y.invert(py);
+    const li = stack.findIndex((l) => v >= l[i][0] && v <= l[i][1]);
+    xhair.attr("x1", x(i)).attr("x2", x(i)).attr("visibility", "visible");
+    if (li < 0) { bands.classed("dim", false); tip.hidden = true; return; }
+    const s = series[li];
+    bands.classed("dim", (l) => l.index !== li);
+    tip.replaceChildren(h("b", {}, s.label), ` · ${short(dates[i])}: ${fmt(s.extra[i])} extra readers`,
+      h("small", {}, s.r ? `${s.type.label} · ${story(s.r).hed}` : "Smaller comebacks, combined"));
+    tip.hidden = false;
+    const tw = tip.offsetWidth;
+    tip.style.left = `${Math.min(Math.max(px, tw / 2 + 2), W - tw / 2 - 2)}px`;
+    tip.style.top = `${py}px`;
+  }).on("pointerleave", hide);
+  chart.append(svg.node());
+}
+
+let _resizeT;
+window.addEventListener("resize", () => {
+  clearTimeout(_resizeT);
+  _resizeT = setTimeout(() => { if (state.view === "today" && document.querySelector(".stream-chart")) render(); }, 200);
+});
+
 // ---------- Today ----------
 function todayPage() {
   const L = live();
@@ -323,6 +458,7 @@ function todayPage() {
   const rest = L.filter((r) => r !== lead);
   const st = story(lead);
   const out = [
+    streamSection(),
     h("section", { class: "front" },
       h("article", { class: "lead" },
         ext(wikipedia(lead.title), media(lead.image, lead.label, lead.release_year, lead.kind, 1200)),
@@ -377,7 +513,7 @@ function todayPage() {
   }
   out.push(sectionHead(`Every Revival (${state.data.results.length})`, "Search, filter and dig into the numbers."));
   out.push(listSection());
-  return out;
+  return out.filter(Boolean);
 }
 
 function threadFeature(t) {
