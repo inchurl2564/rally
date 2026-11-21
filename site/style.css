@@ -473,4 +473,7 @@ p, li, .dek, .about .mission { text-wrap: pretty; }
   .mast-right .run-pick select { max-width: 100%; padding-left: 0; text-indent: 0; }
   .mast-right .run-pick { order: 1; }
   .mast-right .follow-link { order: 2; }
+  /* Phones: no date (the phone shows it); edition picker and Following share one row. */
+  .mast-top > .dateline { display: none; }
+  .mast-right { flex-wrap: wrap; justify-content: space-between; align-items: center; width: 100%; min-width: 0; }
 }
