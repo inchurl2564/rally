@@ -1,0 +1,14 @@
+# Cloudflare: browsers check for a newer copy every time (a quick "not modified" when nothing changed),
+# so a new page is never paired with an old script. GitHub Pages ignores this file.
+/
+  Cache-Control: no-cache
+/index.html
+  Cache-Control: no-cache
+/app.js
+  Cache-Control: no-cache
+/style.css
+  Cache-Control: no-cache
+/embed.html
+  Cache-Control: no-cache
+/data/*
+  Cache-Control: no-cache
