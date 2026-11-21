@@ -62,6 +62,13 @@ const CAUSE = {
   politics: ["Politics", "pulled it back into view"],
 };
 const causeSentence = (c) => (CAUSE[c] ? `${CAUSE[c][0]} ${CAUSE[c][1]}` : `Coverage points to ${c}`);
+// The reason itself links to the article it came from (no source named in the text).
+function dekWithLink(text, cause, link) {
+  const phrase = cause ? causeSentence(cause) : null;
+  if (!link || !phrase || !text.includes(phrase)) return text;
+  const i = text.indexOf(phrase);
+  return [text.slice(0, i), ext(link.url, phrase), text.slice(i + phrase.length)];
+}
 const REL = { "adaptation/based on it": "a new adaptation", sequel: "the sequel", "derivative work": "a spin-off",
   "remake/new version": "the remake", "new entry in same series": "the new entry in the series" };
 
@@ -661,7 +668,7 @@ function buildCauseGroups() {
   bySize((D.common_threads || []).filter(threadExplained), (t) => t.works.length).forEach((t, i) =>
     claim(`thread-${i}`, t.works.map((w) => w.qid), (free) => {
       const tt = { ...t, works: t.works.filter((w) => free.includes(w.qid)) };
-      return { story: threadStory(tt), sources: () => threadSources(tt) };
+      return { story: threadStory(tt), sources: () => threadSources(tt), t: tt };
     }));
   for (const g of groups) {
     g.works.sort((a, b) => b.score - a.score);
@@ -735,7 +742,7 @@ function todayPage() {
       withPic("article", "lead", pic(null, lead.image, lead.label, 1200, lead.image_of),
         kickerEl(st.reason, st.kicker),
         h("h2", { class: "hed" }, link(lead, st.hed)),
-        h("p", { class: "dek" }, st.dek),
+        h("p", { class: "dek" }, dekWithLink(st.dek, lead.cause, lead.cause_link)),
         bigstat(lead),
         sourcesBox(sourcesFor(lead))),
       h("aside", { class: "index" },
@@ -754,7 +761,7 @@ function todayPage() {
   // Unexplained "same person" groups aren't causes, so they're shown here as their own stories.
   const openGroups = openThreads.map((t) => {
     const ws = t.works.map((w) => state.byQid[w.qid]).filter((w) => w && !(state.groupOf && state.groupOf.has(w.qid)));
-    return ws.length >= 2 ? { works: ws.sort((a, b) => b.score - a.score), story: threadStory({ ...t, works: t.works.filter((w) => ws.includes(state.byQid[w.qid])) }), sources: () => threadSources(t) } : null;
+    return ws.length >= 2 ? { works: ws.sort((a, b) => b.score - a.score), story: threadStory({ ...t, works: t.works.filter((w) => ws.includes(state.byQid[w.qid])) }), sources: () => threadSources(t), t } : null;
   }).filter(Boolean);
   const inOpen = new Set(openGroups.flatMap((g) => g.works.map((w) => w.qid)));
   const best = (x) => (x.works ? x.works[0].score : x.score);
@@ -821,7 +828,7 @@ function storyCard(r) {
   return withPic("article", "story", photoOrPanel(r.image, r.label, r.image_of, r.release_year, noun(r.kind)),
     kickerEl(st.reason, st.kicker),
     h("h3", { class: "hed" }, link(r, st.hed)),
-    h("p", { class: "dek" }, st.dek),
+    h("p", { class: "dek" }, dekWithLink(st.dek, r.cause, r.cause_link)),
     h("div", { class: "story-foot" },
       bigstat(r),
       h("div", { class: "foot-row" }, confidenceTag(r), followBtn(r.qid, plain(r.label))),
@@ -851,7 +858,7 @@ function groupStoryCard(g) {
   return withPic("article", "story", photoOrPanel(top && top.image, top && top.label, top && top.image_of, span, `${ws.length} titles`),
     kickerEl(g.story.reason, g.story.kicker),
     h("h3", { class: "hed" }, headLink),
-    h("p", { class: "dek" }, g.story.dek),
+    h("p", { class: "dek" }, g.t ? dekWithLink(g.story.dek, g.t.cause, g.t.cause_link) : g.story.dek),
     h("div", { class: "story-foot" },
       h("div", { class: "bigstat" }, scoreDot(scores.length ? Math.max(...scores) : null, true, "Top Rallyback Score in this group"),
         h("b", {}, String(ws.length)), h("span", {}, `titles back at once · biggest ${mult(best)}`), combinedSpark(ws)),
@@ -1282,7 +1289,7 @@ function card(r, open, inGroup) {
       h("h3", { class: "hed" }, h("a", { href: `#w-${r.qid}`, onclick: (e) => {
         e.preventDefault(); const d = e.target.closest(".card").querySelector("details"); d.open = !d.open; } },
         inGroup ? `${plain(r.label)} (${r.release_year})` : st.hed)),
-      h("p", { class: "dek" }, inGroup ? `The ${noun(r.kind)} is drawing ${mult(r)} its usual interest.` : st.dek),
+      h("p", { class: "dek" }, inGroup ? `The ${noun(r.kind)} is drawing ${mult(r)} its usual interest.` : dekWithLink(st.dek, r.cause, r.cause_link)),
       h("div", { class: "tags" },
         inGroup ? null : h("span", { class: "tagx" }, `${r.label} · ${r.release_year}`),
         r.stage === "emerging" ? h("span", { class: "tagx hot" }, "Just starting") : r.stage ? h("span", { class: "tagx" }, STAGES[r.stage]) : null,

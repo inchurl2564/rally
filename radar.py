@@ -870,6 +870,22 @@ def solved_cases(rdir: str, data: dict, run_id: str, days: int = 7) -> list[dict
     return out
 
 
+def cause_link(cause: str | None, evidence: list[dict] | None) -> dict | None:
+    """The article behind a likely cause: the newest evidence item with a link whose text
+    matches that cause (e.g. a 4K restoration announcement for "re-release")."""
+    if not cause or not evidence:
+        return None
+    import explain
+    rx = dict(explain._CAUSE_RE).get(cause)
+    # Outside articles only: a Wikipedia edit isn't something to send readers to from a story.
+    hits = [e for e in evidence if e.get("url") and "wikipedia.org" not in e["url"]
+            and (rx is None or rx.search(e.get("text", "")))]
+    if not hits:
+        return None
+    e = max(hits, key=lambda e: e.get("date") or "")
+    return {"url": e["url"], "date": e.get("date")}
+
+
 def write_site_data(site: str, results, meta, clusters, threads, keep_runs: int,
                     coming_up: dict | None = None) -> dict:
     """latest.json + an archive of runs + an index of runs, for the static site."""
@@ -880,6 +896,7 @@ def write_site_data(site: str, results, meta, clusters, threads, keep_runs: int,
             "days_in_top", "best_rank", "lift3", "stage", "early", "early_ratio", "cause", "evidence",
             "edit_burst", "corroborated", "image", "image_of", "ripple", "editor_note", "front_page", "signals",
             "rally_score", "global", "chatter")}
+        out["cause_link"] = cause_link(r.get("cause"), r.get("evidence"))
         out.update(release=r["release"].isoformat(), release_year=r["release"].year,
                    spike_start=r["spike_start"].isoformat(), peak_day=r["peak_day"].isoformat(),
                    spark_start=(r["spark_start"] + dt.timedelta(days=len(r["spark"]) - 365)).isoformat(),
@@ -931,6 +948,7 @@ def write_site_data(site: str, results, meta, clusters, threads, keep_runs: int,
                              "works": [w["qid"] for w in g["works"]]} for g in clusters],
         "common_threads": [{"qid": t["qid"], "name": t["name"], "around": t["around"].isoformat(),
                             "title": t.get("title"), "cause": t.get("cause"), "evidence": t.get("evidence", []),
+                            "cause_link": cause_link(t.get("cause"), t.get("evidence")),
                             "image": images.get(t["qid"]), "person_jump": t.get("person_jump"),
                             "editor_note": t.get("editor_note"),
                             "edit_burst": t.get("edit_burst"),
