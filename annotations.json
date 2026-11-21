@@ -81,10 +81,14 @@
  {
   "id": "godzilla-new-film-2026",
   "status": "published",
-  "note": "A new Godzilla film was released.",
+  "note": "Godzilla Minus Zero, the new Godzilla film, opened in Japan on Nov 3, 2026.",
   "works": [
    "Shin Godzilla",
-   "Godzilla"
+   "Godzilla",
+   "Godzilla: Tokyo S.O.S.",
+   "Godzilla: Final Wars",
+   "Godzilla vs. Megaguirus",
+   "Godzilla Against Mechagodzilla"
   ],
   "entity_name": "Godzilla",
   "entity_title": "Godzilla_(franchise)",
@@ -101,7 +105,16 @@
   "source_text": "On November 1, 2024, Toho announced plans to move forward with a new Godzilla film with Yamazaki returning to direct, write, and handle visual effects. Later revealed as Godzilla Minus Zero, it is to be released on November 3, 2026 in Japan; select theaters in the United States provided early access",
   "source_kind": "Wikipedia (cited)",
   "corroborated": "2026-11-20",
-  "cause": "release"
+  "cause": "release",
+  "qids": [
+   "Q677987",
+   "Q431660",
+   "Q664983",
+   "Q660666"
+  ],
+  "related": [
+   "Tsutomu Kitagawa"
+  ]
  },
  {
   "id": "cat-in-the-hat-film-2026",
