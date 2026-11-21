@@ -1,80 +1,102 @@
-The Rallyback, the comeback report, for **2026-11-19**: 160 new findings. [Open the site](https://inchurl2564.github.io/rally/?run=2026-11-19).
+The Rallyback, the comeback report, for **2026-11-20**: 284 new findings. [Open the site](https://inchurl2564.github.io/rally/?run=2026-11-20).
 
 ### Shared triggers
 
-- [3 older works are back: Maine Pyar Kiya, Prem Ratan Dhan Payo, Vivah (new work by Sooraj R. Barjatya: Yeh Prem Mol Liya (upcoming))](https://inchurl2564.github.io/rally/?run=2026-11-19)  
-  Maine Pyar Kiya, Prem Ratan Dhan Payo, Vivah
-- [2 older works are back: Penny Lane, Golden Slumbers (new work by The Beatles: Rubber Soul: Special Edition)](https://inchurl2564.github.io/rally/?run=2026-11-19)  
-  Penny Lane, Golden Slumbers
-- [2 older works are back: Songs of Innocence, Achtung Baby (new work by U2: Carnaval de Luz)](https://inchurl2564.github.io/rally/?run=2026-11-19)  
-  Songs of Innocence, Achtung Baby
-- [2 older works are back: Songs of Innocence, Achtung Baby (new work by U2: The Greatest Show on Earth (U2 song))](https://inchurl2564.github.io/rally/?run=2026-11-19)  
-  Songs of Innocence, Achtung Baby
+- [2 older works are back: The Lost City of Z, Two Lovers (new work by James Gray: Paper Tiger)](https://inchurl2564.github.io/rally/?run=2026-11-20)  
+  The Lost City of Z, Two Lovers
+- [2 older works are back: The Cat in the Hat, The Cat in the Hat (new adaptation of the same source: The Cat in the Hat)](https://inchurl2564.github.io/rally/?run=2026-11-20)  
+  The Cat in the Hat, The Cat in the Hat
+- [2 older works are back: Audio, Video, Disco., Cross (new work by Justice: Grand Theft Auto VI: Original Score (upcoming))](https://inchurl2564.github.io/rally/?run=2026-11-20)  
+  Audio, Video, Disco., Cross
+- [2 older works are back: Audio, Video, Disco., Cross (new work by Justice: Flower in a Hurricane)](https://inchurl2564.github.io/rally/?run=2026-11-20)  
+  Audio, Video, Disco., Cross
+- [2 older works are back: Down II: A Bustle in Your Hedgerow, Over the Under (new work by Down: Volume V)](https://inchurl2564.github.io/rally/?run=2026-11-20)  
+  Down II: A Bustle in Your Hedgerow, Over the Under
+- [2 older works are back: The Long Riders, The Ninth Configuration (Stacy Keach (screenwriter) died)](https://inchurl2564.github.io/rally/?run=2026-11-20)  
+  The Long Riders, The Ninth Configuration
+- [2 older works are back: Flirting with Disaster, Accidental Love (new work by David O. Russell: Madden)](https://inchurl2564.github.io/rally/?run=2026-11-20)  
+  Flirting with Disaster, Accidental Love
 
 ### Common threads
 
-- [2 works with Walter Gotell are back at once, from 2026-11-16](https://inchurl2564.github.io/rally/?run=2026-11-19)  
-  Ice Cold in Alex, Lord Jim. No recorded cause.
-- [2 works with Robert Riettii are back at once, from 2026-11-16](https://inchurl2564.github.io/rally/?run=2026-11-19)  
-  The Battle of the River Plate, Force 10 from Navarone. No recorded cause.
-- [2 works with Pierce Brosnan are back at once, from 2026-11-16](https://inchurl2564.github.io/rally/?run=2026-11-19)  
-  The November Man, The Matador. Likely cause: sync placement.
-- [2 works with Sarah Gadon are back at once, from 2026-11-18](https://inchurl2564.github.io/rally/?run=2026-11-19)  
-  Charlie Bartlett, Antiviral. No recorded cause.
-- [2 works with Michael Goodliffe are back at once, from 2026-11-19](https://inchurl2564.github.io/rally/?run=2026-11-19)  
-  The End of the Affair, Von Ryan's Express. No recorded cause.
-- [4 works with Robin Williams are back at once, from 2026-11-14](https://inchurl2564.github.io/rally/?run=2026-11-19)  
-  World's Greatest Dad, The Face of Love, What Dreams May Come, The Best of Times. No recorded cause.
-- [4 works with Joe Pasternak are back at once, from 2026-11-19](https://inchurl2564.github.io/rally/?run=2026-11-19)  
-  The Opposite Sex, Three Daring Daughters, Anchors Aweigh, Thrill of a Romance. No recorded cause.
-- [3 works with Gene Kelly are back at once, from 2026-11-19](https://inchurl2564.github.io/rally/?run=2026-11-19)  
-  What a Way to Go!, The Pirate, For Me and My Gal. No recorded cause.
-- [2 works with Slim Pickens are back at once, from 2026-11-14](https://inchurl2564.github.io/rally/?run=2026-11-19)  
-  The Getaway, Will Penny. No recorded cause.
-- [2 works with Trevor Howard are back at once, from 2026-11-15](https://inchurl2564.github.io/rally/?run=2026-11-19)  
-  The Charge of the Light Brigade, The Way Ahead. No recorded cause.
-- [3 works with Frances Fisher are back at once, from 2026-11-11](https://inchurl2564.github.io/rally/?run=2026-11-19)  
-  Jolene, Female Perversions, You're Not You. No recorded cause.
-- [2 works with Charles Millot are back at once, from 2026-11-18](https://inchurl2564.github.io/rally/?run=2026-11-19)  
-  The Sleeping Car Murders, The Nun. No recorded cause.
+- [13 works with Ian Fleming are back at once, from 2026-11-16](https://inchurl2564.github.io/rally/?run=2026-11-20)  
+  Octopussy and The Living Daylights, Chitty-Chitty-Bang-Bang, You Only Live Twice, Moonraker, Diamonds Are Forever, Goldfinger, The Spy Who Loved Me, Thunderball, Casino Royale, On Her Majesty's Secret Service, Live and Let Die, For Your Eyes Only, From Russia, with Love. No recorded cause.
+- [2 works with John Barry are back at once, from 2026-11-16](https://inchurl2564.github.io/rally/?run=2026-11-20)  
+  The James Bond Theme, Peggy Sue Got Married. No recorded cause.
+- [8 works with Michael Tavera are back at once, from 2026-11-18](https://inchurl2564.github.io/rally/?run=2026-11-20)  
+  The Land Before Time V: The Mysterious Island, The Land Before Time VI: The Secret of Saurus Rock, The Land Before Time XI: Invasion of the Tinysauruses, The Land Before Time X: The Great Longneck Migration, The Land Before Time IV: Journey Through the Mists, The Land Before Time II: The Great Valley Adventure, The Land Before Time III: The Time of the Great Giving, The Land Before Time XIV: Journey of the Brave. No recorded cause.
+- [3 works with Alfred Hitchcock are back at once, from 2026-11-14](https://inchurl2564.github.io/rally/?run=2026-11-20)  
+  Spellbound, The Paradine Case, Lifeboat. No recorded cause.
+- [4 works with Tsutomu Kitagawa are back at once, from 2026-11-03](https://inchurl2564.github.io/rally/?run=2026-11-20)  
+  Godzilla: Tokyo S.O.S., Godzilla: Final Wars, Godzilla vs. Megaguirus, Godzilla Against Mechagodzilla. No recorded cause.
+- [2 works with Bill Conti are back at once, from 2026-11-11](https://inchurl2564.github.io/rally/?run=2026-11-20)  
+  Paradise Alley, F.I.S.T.. No recorded cause.
+- [3 works with Suzanne Collins are back at once, from 2026-11-05](https://inchurl2564.github.io/rally/?run=2026-11-20)  
+  The Hunger Games, Catching Fire, Mockingjay. No recorded cause.
+- [3 works with Edward Shearmur are back at once, from 2026-11-19](https://inchurl2564.github.io/rally/?run=2026-11-20)  
+  She's Funny That Way, The Skeleton Key, K-PAX. No recorded cause.
+- [2 works with Marcelo Zarvos are back at once, from 2026-11-16](https://inchurl2564.github.io/rally/?run=2026-11-20)  
+  The Face of Love, Won't Back Down. No recorded cause.
+- [2 works with Bernard Herrmann are back at once, from 2026-11-15](https://inchurl2564.github.io/rally/?run=2026-11-20)  
+  Jane Eyre, The Naked and the Dead. No recorded cause.
+- [2 works with Daniel Radcliffe are back at once, from 2026-11-16](https://inchurl2564.github.io/rally/?run=2026-11-20)  
+  David Copperfield, Imperium. No recorded cause.
+- [2 works with Gene Hackman are back at once, from 2026-11-16](https://inchurl2564.github.io/rally/?run=2026-11-20)  
+  Behind Enemy Lines, The Chamber. Likely cause: award.
 
 ### New comebacks
 
-- [Bachelor Party (2012) is back: 28.4× usual attention](https://inchurl2564.github.io/rally/?run=2026-11-19#w-Q4838765)  
-  New work by same creator · sustained. new work by Amal Neerad: Bachelor Party D'eux (attention rose before release). Spike began 2026-10-16; usual 93 views/day.
-- [Virtuosity (1995) is back: 294.2× usual attention](https://inchurl2564.github.io/rally/?run=2026-11-19#w-Q187414)  
-  No trigger found · sustained. No recorded cause yet. Spike began 2026-10-14; usual 1 views/day.
-- [Blind Detective (2013) is back: 47.3× usual attention](https://inchurl2564.github.io/rally/?run=2026-11-19#w-Q11699344)  
-  Shared person, same timing · fading. Johnnie To (director) is credited on 3 works that all started spiking around 2026-11-12. Spike began 2026-11-06; usual 17 views/day.
-- [Gloria (2013) is back: 14.3× usual attention](https://inchurl2564.github.io/rally/?run=2026-11-19#w-Q5013909)  
-  Death of someone credited · fading. Sebastián Lelio (director) died. Spike began 2026-11-06; usual 45 views/day.
-- [Rectify (2013) is back: 12.7× usual attention](https://inchurl2564.github.io/rally/?run=2026-11-19#w-Q7303179)  
-  No trigger found · sustained. No recorded cause yet. Spike began 2026-11-02; usual 268 views/day.
-- [Cassiopeia (1996) is back: 61.6× usual attention](https://inchurl2564.github.io/rally/?run=2026-11-19#w-Q2941299)  
-  No trigger found · emerging. No recorded cause yet. Spike began 2026-11-19; usual 18 views/day.
-- [Songs of Innocence (2014) is back: 3.7× usual attention](https://inchurl2564.github.io/rally/?run=2026-11-19#w-Q14037150)  
-  New work by same creator · peaking. new work by U2: Carnaval de Luz. Spike began 2026-11-11; usual 337 views/day.
-- [In the Heart of the Sea (2015) is back: 4.6× usual attention](https://inchurl2564.github.io/rally/?run=2026-11-19#w-Q15079316)  
-  Shared person, same timing · fading. Charles Leavitt (screenwriter) is credited on 2 works that all started spiking around 2026-11-09. Spike began 2026-11-06; usual 889 views/day.
-- [Force 10 from Navarone (1978) is back: 3.8× usual attention](https://inchurl2564.github.io/rally/?run=2026-11-19#w-Q572736)  
-  Shared person, same timing · emerging. Robert Riettii (cast member) is credited on 2 works that all started spiking around 2026-11-16. Spike began 2026-11-17; usual 293 views/day.
-- [The Nightingale (2015) is back: 4.4× usual attention](https://inchurl2564.github.io/rally/?run=2026-11-19#w-Q25218724)  
-  No trigger found · emerging. No recorded cause yet. Spike began 2026-11-16; usual 1,151 views/day.
-- [Swingin' (1983) is back: 11.8× usual attention](https://inchurl2564.github.io/rally/?run=2026-11-19#w-Q7658661)  
-  Death of someone credited · emerging. John Anderson (performer) died. Spike began 2026-11-19; usual 36 views/day.
-- [The Face of Love (2013) is back: 15.4× usual attention](https://inchurl2564.github.io/rally/?run=2026-11-19#w-Q15046522)  
-  Shared person, same timing · fading. Robin Williams (cast member) is credited on 4 works that all started spiking around 2026-11-14. Spike began 2026-11-10; usual 50 views/day.
+- [Minority Report (2002) is back: 166.7× usual attention](https://inchurl2564.github.io/rally/?run=2026-11-20#w-Q244604)  
+  Cause suggested by news/edits · sustained. Likely cause from coverage: sync placement. Spike began 2026-08-15; usual 10 views/day.
+- [The Hunger Games (2008) is back: 4.5× usual attention](https://inchurl2564.github.io/rally/?run=2026-11-20#w-Q11678)  
+  Shared person, same timing · sustained. Suzanne Collins (author) is credited on 3 works that all started spiking around 2026-11-05. Spike began 2026-11-05; usual 769 views/day.
+- [Catching Fire (2009) is back: 5.1× usual attention](https://inchurl2564.github.io/rally/?run=2026-11-20#w-Q837140)  
+  Shared person, same timing · sustained. Suzanne Collins (author) is credited on 3 works that all started spiking around 2026-11-05. Spike began 2026-11-05; usual 334 views/day.
+- [Mockingjay (2010) is back: 5.0× usual attention](https://inchurl2564.github.io/rally/?run=2026-11-20#w-Q40354)  
+  Shared person, same timing · sustained. Suzanne Collins (author) is credited on 3 works that all started spiking around 2026-11-05. Spike began 2026-11-05; usual 515 views/day.
+- [A Beautiful Mind (2001) is back: 248.0× usual attention](https://inchurl2564.github.io/rally/?run=2026-11-20#w-Q164103)  
+  No trigger found · sustained. No recorded cause yet. Spike began 2026-08-21; usual 11 views/day.
+- [The Night of the Hunter (1955) is back: 642.3× usual attention](https://inchurl2564.github.io/rally/?run=2026-11-20#w-Q1132629)  
+  Cause suggested by news/edits · sustained. Likely cause from coverage: legal. Spike began 2026-08-22; usual 2 views/day.
+- [Lost in Translation (2003) is back: 118.8× usual attention](https://inchurl2564.github.io/rally/?run=2026-11-20#w-Q107270)  
+  No trigger found · sustained. No recorded cause yet. Spike began 2026-09-14; usual 7 views/day.
+- [4.50 from Paddington (1957) is back: 169.9× usual attention](https://inchurl2564.github.io/rally/?run=2026-11-20#w-Q197243)  
+  No trigger found · sustained. No recorded cause yet. Spike began 2026-09-24; usual 1 views/day.
+- [ATM (2012) is back: 165.7× usual attention](https://inchurl2564.github.io/rally/?run=2026-11-20#w-Q1060517)  
+  No trigger found · fading. No recorded cause yet. Spike began 2026-11-01; usual 1 views/day.
+- [A Christmas Carol (1984) is back: 8.7× usual attention](https://inchurl2564.github.io/rally/?run=2026-11-20#w-Q1064123)  
+  New sequel/adaptation · sustained. new adaptation of the same source: Ebenezer (attention rose before release). Spike began 2026-10-29; usual 107 views/day.
+- [Godzilla, Mothra and King Ghidorah: Giant Monsters All-Out Attack (2001) is back: 6.7× usual attention](https://inchurl2564.github.io/rally/?run=2026-11-20#w-Q1533961)  
+  Anniversary · fading. 25th anniversary of release. Spike began 2026-11-02; usual 199 views/day.
+- [Godzilla: Final Wars (2004) is back: 5.8× usual attention](https://inchurl2564.github.io/rally/?run=2026-11-20#w-Q431660)  
+  Shared person, same timing · fading. Tsutomu Kitagawa (cast member) is credited on 4 works that all started spiking around 2026-11-03. Spike began 2026-11-03; usual 304 views/day.
 
 ### Coming up
 
-- [The Snow Queen (1844) is due for a comeback](https://inchurl2564.github.io/rally/?run=2026-11-19&tab=coming)  
-  North, adaptation of it, arrives 2026-11-26.
-- [Monster Hunter 4 (2013) is due for a comeback](https://inchurl2564.github.io/rally/?run=2026-11-19&tab=coming)  
-  Monster Hunter Wilds, new entry in the series of it, arrives 2026-12-04.
-- [Mrs Dalloway (1925) is due for a comeback](https://inchurl2564.github.io/rally/?run=2026-11-19&tab=coming)  
-  Clarissa, adaptation of it, arrives 2026-12-11.
-- [Rendezvous with Rama (1973) is due for a comeback](https://inchurl2564.github.io/rally/?run=2026-11-19&tab=coming)  
-  Rendezvous with Rama, adaptation of it, arrives 2027-01-01.
+- [Turok: Evolution (2002) is due for a comeback](https://inchurl2564.github.io/rally/?run=2026-11-20&tab=coming)  
+  Turok: Origins, new entry in the series of it, arrives 2027-01-01.
+- [Megadimension Neptunia VII (2015) is due for a comeback](https://inchurl2564.github.io/rally/?run=2026-11-20&tab=coming)  
+  Hyperspace Neptunia: Unlimited, new entry in the series of it, arrives 2027-01-01.
+- [Danganronpa 2: Goodbye Despair (2012) is due for a comeback](https://inchurl2564.github.io/rally/?run=2026-11-20&tab=coming)  
+  Danganronpa 2×2, adaptation of it, arrives 2027-01-14.
+- [The Unfaithful Wife (1969) is due for a comeback](https://inchurl2564.github.io/rally/?run=2026-11-20&tab=coming)  
+  Minotaur, adaptation of it, arrives 2027-01-21.
+- [Forza Motorsport 3 (2009) is due for a comeback](https://inchurl2564.github.io/rally/?run=2026-11-20&tab=coming)  
+  Forza Horizon 6, new entry in the series of it, arrives 2027-01-26.
+- [Forza Horizon (2012) is due for a comeback](https://inchurl2564.github.io/rally/?run=2026-11-20&tab=coming)  
+  Forza Horizon 6, new entry in the series of it, arrives 2027-01-26.
+- [Forza Motorsport (2005) is due for a comeback](https://inchurl2564.github.io/rally/?run=2026-11-20&tab=coming)  
+  Forza Horizon 6, new entry in the series of it, arrives 2027-01-26.
+- [Forza Motorsport 4 (2011) is due for a comeback](https://inchurl2564.github.io/rally/?run=2026-11-20&tab=coming)  
+  Forza Horizon 6, new entry in the series of it, arrives 2027-01-26.
+- [Until Dawn (2015) is due for a comeback](https://inchurl2564.github.io/rally/?run=2026-11-20&tab=coming)  
+  Until Dawn 2, new entry in the series of it, arrives 2027-01-28.
+- [Super Metroid (1994) is due for a comeback](https://inchurl2564.github.io/rally/?run=2026-11-20&tab=coming)  
+  Metroid Ravenous, new entry in the series of it, arrives 2027-01-28.
+- [Metroid Prime (2002) is due for a comeback](https://inchurl2564.github.io/rally/?run=2026-11-20&tab=coming)  
+  Metroid Ravenous, new entry in the series of it, arrives 2027-01-28.
+- [Metroid (1986) is due for a comeback](https://inchurl2564.github.io/rally/?run=2026-11-20&tab=coming)  
+  Metroid Ravenous, new entry in the series of it, arrives 2027-01-28.
 
 ---
 Leads, not conclusions: verify before publishing. To get this by email, **Watch** this repo → **Custom** → **Issues**.
