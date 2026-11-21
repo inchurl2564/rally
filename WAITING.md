@@ -60,4 +60,4 @@ The site lives at https://therallyback.com (Cloudflare, connected to this repo: 
 including the nightly edition, publishes within a few minutes). Feeds, share links and title pages use
 the new domain. The old address, inchurl2564.github.io/rally/, forwards every page to the same page on
 therallyback.com and still serves the feeds, so existing subscriptions keep working.
-Still to do (optional): Rules → Redirect Rules → "Redirect from WWW to root", so www.therallyback.com works.
+www.therallyback.com forwards to therallyback.com (Cloudflare redirect rule "www to therallyback.com").
