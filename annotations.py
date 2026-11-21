@@ -155,6 +155,9 @@ def check_drafts(notes: list[dict]) -> int:
 
 # ---------- applying notes to a run ----------
 
+EDITOR_VERDICT = {"release": "editor-release", "death": "editor-death", "news": "editor"}
+
+
 def apply(results: list[dict], threads: list[dict]) -> None:
     """Attach published notes to matching spikes and threads."""
     notes = [n for n in load() if n.get("status") == "published" and n.get("source")]
@@ -164,7 +167,11 @@ def apply(results: list[dict], threads: list[dict]) -> None:
         works = {w.lower() for w in n.get("works", [])}
         names = {x.lower() for x in (n.get("entity_name"), n.get("entity_title", "").replace("_", " "),
                                       *n.get("related", [])) if x}
-        note = {"text": n["note"], "source": n["source"], "id": n["id"]}
+        # "cause": release (a new film, show, game or book), death, or news; decides the section.
+        # "new_work": the Wikidata ID of that new release, so its titles join the same story.
+        note = {"text": n["note"], "source": n["source"], "id": n["id"], "cause": n.get("cause", "news")}
+        if n.get("new_work"):
+            note["new_work"] = n["new_work"]
         if n.get("via"):            # e.g. "reader tip": credited when the mystery is marked solved
             note["via"] = n["via"]
         for r in results:
@@ -174,7 +181,7 @@ def apply(results: list[dict], threads: list[dict]) -> None:
             if r.get("label", "").lower() in works or r["qid"] in n.get("qids", []) or (rip and rip in names):
                 r["editor_note"] = note
                 if r["verdict"] not in ("death", "derivative", "same-creator", "anniversary"):
-                    r["verdict"] = "editor"
+                    r["verdict"] = EDITOR_VERDICT.get(note["cause"], "editor")
         for t in threads:
             if t["name"].lower() in names and lo <= t["around"] <= hi:
                 t["editor_note"] = note

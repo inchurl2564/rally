@@ -164,3 +164,11 @@ The nightly run checks itself (`health.py` plus two workflow steps) and opens on
 While a problem lasts, each night adds a comment to the same issue. Close it once it's dealt with.
 Quiet nights send nothing.
 
+## Editor's notes: where they're filed
+
+Each note in `annotations.json` says what kind of cause it is, and its titles are filed in that section:
+`"cause": "release"` (a new film, show, game or book) → New releases, `"death"` → In memoriam,
+`"news"` (the default) → In the news. A release note can also name the new work's Wikidata ID in
+`"new_work"`; titles the site already linked to that release then join the same story (e.g. the Hunger
+Games films and novels, with Sunrise on the Reaping). Noted stories keep the **Confirmed** label.
+

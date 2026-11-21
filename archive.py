@@ -357,6 +357,7 @@ def weekly(site: str, hist: dict, runs: list[str], latest: dict) -> None:
     # New comebacks each day of the week, by reason (for the week chart). The record's first
     # day has nothing to compare with, so it isn't counted as "new".
     reason = {"ripple": "news", "editor": "news", "coverage": "news", "derivative": "release", "same-creator": "release",
+              "editor-release": "release", "editor-death": "memoriam",
               "unexplained": "unexplained", "weak link": "unexplained", "lookup failed": "unexplained",
               "common thread": "unexplained", "death": "memoriam", "anniversary": "anniversary"}
     per_day = []

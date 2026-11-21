@@ -17,7 +17,8 @@
    "stop-motion"
   ],
   "source": "https://www.npr.org/2026/11/01/nx-s1-5726764/travis-knight-discusses-his-stop-motion-adaptation-of-the-childrens-book-wildwood",
-  "source_kind": "NPR (supplied by an editor)"
+  "source_kind": "NPR (supplied by an editor)",
+  "cause": "release"
  },
  {
   "id": "russell-brand-verdict-2026",
@@ -41,7 +42,8 @@
   "last_checked": "2026-11-20",
   "source_text": "On 5 November 2026, Brand was convicted of one count of rape and three counts of sexual assault and remanded in custody. The jury deliberated for nine hours and 13 minutes, and the verdicts were as follows:",
   "source_kind": "Wikipedia (cited)",
-  "corroborated": "2026-11-20"
+  "corroborated": "2026-11-20",
+  "cause": "news"
  },
  {
   "id": "pattinson-bond-2026",
@@ -73,7 +75,8 @@
    "John Barry",
    "Daniel Craig",
    "Sean Connery"
-  ]
+  ],
+  "cause": "news"
  },
  {
   "id": "godzilla-new-film-2026",
@@ -97,7 +100,8 @@
   "source": "https://variety.com/2024/film/news/godzilla-sequel-new-movie-minus-one-director-1236197482/",
   "source_text": "On November 1, 2024, Toho announced plans to move forward with a new Godzilla film with Yamazaki returning to direct, write, and handle visual effects. Later revealed as Godzilla Minus Zero, it is to be released on November 3, 2026 in Japan; select theaters in the United States provided early access",
   "source_kind": "Wikipedia (cited)",
-  "corroborated": "2026-11-20"
+  "corroborated": "2026-11-20",
+  "cause": "release"
  },
  {
   "id": "cat-in-the-hat-film-2026",
@@ -116,7 +120,8 @@
    "release"
   ],
   "source": null,
-  "last_checked": "2026-11-21"
+  "last_checked": "2026-11-21",
+  "cause": "release"
  },
  {
   "id": "friday-13th-new-film-2026",
@@ -137,7 +142,8 @@
    "in development"
   ],
   "source": null,
-  "last_checked": "2026-11-21"
+  "last_checked": "2026-11-21",
+  "cause": "release"
  },
  {
   "id": "i-play-rocky-2026",
@@ -158,7 +164,8 @@
    "Anthony Ippolito"
   ],
   "source": "https://variety.com/2026/film/reviews/i-play-rocky-review-anthony-ippolito-peter-farrelly-1236859563/",
-  "source_kind": "Variety review (supplied by an editor)"
+  "source_kind": "Variety review (supplied by an editor)",
+  "cause": "release"
  },
  {
   "id": "hunger-games-sunrise-2026",
@@ -186,6 +193,8 @@
    "Suzanne Collins"
   ],
   "source": "https://en.wikipedia.org/wiki/The_Hunger_Games:_Sunrise_on_the_Reaping",
-  "source_kind": "Wikipedia (supplied by an editor)"
+  "source_kind": "Wikipedia (supplied by an editor)",
+  "cause": "release",
+  "new_work": "Q126390739"
  }
 ]

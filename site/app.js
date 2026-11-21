@@ -123,6 +123,8 @@ function storyText(r) {
       return { kicker: "The Ripple Effect", hed,
         dek: `Interest in the ${yr} ${n} took off right as interest in ${rp.name} jumped ${rp.ratio}× on ${short(rp.date)}.${["franchise", "series", "character", "sequel or adaptation", "source material"].includes(rp.relation) ? "" : ` Something happened involving ${rp.name}.`}` };
     }
+    case "editor-release":
+    case "editor-death":
     case "editor":
       return { kicker: "Explained", hed: `Why interest in ${w} is up`, dek: `${r.editor_note.text} The ${yr} ${n} is drawing ${x} its usual interest.` };
     case "coverage":
@@ -241,7 +243,8 @@ function threadStory(t) {
     : t.cause ? `${causeSentence(t.cause)}.` : "We don't know why yet. Maybe you know?";
   const works = t.works.map((w) => state.byQid[w.qid]).filter(Boolean);
   const known = !!(t.editor_note || pj || t.cause);
-  return { reason: known ? STREAM_TYPES[0] : STREAM_TYPES[2], kicker: known ? "In the news" : "Unexplained",
+  const sec = t.editor_note ? STREAM_TYPES[NOTE_SECTION[t.editor_note.cause] ?? 0] : STREAM_TYPES[0];
+  return { reason: known ? sec : STREAM_TYPES[2], kicker: known ? sec.label : "Unexplained",
     hed: `${oldNames(works)}: ${t.works.length} titles ${how} ${t.name}, all back at once`,
     dek: `They all started rising around ${short(t.around)}. ${cause}` };
 }
@@ -436,14 +439,15 @@ function link(r, ...kids) { return h("a", { href: `#w-${r.qid}`, onclick: (e) =>
 // Colors: fixed validated palette slots, in this order (never re-assigned by rank).
 const STREAM_TYPES = [
   { key: "news", label: "In the news", color: "var(--s1)", verdicts: ["ripple", "editor", "coverage"] },
-  { key: "release", label: "New release", color: "var(--s2)", verdicts: ["derivative", "same-creator"] },
+  { key: "release", label: "New release", color: "var(--s2)", verdicts: ["derivative", "same-creator", "editor-release"] },
   { key: "unexplained", label: "Unexplained", color: "var(--s3)", verdicts: ["unexplained", "weak link", "lookup failed", "common thread"] },
-  { key: "memoriam", label: "In memoriam", color: "var(--s4)", verdicts: ["death"] },
+  { key: "memoriam", label: "In memoriam", color: "var(--s4)", verdicts: ["death", "editor-death"] },
   { key: "anniversary", label: "Anniversary", color: "var(--s5)", verdicts: ["anniversary"] },
 ];
 const SET_ASIDE = { seasonal: "Seasonal", "automated?": "Likely bots", "front page": "Wikipedia feature" };
 const OTHER = { key: "other", label: "Set aside", color: "var(--s-other)" };
 const threadExplained = (t) => !!(t.editor_note || t.person_jump || t.cause);
+const NOTE_SECTION = { release: 1, death: 3, news: 0 };
 const typeOf = (r) => (r.verdict === "common thread" && state.explainedByThread && state.explainedByThread.has(r.qid)
   ? STREAM_TYPES[0] : STREAM_TYPES.find((t) => t.verdicts.includes(r.verdict)) || OTHER);
 const reasonOf = typeOf;
@@ -635,10 +639,17 @@ function buildCauseGroups() {
   for (const [id, qids] of notes) {
     const note = (R[qids.find((q) => R[q] && R[q].editor_note)] || {}).editor_note
       || (D.common_threads || []).find((t) => t.editor_note && t.editor_note.id === id).editor_note;
-    claim(`note-${id}`, qids, (free) => {
+    // A note about a new release takes in the titles the site already linked to that release,
+    // so the films and the novels behind one new film are one story.
+    const same = note.new_work ? (D.shared_triggers || []).filter((t) => t.qid === note.new_work).flatMap((t) => t.works) : [];
+    const release = same.length ? (D.shared_triggers || []).find((t) => t.qid === note.new_work) : null;
+    const reason = STREAM_TYPES[NOTE_SECTION[note.cause] ?? 0];
+    claim(`note-${id}`, [...qids, ...same], (free) => {
       const ws = free.map((q) => R[q]);
-      return { story: { reason: STREAM_TYPES[0], kicker: "In the news", hed: `${oldNames(ws)} are back`,
-        dek: `${note.text} ${ws.length} older titles connected to the story started rising together.` }, sources: () => [sourceLine(note)] };
+      const nw = release ? release.text.split(": ").slice(1).join(": ").replace(/ \((upcoming|attention rose before release)\)$/, "") : null;
+      return { story: { reason, kicker: reason.label,
+        hed: nw ? `${oldNames(ws)} are back, thanks to ${nw}` : `${oldNames(ws)} are back`,
+        dek: `${note.text} ${ws.length} older titles connected to it started rising together.` }, sources: () => [sourceLine(note)] };
     });
   }
   const bySize = (xs, n) => [...xs].sort((a, b) => n(b) - n(a));
@@ -708,7 +719,7 @@ function todayPage() {
   // Lead with a story people will recognise: a real everyday audience, ideally a picture.
   const known = L.slice(0, 25).filter((r) => r.baseline >= 100);
   // Prefer a story we can actually tell (a named cause) over a mystery.
-  const told = (r) => ["editor", "death", "derivative", "ripple", "same-creator", "anniversary"].includes(r.verdict);
+  const told = (r) => ["editor", "editor-release", "editor-death", "death", "derivative", "ripple", "same-creator", "anniversary"].includes(r.verdict);
   const lead = known.find((r) => told(r) && r.image) || known.find((r) => r.image) || known[0] ||
     L.find((r) => r.image) || L[0];
   const rest = L.filter((r) => r !== lead);

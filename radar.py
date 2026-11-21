@@ -598,6 +598,8 @@ VERDICT_LABEL = {
     "coverage": "Cause suggested by news/edits",
     "ripple": "Riding a connected story",
     "editor": "Editor's note",
+    "editor-release": "Editor's note: a new release",
+    "editor-death": "Editor's note: a death",
     "front page": "Featured on Wikipedia's front page",
 }
 
@@ -1114,7 +1116,7 @@ def main():
             hit = [(d, kind) for d, kind in feats.get(r["title"], []) if 0 <= (r["peak_day"] - d).days <= 1]
             if hit:
                 r["front_page"] = {"date": hit[0][0].isoformat(), "kind": hit[0][1]}
-                if r["verdict"] not in ("death", "derivative", "editor"):
+                if r["verdict"] not in ("death", "derivative", "editor", "editor-release", "editor-death"):
                     r["verdict"] = "front page"
         log(f"      front page: {sum(1 for r in results if r.get('front_page'))} spikes were Wikipedia front-page features")
     except Exception as e:
