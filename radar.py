@@ -1016,9 +1016,8 @@ def main():
                     help="max bulk pageview files to download in one run (~1 min each; later runs need 1)")
     ap.add_argument("--no-news", action="store_true", help="skip GDELT news lookups")
     ap.add_argument("--explain-max", type=int, default=30, help="max unexplained spikes to research per run")
-    ap.add_argument("--site-url", default=(f"https://{os.environ['GITHUB_REPOSITORY'].split('/')[0]}.github.io/"
-                                           f"{os.environ['GITHUB_REPOSITORY'].split('/')[1]}/")
-                    if os.environ.get("GITHUB_REPOSITORY") else "https://inchurl2564.github.io/rally/")
+    ap.add_argument("--site-url", default="https://therallyback.com/",
+                    help="the site's official address, used in feeds, share links and title pages")
     args = ap.parse_args()
 
     today = dt.date.today()

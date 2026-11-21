@@ -11,7 +11,7 @@ on:
   push:
     branches: [main]
     # Redeploy committed data when code changes (doesn't rerun the radar).
-    paths: ["site/**", "*.py", "annotations.json", ".github/workflows/radar.yml", "!site/data/**", "!site/feeds/**", "!site/w/**"]
+    paths: ["site/**", "*.py", "annotations.json", "pointer/**", ".github/workflows/radar.yml", "!site/data/**", "!site/feeds/**", "!site/w/**"]
 
 permissions:
   contents: write   # commit each day's results
@@ -155,10 +155,17 @@ jobs:
           sed -i "s|src=\"app.js\"|src=\"app.js?v=$v\"|; s|href=\"style.css\"|href=\"style.css?v=$v\"|" site/index.html
           grep -n "app.js\|style.css" site/index.html
 
+      # The site itself is published by Cloudflare at therallyback.com (from this repo).
+      # The old GitHub Pages address now only forwards visitors there, and keeps serving the
+      # feeds so existing subscriptions don't break.
+      - name: Build the GitHub Pages pointer
+        run: |
+          rm -rf pointer/feeds && cp -r site/feeds pointer/feeds
+
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: site
+          path: pointer
 
   deploy:
     needs: build

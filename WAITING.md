@@ -7,8 +7,7 @@ Updated as items move. Last updated: 2026-11-20 (prediction backfill done: 10,41
 
 | Item | Waiting for | Then |
 | --- | --- | --- |
-| Own domain (therallyback.com) | Buying the domain | Add it to the Cloudflare project (Workers & Pages → rallyback → Settings → Domains & Routes → Add → Custom domain). Then Claude switches feeds and share links to it, once, and the GitHub Pages copy becomes a pointer to it. Needed before anything commercial: GitHub Pages doesn't allow it |
-| "Where to watch / listen / read / play" links (affiliate) | The domain move above; joining Apple, Amazon, Bookshop.org and a game-store affiliate program | Buttons on every title and story card, plus the disclosure line |
+| "Where to watch / listen / read / play" links (affiliate) | Joining Apple, Amazon, Bookshop.org and a game-store affiliate program | Buttons on every title and story card, plus the disclosure line |
 | Newsletter sign-up and the weekly issue | Picking a newsletter service (Beehiiv suggested, free to 2,500 subscribers) | Sign-up boxes on the site; the This week page becomes the Friday issue |
 | Reader tips going to a form instead of GitHub | A Google Form (or Formspree) link | Set `TIPS_FORM` in `site/app.js`; tips stop opening GitHub issues |
 | A contact address on About us | Choosing an address you're happy to publish | Add it to About us and the footer |
@@ -55,9 +54,10 @@ Updated as items move. Last updated: 2026-11-20 (prediction backfill done: 10,41
 - Group headlines that use the editor's note ("Robert Pattinson's Bond casting brings back 39 titles").
 - Fix headlines where the new release has the same name as the original ("Zelda … thanks to Zelda").
 
-## Cloudflare: done
+## Cloudflare and the domain: done
 
-The site is on Cloudflare (as a Worker) at https://rallyback.inchurlyo.workers.dev, connected to this
-repo: every push to `main`, including the nightly edition, publishes there within a few minutes.
-`site/_headers` makes browsers always check for fresh code. The GitHub Pages copy keeps running, and
-feeds and share links keep pointing at it until therallyback.com is bought; then they switch once.
+The site lives at https://therallyback.com (Cloudflare, connected to this repo: every push to `main`,
+including the nightly edition, publishes within a few minutes). Feeds, share links and title pages use
+the new domain. The old address, inchurl2564.github.io/rally/, forwards every page to the same page on
+therallyback.com and still serves the feeds, so existing subscriptions keep working.
+Still to do (optional): Rules → Redirect Rules → "Redirect from WWW to root", so www.therallyback.com works.

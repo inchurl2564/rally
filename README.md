@@ -172,3 +172,10 @@ Each note in `annotations.json` says what kind of cause it is, and its titles ar
 `"new_work"`; titles the site already linked to that release then join the same story (e.g. the Hunger
 Games films and novels, with Sunrise on the Reaping). Noted stories keep the **Confirmed** label.
 
+## Where the site lives
+
+**https://therallyback.com**, served by Cloudflare straight from this repository (the `site` folder);
+every push to `main` publishes within minutes. `site/_headers` makes browsers always check for fresh
+code. The old GitHub Pages address publishes the `pointer` folder instead: it forwards every page to
+the same page on therallyback.com and keeps serving the feeds.
+
