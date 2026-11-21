@@ -99,6 +99,12 @@ function storyText(r) {
     case "derivative": {
       const [rel, ...rest] = t.text.split(": "), nw = strip(rest.join(": "));
       const what = REL[rel] || "a new release";
+      // A new version with the original's own name: "thanks to Zelda" would read as nonsense.
+      if (sameName(nw, w)) return upcoming
+        ? { kicker: "Homework", hed: `${w} is back, just ahead of a new version of the same name`,
+            dek: `The ${yr} ${n} is already at ${x} its usual interest, with a new version of the same name due ${fmtDate(t.date)}.` }
+        : { kicker: "The Sequel Effect", hed: `${w} is back, thanks to a new version of the same name`,
+            dek: `The ${yr} ${n} is drawing ${x} its usual interest since a new version of the same name came out ${fmtDate(t.date)}.` };
       return upcoming
         ? { kicker: "Homework", hed: `${w} is back, just ahead of ${nw}`,
             dek: `The ${yr} ${n} is already at ${x} its usual interest, with ${what}, ${nw}, due ${fmtDate(t.date)}.` }
@@ -120,6 +126,8 @@ function storyText(r) {
       const who = t.text.split(" (")[0], k = (t.text.match(/credited on (\d+)/) || [])[1];
       // If its group is explained (an editor's note, the person's own spike, a likely cause), say so.
       const grp = (state.data.common_threads || []).find((g) => threadExplained(g) && g.works.some((x) => x.qid === r.qid));
+      // Two titles sharing someone is often coincidence: unexplained, it's told as a plain mystery.
+      if (!grp && +k < MIN_LINKED) return mysteryText(r, w, yr, n, x, since);
       return { kicker: "Six Degrees", hed: `${w} is one of ${k} ${who} titles back at once`,
         dek: grp ? threadStory(grp).dek : `They all started rising around ${short(t.date)}. Something is going on with ${who}, but we can't say what yet.` };
     }
@@ -148,17 +156,20 @@ function storyText(r) {
     case "automated?":
       return { kicker: "Probably Bots", hed: `${w}'s spike looks automated`,
         dek: `Almost all of the extra traffic comes from desktop computers, a typical sign of bots rather than people.` };
-    default: {
-      const heds = [
-        `Nobody can explain why people are suddenly looking up ${w}`,
-        `${w} is having a moment. Nobody knows why.`,
-        `Why is everyone suddenly reading about ${w}?`,
-        `The internet rediscovered ${w}, and we can't figure out why`,
-      ];
-      return { kicker: "Mystery", hed: heds[hash(r.qid) % heds.length],
-        dek: `The ${yr} ${n} has drawn ${x} its usual interest ${since}, with no sequel, death, anniversary or news story we can find.` };
-    }
+    default:
+      return mysteryText(r, w, yr, n, x, since);
   }
+}
+const MIN_LINKED = 3;     // an unexplained "linked by one person" group needs 3+ titles
+function mysteryText(r, w, yr, n, x, since) {
+  const heds = [
+    `Nobody can explain why people are suddenly looking up ${w}`,
+    `${w} is having a moment. Nobody knows why.`,
+    `Why is everyone suddenly reading about ${w}?`,
+    `The internet rediscovered ${w}, and we can't figure out why`,
+  ];
+  return { kicker: "Mystery", hed: heds[hash(r.qid) % heds.length],
+    dek: `The ${yr} ${n} has drawn ${x} its usual interest ${since}, with no sequel, death, anniversary or news story we can find.` };
 }
 
 // "A, B and 10 more": the old works themselves, biggest comeback first.
@@ -179,6 +190,7 @@ const topPictured = (works) => {
   return ws.find((w) => w.image && !w.image_of) || ws.find((w) => w.image);   // its own photo first
 };
 
+const sameName = (a, b) => plain(String(a)).toLowerCase().trim() === plain(String(b)).toLowerCase().trim();
 function sharedStory(t) {
   const works = t.works.map((q) => state.byQid[q]).filter(Boolean);
   const names = oldNames(works);
@@ -190,6 +202,9 @@ function sharedStory(t) {
   const nw = t.text.split(": ").slice(1).join(": ").replace(/ \((upcoming|attention rose before release)\)$/, "") || t.text;
   const up = /\(upcoming\)$/.test(t.text);
   const are = works.length === 1 ? "is" : "are";
+  if (works.length && works.every((w) => sameName(w.label, nw))) return { reason: STREAM_TYPES[1], kicker: "New release",
+    hed: `${names} ${are} back, ${up ? "just ahead of" : "thanks to"} a new version of the same name`,
+    dek: `A new version of the same name ${up ? `is due ${fmtDate(t.date)}` : `came out ${fmtDate(t.date)}`}.` };
   return { reason: STREAM_TYPES[1], kicker: "New release",
     hed: up ? `${names} ${are} back, just ahead of ${nw}` : `${names} ${are} back, thanks to ${nw}`,
     dek: `${works.length} older titles are getting far more interest than usual. ${nw} ${up ? `is due ${fmtDate(t.date)}` : `came out ${fmtDate(t.date)}`}.` };
@@ -657,7 +672,7 @@ function buildCauseGroups() {
       const ws = free.map((q) => R[q]);
       const nw = release ? release.text.split(": ").slice(1).join(": ").replace(/ \((upcoming|attention rose before release)\)$/, "") : null;
       return { story: { reason, kicker: reason.label,
-        hed: nw ? `${oldNames(ws)} are back, thanks to ${nw}` : `${oldNames(ws)} are back`,
+        hed: note.headline ? note.headline.replace("{n}", ws.length) : nw ? `${oldNames(ws)} are back, thanks to ${nw}` : `${oldNames(ws)} are back`,
         dek: `${note.text} ${ws.length} older titles connected to it started rising together.` }, sources: () => [sourceLine(note)], note };
     });
   }
@@ -763,7 +778,7 @@ function todayPage() {
   // Unexplained "same person" groups aren't causes, so they're shown here as their own stories.
   const openGroups = openThreads.map((t) => {
     const ws = t.works.map((w) => state.byQid[w.qid]).filter((w) => w && !(state.groupOf && state.groupOf.has(w.qid)));
-    return ws.length >= 2 ? { works: ws.sort((a, b) => b.score - a.score), story: threadStory({ ...t, works: t.works.filter((w) => ws.includes(state.byQid[w.qid])) }), sources: () => threadSources(t), t } : null;
+    return ws.length >= MIN_LINKED ? { works: ws.sort((a, b) => b.score - a.score), story: threadStory({ ...t, works: t.works.filter((w) => ws.includes(state.byQid[w.qid])) }), sources: () => threadSources(t), t } : null;
   }).filter(Boolean);
   const inOpen = new Set(openGroups.flatMap((g) => g.works.map((w) => w.qid)));
   const best = (x) => (x.works ? x.works[0].score : x.score);
@@ -1041,13 +1056,13 @@ function caseClosed() {
 const noKicker = (el) => { el.querySelector(".kicker")?.remove(); return el; };
 function mysteriesPage() {
   // Only what we can't explain: no named cause, no likely cause, no explained group.
-  const threads = (state.data.common_threads || []).filter((t) => !threadExplained(t));
+  const threads = (state.data.common_threads || []).filter((t) => !threadExplained(t) && t.works.length >= MIN_LINKED);
   const inThreads = new Set(threads.flatMap((t) => t.works.map((w) => w.qid)));
   const L = live().filter((r) => reasonOf(r).key === "unexplained" && !inThreads.has(r.qid))
     .sort((a, b) => b.spike_start.localeCompare(a.spike_start) || b.score - a.score);
   const groups = threads.map((t) => {
     const ws = t.works.map((w) => state.byQid[w.qid]).filter(Boolean).sort((a, b) => b.score - a.score);
-    return ws.length >= 2 ? { t, works: ws, story: threadStory(t), sources: () => threadSources(t) } : null;
+    return ws.length >= MIN_LINKED ? { t, works: ws, story: threadStory(t), sources: () => threadSources(t) } : null;
   }).filter(Boolean).sort((a, b) => b.works[0].score - a.works[0].score);
   const caseRow = (r) => h("tr", {},
     h("td", { class: "nowrap" }, short(r.spike_start)),

@@ -168,7 +168,7 @@ Quiet nights send nothing.
 
 Each note in `annotations.json` says what kind of cause it is, and its titles are filed in that section:
 `"cause": "release"` (a new film, show, game or book) → New releases, `"death"` → In memoriam,
-`"news"` (the default) → In the news. A release note can also name the new work's Wikidata ID in
+`"news"` (the default) → In the news. An optional `"headline"` names the grouped story (`{n}` = how many titles), e.g. "Robert Pattinson's Bond casting brings back {n} titles". A release note can also name the new work's Wikidata ID in
 `"new_work"`; titles the site already linked to that release then join the same story (e.g. the Hunger
 Games films and novels, with Sunrise on the Reaping). Noted stories keep the **Confirmed** label.
 

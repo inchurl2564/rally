@@ -65,6 +65,8 @@ def _entries_for_run(data: dict, prev: dict | None, site_url: str, labels: dict)
     for t in data.get("common_threads", []):
         if t["qid"] in prev_events:
             continue
+        if len(t["works"]) < 3 and not (t.get("editor_note") or t.get("person_jump") or t.get("cause")):
+            continue        # two titles sharing someone, unexplained: often coincidence
         names = ", ".join(by_q[w["qid"]]["label"] for w in t["works"] if w["qid"] in by_q)
         out.append({"id": f"thread-{t['qid']}-{t['around']}", "kind_of": "thread", "verdict": "common thread",
                     "date": run, "title": f"{len(t['works'])} works with {t['name']} are back at once, from {t['around']}",

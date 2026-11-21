@@ -172,6 +172,8 @@ def apply(results: list[dict], threads: list[dict]) -> None:
         note = {"text": n["note"], "source": n["source"], "id": n["id"], "cause": n.get("cause", "news")}
         if n.get("new_work"):
             note["new_work"] = n["new_work"]
+        if n.get("headline"):           # for the story grouping its titles; {n} = how many
+            note["headline"] = n["headline"]
         if n.get("via"):            # e.g. "reader tip": credited when the mystery is marked solved
             note["via"] = n["via"]
         for r in results:

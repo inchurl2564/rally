@@ -47,12 +47,6 @@ Updated as items move. Last updated: 2026-11-21 (site moved to therallyback.com;
 | Project Gutenberg top downloads | Was down for maintenance; retried automatically every night |
 | GDELT news matching | Sometimes rate-limited; retried every night |
 
-## Small fixes offered, not yet requested
-
-- Hide weak two-title "linked by one person" groups (show only 3+).
-- Group headlines that use the editor's note ("Robert Pattinson's Bond casting brings back 39 titles").
-- Fix headlines where the new release has the same name as the original ("Zelda … thanks to Zelda").
-
 ## Cloudflare and the domain: done
 
 The site lives at https://therallyback.com (Cloudflare, connected to this repo: every push to `main`,

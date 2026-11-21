@@ -18,7 +18,8 @@
   ],
   "source": "https://www.npr.org/2026/11/01/nx-s1-5726764/travis-knight-discusses-his-stop-motion-adaptation-of-the-childrens-book-wildwood",
   "source_kind": "NPR (supplied by an editor)",
-  "cause": "release"
+  "cause": "release",
+  "headline": "{n} titles are back with Travis Knight's Wildwood film"
  },
  {
   "id": "russell-brand-verdict-2026",
@@ -43,7 +44,8 @@
   "source_text": "On 5 November 2026, Brand was convicted of one count of rape and three counts of sexual assault and remanded in custody. The jury deliberated for nine hours and 13 minutes, and the verdicts were as follows:",
   "source_kind": "Wikipedia (cited)",
   "corroborated": "2026-11-20",
-  "cause": "news"
+  "cause": "news",
+  "headline": "{n} Russell Brand films are back after his conviction"
  },
  {
   "id": "pattinson-bond-2026",
@@ -76,7 +78,8 @@
    "Daniel Craig",
    "Sean Connery"
   ],
-  "cause": "news"
+  "cause": "news",
+  "headline": "Robert Pattinson's Bond casting brings back {n} titles"
  },
  {
   "id": "godzilla-new-film-2026",
@@ -114,7 +117,8 @@
   ],
   "related": [
    "Tsutomu Kitagawa"
-  ]
+  ],
+  "headline": "{n} Godzilla films are back with Godzilla Minus Zero"
  },
  {
   "id": "cat-in-the-hat-film-2026",
@@ -208,6 +212,7 @@
   "source": "https://variety.com/2026/film/reviews/the-hunger-games-sunrise-on-the-reaping-review-1236944341/",
   "source_kind": "Variety review (supplied by an editor)",
   "cause": "release",
-  "new_work": "Q126390739"
+  "new_work": "Q126390739",
+  "headline": "The Hunger Games films and novels are back with Sunrise on the Reaping"
  }
 ]
