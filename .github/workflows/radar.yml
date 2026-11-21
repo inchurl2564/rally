@@ -11,7 +11,7 @@ on:
   push:
     branches: [main]
     # Redeploy committed data when code changes (doesn't rerun the radar).
-    paths: ["site/**", "*.py", "annotations.json", "pointer/**", ".github/workflows/radar.yml", "!site/data/**", "!site/feeds/**", "!site/w/**"]
+    paths: ["site/**", "*.py", "annotations.json", ".github/pages-pointer/**", "wrangler.jsonc", ".github/workflows/radar.yml", "!site/data/**", "!site/feeds/**", "!site/w/**"]
 
 permissions:
   contents: write   # commit each day's results
@@ -160,12 +160,12 @@ jobs:
       # feeds so existing subscriptions don't break.
       - name: Build the GitHub Pages pointer
         run: |
-          rm -rf pointer/feeds && cp -r site/feeds pointer/feeds
+          rm -rf .github/pages-pointer/feeds && cp -r site/feeds .github/pages-pointer/feeds
 
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: pointer
+          path: .github/pages-pointer
 
   deploy:
     needs: build

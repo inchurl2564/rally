@@ -1,0 +1,9 @@
+// Cloudflare: publish the `site` folder as the Worker "rallyback" (therallyback.com).
+// Without this, Cloudflare guesses the folder, and can pick the wrong one.
+{
+  "name": "rallyback",
+  "compatibility_date": "2025-01-01",
+  "assets": {
+    "directory": "./site"
+  }
+}
