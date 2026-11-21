@@ -1,7 +1,7 @@
 # Waiting list
 
 Things we've decided to do (or want to) that are on hold, grouped by what they're waiting for.
-Updated as items move. Last updated: 2026-11-20 (prediction backfill done: 10,415 past cases).
+Updated as items move. Last updated: 2026-11-21 (site moved to therallyback.com; Warming up live).
 
 ## Waiting on a decision or an account from you
 
@@ -36,7 +36,6 @@ Updated as items move. Last updated: 2026-11-20 (prediction backfill done: 10,41
 | Lead time (Wikipedia vs. charts; publishes itself) | Spring 2027 |
 | Calibrated forecasts from our own record (publishes itself) | May – June 2027 |
 | Star power (publishes itself) | Second half of 2027 |
-| "Warming up" filled in on the live site | Tonight's run (needs the 28 days of daily counts the nightly job keeps) |
 | Predictions for documentaries and biopics | Once enough of them have been checked |
 | Full refresh of the prediction backfill | Once a year (run "Backfill predictions" in Actions) |
 
