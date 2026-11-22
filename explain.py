@@ -6,7 +6,8 @@ Explain spikes that Wikidata can't, using open signals from the days the spike b
                  at the spike start means a real-world event, even if we can't name it.
   edit summaries the text editors wrote for those edits (MediaWiki API). Often names
                  the event: "died 3 November", "added to Netflix", "verdict".
-  news           headlines from the GDELT DOC API (free, no key).
+  news           headlines from entertainment news sites' RSS feeds, then Google News
+                 (newsfeeds.py; GDELT refused requests from shared cloud addresses).
 
 All three are best-effort. Shared IPs (like CI runners) are sometimes rate-limited,
 so each source backs off and switches itself off for the run after repeated 429s.
@@ -134,21 +135,19 @@ def edit_summaries(title: str, around: dt.date, limit: int = 30) -> list[dict]:
 
 
 def news(query: str, around: dt.date, n: int = 6) -> list[dict]:
-    params = {"query": f'"{query}" sourcelang:english', "mode": "artlist", "format": "json",
-              "maxrecords": n, "sort": "hybridrel",
-              "startdatetime": f"{(around - dt.timedelta(days=2)):%Y%m%d}000000",
-              "enddatetime": f"{(around + dt.timedelta(days=4)):%Y%m%d}235959"}
-    d = NEWS.get(f"{GDELT}?{urllib.parse.urlencode(params)}")
-    return [{"source": a.get("domain", "news"), "date": f"{a['seendate'][:4]}-{a['seendate'][4:6]}-{a['seendate'][6:8]}",
-             "text": a.get("title", "")[:200], "url": a.get("url")}
-            for a in (d or {}).get("articles", [])]
+    import newsfeeds
+    try:
+        return newsfeeds.news(query, around, n)
+    except Exception as e:                     # news is a bonus: never let it stop the run
+        print(f"      news lookup failed for {query}: {e}", file=sys.stderr)
+        return []
 
 
 def likely_cause(evidence: list[dict]) -> str | None:
     scores: dict[str, int] = {}
     for e in evidence:
         for name, rx in _CAUSE_RE:
-            if rx.search(e["text"]):
+            if rx.search(f'{e["text"]} {e.get("detail", "")}'):
                 scores[name] = scores.get(name, 0) + 1
     return max(scores, key=scores.get) if scores else None
 
@@ -157,10 +156,10 @@ def explain(project: str, title: str, query: str, around: dt.date, with_news: bo
     """Evidence for one spike. `query` is what to search news for (a work's or person's name)."""
     import annotations   # local import: annotations imports this module
     burst = edit_burst(project, title, around)
-    ev = annotations.added_text(title, around)        # sentences added, with the news source cited
+    # News articles first: they're dated and say why; Wikipedia edits fill in behind them.
+    ev = news(query, around) if with_news else []
+    ev += annotations.added_text(title, around)       # sentences added, with the news source cited
     ev += edit_summaries(title, around)
-    if with_news:
-        ev += news(query, around)
     return {"edit_burst": burst, "evidence": ev[:10], "cause": likely_cause(ev)}
 
 

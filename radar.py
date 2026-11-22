@@ -943,18 +943,20 @@ def link_ok(url: str) -> bool:
     return ok
 
 
-def article_ok(url: str | None, start: dt.date | str | None, check: bool = True) -> bool:
-    """An outside article fit to show readers: dated (in its address) from 120 days before this
-    comeback started to today, and still loading as itself."""
+def article_ok(url: str | None, start: dt.date | str | None, check: bool = True,
+               published: str | None = None) -> bool:
+    """An outside article fit to show readers: dated (by the news feed it came from, or in its
+    address) from 120 days before this comeback started to today, and still loading as itself.
+    Google News links are redirects that only a browser follows, so they aren't load-checked."""
     if not url or "wikipedia.org" in url:
         return bool(url)                              # Wikipedia's own pages are always fine
     if isinstance(start, str):
         start = dt.date.fromisoformat(start[:10])
-    published = url_date(url)
+    when = dt.date.fromisoformat(published[:10]) if published else url_date(url)
     lo = (start or dt.date.today()) - dt.timedelta(days=120)
-    if published is None or not (lo <= published <= dt.date.today() + dt.timedelta(days=1)):
+    if when is None or not (lo <= when <= dt.date.today() + dt.timedelta(days=1)):
         return False
-    return not check or link_ok(url)
+    return not check or "news.google.com" in url or link_ok(url)
 
 
 def clean_evidence(evidence: list[dict] | None, start, check: bool = True) -> list[dict]:
@@ -962,7 +964,7 @@ def clean_evidence(evidence: list[dict] | None, start, check: bool = True) -> li
     broken article is removed (the line shows as plain text)."""
     out = []
     for e in evidence or []:
-        if e.get("url") and not article_ok(e["url"], start, check):
+        if e.get("url") and not article_ok(e["url"], start, check, e.get("published")):
             e = {k: v for k, v in e.items() if k != "url"}
         out.append(e)
     return out
@@ -989,12 +991,12 @@ def cause_link(cause: str | None, evidence: list[dict] | None, start: dt.date | 
         url = e.get("url")
         if not url or "wikipedia.org" in url or (rx is not None and not rx.search(e.get("text", ""))):
             continue
-        published = url_date(url)
+        published = dt.date.fromisoformat(e["published"][:10]) if e.get("published") else url_date(url)
         if published is None or not (lo <= published <= dt.date.today() + dt.timedelta(days=1)):
             continue
         hits.append((published, url))
     for published, url in sorted(hits, reverse=True):
-        if not check or link_ok(url):
+        if not check or "news.google.com" in url or link_ok(url):
             return {"url": url, "date": published.isoformat()}
     return None
 
@@ -1128,7 +1130,7 @@ def main():
     ap.add_argument("--no-early", action="store_true", help="skip the bulk-file watchlist (faster, later detection)")
     ap.add_argument("--bulk-new-days", type=int, default=28,
                     help="max bulk pageview files to download in one run (~1 min each; later runs need 1)")
-    ap.add_argument("--no-news", action="store_true", help="skip GDELT news lookups")
+    ap.add_argument("--no-news", action="store_true", help="skip news lookups (news sites' feeds, Google News)")
     ap.add_argument("--explain-max", type=int, default=30, help="max unexplained spikes to research per run")
     ap.add_argument("--site-url", default="https://therallyback.com/",
                     help="the site's official address, used in feeds, share links and title pages")
