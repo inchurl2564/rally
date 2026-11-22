@@ -1271,16 +1271,9 @@ function openTip(r, mode = "tip") {
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     if (!why.value.trim()) { why.focus(); return; }
-    const F = TIPS_FORM.fields, data = new URLSearchParams();
-    const put = (k, v) => { if (v) data.append(F[k] || k, v); };
-    put("work", work); put("why", why.value.trim()); put("link", link.value.trim()); put("email", email.value.trim());
     send.disabled = true; status.textContent = "Sending…";
     try {
-      const google = /docs\.google\.com\/forms/.test(TIPS_FORM.action);
-      // Google Forms doesn't allow reading its reply from another site, so a sent request counts as success.
-      const res = await fetch(TIPS_FORM.action, google ? { method: "POST", mode: "no-cors", body: data }
-        : { method: "POST", body: data, headers: { Accept: "application/json" } });
-      if (!google && !res.ok) throw new Error(res.status);
+      await sendToForm({ work, why: why.value.trim(), link: link.value.trim(), email: email.value.trim() });
       form.replaceChildren(h("span", { class: "kicker" }, "Thank you"), h("h2", { class: "hed" }, fix ? "Correction received" : "Tip received"),
         h("p", {}, fix ? "We read every report. If we got it wrong, we'll fix it and list it under Corrections on Track record."
           : "We read every tip. If it checks out, it'll show up as an editor's note on the story."),
@@ -1295,6 +1288,45 @@ function openTip(r, mode = "tip") {
   document.body.append(dlg);
   dlg.showModal();
   why.focus();
+}
+
+// A short contact form on About us. It goes to the same Google Form as tips, marked "CONTACT ·"
+// in the "Which title?" answer so messages are easy to tell apart in the Responses tab.
+async function sendToForm(fields) {
+  const F = TIPS_FORM.fields, data = new URLSearchParams();
+  for (const [k, v] of Object.entries(fields)) if (v) data.append(F[k] || k, v);
+  const google = /docs\.google\.com\/forms/.test(TIPS_FORM.action);
+  // Google Forms doesn't allow reading its reply from another site, so a sent request counts as success.
+  const res = await fetch(TIPS_FORM.action, google ? { method: "POST", mode: "no-cors", body: data }
+    : { method: "POST", body: data, headers: { Accept: "application/json" } });
+  if (!google && !res.ok) throw new Error(res.status);
+}
+function contactForm() {
+  const name = h("input", { name: "name", autocomplete: "name", placeholder: "Your name" });
+  const email = h("input", { name: "email", type: "email", required: "", autocomplete: "email", placeholder: "you@example.com" });
+  const msg = h("textarea", { name: "message", required: "", rows: "5", placeholder: "What's on your mind?" });
+  const status = h("p", { class: "form-status", role: "status" });
+  const send = h("button", { type: "submit", class: "btn" }, "Send message");
+  const form = h("form", { class: "tipform contact-form" },
+    h("label", {}, h("span", {}, "Name ", h("i", { class: "muted" }, "(optional)")), name),
+    h("label", {}, h("span", {}, "Email ", h("i", { class: "muted" }, "(so we can reply)")), email),
+    h("label", {}, h("span", {}, "Message"), msg),
+    h("div", { class: "form-actions" }, send), status);
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!email.value.trim() || !email.checkValidity()) { email.focus(); return; }
+    if (!msg.value.trim()) { msg.focus(); return; }
+    send.disabled = true; status.textContent = "Sending…";
+    try {
+      await sendToForm({ work: `CONTACT · ${name.value.trim() || "(no name)"}`, why: msg.value.trim(), email: email.value.trim() });
+      form.replaceChildren(h("p", { class: "contact-sent" }, h("b", {}, "Thanks, your message is on its way. "),
+        "We read everything and reply to the email you gave."));
+    } catch (err) {
+      send.disabled = false;
+      status.textContent = "That didn't go through. Please try again in a moment, or email us.";
+    }
+  });
+  return form;
 }
 
 function evidenceList(ev, limit = 4) {
@@ -1566,7 +1598,8 @@ function aboutPage() {
         h("li", {}, h("b", {}, "Keeping score in public. "), "We predict comebacks before they happen and check afterwards whether we were right. See the ", go("accuracy", "Track record"), "."),
         h("li", {}, h("b", {}, "Readers help. "), "Know why something is back, or spotted a mistake? Use ", h("i", {}, "Know why? Tell us"), " on any story. Tips that check out become editor's notes.")),
       h("h3", {}, "Contact us"),
-      h("p", { class: "mission" }, "Questions, ideas, press or partnerships: write to ", contactLink(), ". For a tip or a correction about a story, the links on the story itself are fastest.")),
+      h("p", { class: "mission" }, "Questions, ideas, press or partnerships: send us a note below or write to ", contactLink(), ". For a tip or a correction about a story, the links on the story itself are fastest."),
+      TIPS_FORM.action ? contactForm() : null),
     sectionHead("Embed the chart", "Put today's top comebacks on your own site. It updates itself every morning."),
     embedBox(base),
     sectionHead("Feeds", "Get new comebacks every morning. Copy a link into any feed reader: Feedly, Inoreader, NetNewsWire, Outlook, Slack and others."),

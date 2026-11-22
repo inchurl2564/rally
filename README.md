@@ -72,7 +72,8 @@ The daily email digest (a GitHub issue each run) is paused. To turn it back on, 
 
 "Know why? Tell us" and "Report a correction" open a short form on the page that sends the tip to the Google Form
 "The Rallyback: reader tips" (set in `TIPS_FORM` in `site/app.js`). Tips arrive in that form's
-Responses tab (turn on email notifications there); readers never need a GitHub account. Corrections are marked "CORRECTION" in the first answer. The title,
+Responses tab (turn on email notifications there); readers never need a GitHub account. Corrections are marked "CORRECTION" in the first answer, and messages from the
+contact form on About us are marked "CONTACT" (name in the first answer, message in the second, reply address in the email answer). The title,
 year, edition and what the site said are filled in automatically.
 
 When a tip checks out, add an editor's note to `annotations.json` with a `source` link and `"via": "reader tip"`.

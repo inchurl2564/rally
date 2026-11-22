@@ -295,6 +295,9 @@ code { font-size: 13px; background: var(--paper-2); padding: 1px 5px; }
 .tipform textarea, .tipform input { width: 100%; font: 15px/1.45 var(--sans); color: var(--ink); background: var(--paper-2);
   border: 1px solid var(--hair); padding: 10px 12px; border-radius: 0; }
 .tipform textarea:focus, .tipform input:focus { outline: 2px solid var(--red); outline-offset: 0; border-color: transparent; }
+/* the contact form sits in the About page, not in a pop-up */
+.tipform.contact-form { width: auto; max-width: 560px; max-height: none; padding: 0; border: 0; box-shadow: none; background: none; margin-top: 4px; }
+.contact-sent { padding: 14px 16px; background: var(--paper-2); border-left: 4px solid var(--red); }
 .form-actions { display: flex; gap: 10px; margin-top: 20px; }
 .btn { font: 700 13px var(--sans); text-transform: uppercase; letter-spacing: .06em; padding: 11px 18px; border: 1px solid var(--red);
   background: var(--red); color: var(--red-ink); cursor: pointer; }
