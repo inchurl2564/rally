@@ -43,6 +43,12 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
+# Run as a script, this file is "__main__"; the modules it loads do `import radar`. Make that
+# the same module, so what they record (sources switched off, failed lookups) lands in the
+# one HEALTH record that's saved with the edition, instead of in a second copy that's lost.
+if __name__ == "__main__":
+    sys.modules.setdefault("radar", sys.modules[__name__])
+
 _contact = os.environ.get("RADAR_CONTACT") or (
     f"https://github.com/{os.environ['GITHUB_REPOSITORY']}" if os.environ.get("GITHUB_REPOSITORY") else "")
 UA = f"Rallyback/0.4 ({_contact or 'open-data prototype'}; python-urllib)"
@@ -894,6 +900,7 @@ def url_date(url: str) -> dt.date | None:
 
 LINK_CHECKS = os.path.join(CACHE, "link_checks.json")
 _link_cache: dict | None = None
+_link_budget_end: float | None = None
 
 
 def link_ok(url: str) -> bool:
@@ -910,6 +917,12 @@ def link_ok(url: str) -> bool:
     hit = _link_cache.get(url)
     if hit and time.time() - hit[1] < 30 * 86400:
         return hit[0]
+    # At most 5 minutes of new checks a night; anything left waits for tomorrow (and isn't linked tonight).
+    global _link_budget_end
+    if _link_budget_end is None:
+        _link_budget_end = time.time() + 300
+    if time.time() > _link_budget_end:
+        return False
     ok = True
     try:
         req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (compatible; Rallyback link check)"})

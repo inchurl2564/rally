@@ -44,7 +44,8 @@ Updated as items move. Last updated: 2026-11-22 (hello@therallyback.com live on 
 | --- | --- |
 | Steam review counts | Steam blocks data requests from GitHub's servers; switched off automatically, player counts still work |
 | Project Gutenberg top downloads | Was down for maintenance; retried automatically every night |
-| GDELT news matching | Sometimes rate-limited; retried every night |
+| GDELT news matching | Blocked every night from GitHub (rate limit on shared addresses); switched off |
+| Replacement news source | Needed: one that works from GitHub, so news-based reasons and current article links come back |
 
 ## Cloudflare and the domain: done
 

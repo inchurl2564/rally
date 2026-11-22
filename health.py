@@ -7,7 +7,7 @@ night. The workflow turns any output into a GitHub issue (an email to the repo o
   - the number of comebacks suddenly halved or doubled (usually a data problem, not news)
   - many Wikipedia pages skipped or Wikidata lookups failed
 
-A failed run and reader tips waiting over a week are checked in the workflow itself.
+A failed run is checked in the workflow itself.
 """
 
 from __future__ import annotations
@@ -19,7 +19,9 @@ import os
 import statistics
 
 # Sources known to be off for good; not worth an email every night.
-KNOWN_OFF = {"Steam reviews"}
+# GDELT refuses requests from shared cloud addresses (GitHub's included) whatever the pace;
+# off until a replacement news source is chosen (see WAITING.md).
+KNOWN_OFF = {"Steam reviews", "GDELT news"}
 
 
 def _load(path, default):

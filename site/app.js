@@ -456,7 +456,7 @@ function render() {
   const issues = [];
   if (health.pages_skipped) issues.push(`${health.pages_skipped} pages skipped`);
   if (health.lookups_failed) issues.push(`${health.lookups_failed} Wikidata lookups failed`);
-  if ((health.sources_off || []).length) issues.push(`unavailable: ${health.sources_off.join(", ")}`);
+  // Sources that were switched off go to the nightly health check (an email), not to readers.
   $("generated").textContent = `This edition covers ${fmtDate(meta.window_start)} – ${fmtDate(meta.window_end)} and was generated ${meta.generated}.` +
     (issues.length ? ` Run issues: ${issues.join("; ")}.` : "");
 }
