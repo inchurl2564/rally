@@ -1217,7 +1217,9 @@ function renderList() {
   $("cards").replaceChildren(...(rows.length ? shown.map((x) => (x.g ? groupCard(x.g, x.members) : card(x.r, open))) : [h("p", { class: "status" }, "Nothing matches these filters.")]), ...(more ? [more] : []));
 }
 
+// Corrections use the same form as tips (marked "CORRECTION"), so readers never need a GitHub account.
 function correctionLink(r, label = "Report a correction", cls) {
+  if (TIPS_FORM.action) return h("a", { href: "#", class: cls || null, onclick: (e) => { e.preventDefault(); openTip(r, "correction"); } }, label);
   const top = r.triggers[0];
   const body = [`**Work:** ${r.label} (${r.release_year}) ${wikidata(r.qid)}`, `**Edition:** ${$("run").value}`,
     `**The Rallyback said:** ${story(r).hed}${top ? ` (${top.text})` : ""}${r.cause ? `; likely cause: ${r.cause}` : ""}`,
@@ -1235,23 +1237,28 @@ function tipLink(r, label = "Know why? Tell us →") {
   return h("a", { href: "#", class: "ask", onclick: (e) => { e.preventDefault(); openTip(r); } }, label);
 }
 
-function openTip(r) {
+function openTip(r, mode = "tip") {
   let dlg = $("tipform");
   if (dlg) dlg.remove();
-  const work = `${r.label} (${r.release_year}) · ${wikipedia(r.title)} · edition ${$("run").value} · The Rallyback said: ${story(r).hed}`;
+  const fix = mode === "correction";
+  const top = r.triggers && r.triggers[0];
+  const work = `${fix ? "CORRECTION · " : ""}${r.label} (${r.release_year}) · ${wikipedia(r.title)} · edition ${$("run").value} · The Rallyback said: ${story(r).hed}` +
+    (fix && top ? ` (${top.text})` : "") + (fix && r.cause ? `; likely cause: ${r.cause}` : "");
   const status = h("p", { class: "form-status", role: "status" });
-  const why = h("textarea", { name: "why", required: "", rows: "4", placeholder: "A trailer, a TikTok trend, a TV placement, news about someone involved…" });
+  const why = h("textarea", { name: "why", required: "", rows: "4",
+    placeholder: fix ? "What did we get wrong, and what's right?" : "A trailer, a TikTok trend, a TV placement, news about someone involved…" });
   const link = h("input", { name: "link", type: "url", placeholder: "https://" });
   const email = h("input", { name: "email", type: "email", placeholder: "you@example.com", autocomplete: "email" });
-  const send = h("button", { type: "submit", class: "btn" }, "Send tip");
+  const send = h("button", { type: "submit", class: "btn" }, fix ? "Send correction" : "Send tip");
   const form = h("form", { method: "dialog" },
-    h("span", { class: "kicker" }, "Tip the desk"),
-    h("h2", { class: "hed" }, `Why is ${r.label} back?`),
-    h("p", { class: "small muted" }, `The ${r.release_year} ${noun(r.kind)} is drawing ${mult(r)} its usual interest and we can't find the reason.`),
-    h("label", {}, h("span", {}, "What's bringing it back?"), why),
+    h("span", { class: "kicker" }, fix ? "Report a correction" : "Tip the desk"),
+    h("h2", { class: "hed" }, fix ? `Something wrong about ${r.label}?` : `Why is ${r.label} back?`),
+    h("p", { class: "small muted" }, fix ? `We said: “${story(r).hed}”.`
+      : `The ${r.release_year} ${noun(r.kind)} is drawing ${mult(r)} its usual interest and we can't find the reason.`),
+    h("label", {}, h("span", {}, fix ? "What should it say?" : "What's bringing it back?"), why),
     h("label", {}, h("span", {}, "A link, if you have one ", h("i", { class: "muted" }, "(optional)")), link),
     h("label", {}, h("span", {}, "Your email, if we may follow up ", h("i", { class: "muted" }, "(optional)")), email,
-      h("small", { class: "muted" }, "We'll only use it to follow up on this tip.")),
+      h("small", { class: "muted" }, `We'll only use it to follow up on this ${fix ? "correction" : "tip"}.`)),
     h("div", { class: "form-actions" }, send,
       h("button", { type: "button", class: "btn ghost", onclick: () => dlg.close() }, "Cancel")),
     status);
@@ -1268,8 +1275,9 @@ function openTip(r) {
       const res = await fetch(TIPS_FORM.action, google ? { method: "POST", mode: "no-cors", body: data }
         : { method: "POST", body: data, headers: { Accept: "application/json" } });
       if (!google && !res.ok) throw new Error(res.status);
-      form.replaceChildren(h("span", { class: "kicker" }, "Thank you"), h("h2", { class: "hed" }, "Tip received"),
-        h("p", {}, "We read every tip. If it checks out, it'll show up as an editor's note on the story."),
+      form.replaceChildren(h("span", { class: "kicker" }, "Thank you"), h("h2", { class: "hed" }, fix ? "Correction received" : "Tip received"),
+        h("p", {}, fix ? "We read every report. If we got it wrong, we'll fix it and list it under Corrections on Track record."
+          : "We read every tip. If it checks out, it'll show up as an editor's note on the story."),
         h("div", { class: "form-actions" }, h("button", { type: "button", class: "btn", onclick: () => dlg.close() }, "Close")));
     } catch (err) {
       send.disabled = false;
@@ -1517,9 +1525,8 @@ function accuracyPage() {
     sectionHead("Do Our Explanations Hold Up?", "For explained spikes: did news or Wikipedia edits from the same days mention the same cause?"),
     table(["Story type", "Checked", "Backed by evidence"], corrRows),
     sectionHead("Help Us Check", null),
-    h("p", {}, "Every story has a ", h("b", {}, "Report a correction"), " link. Reports become GitHub issues; once reviewed and labelled ",
-      h("code", {}, "verified-correct"), " or ", h("code", {}, "verified-wrong"), ", they count above. ",
-      ext(`https://github.com/${REPO}/issues?q=label%3Afeedback`, h("b", {}, "See all reports →"))),
+    h("p", {}, "Every story has a ", h("b", {}, "Report a correction"), " link in its numbers and sources. We read every report, ",
+      "and when we got something wrong we fix it and list it under Corrections below."),
     sectionHead("What we're learning", "Measures only our record can answer. Each one appears here by itself once it has enough examples."),
     measuresBox(),
     sectionHead("Corrections", "When we get something wrong, we fix it and say so here."),

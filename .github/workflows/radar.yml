@@ -103,11 +103,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           python health.py --site site > health.md || true
-          old=$(gh issue list --repo "$GITHUB_REPOSITORY" --label feedback --state open --limit 200 --json createdAt \
-                --jq '[.[] | select((now - (.createdAt | fromdateiso8601)) > 604800)] | length' 2>/dev/null || echo 0)
-          if [ "${old:-0}" -gt 0 ]; then
-            echo "- $old reader tip(s) have been waiting more than a week: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/issues?q=is%3Aopen+label%3Afeedback" >> health.md
-          fi
           if [ -s health.md ]; then
             gh label create health --color d93f0b --description "The Rallyback needs attention" 2>/dev/null || true
             body="$(printf 'Nightly check, %s:\n\n' "$(date -u +%F)"; cat health.md; printf '\nClose this issue once it is dealt with.\n')"
