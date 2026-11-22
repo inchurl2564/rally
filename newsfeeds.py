@@ -50,7 +50,6 @@ FEEDS = [
     ("Kotaku", "https://kotaku.com/feed", 6, 30),
     ("Eurogamer", "https://www.eurogamer.net/feed", 1, 1),
     ("GameSpot", "https://www.gamespot.com/feeds/mashup/", 1, 1),
-    ("Publishers Weekly", "https://www.publishersweekly.com/pw/feeds/recent/index.xml", 1, 1),
     ("Book Riot", "https://bookriot.com/feed/", 4, 20),
     ("The Guardian", "https://www.theguardian.com/culture/rss", 1, 1),
     ("The Guardian", "https://www.theguardian.com/film/rss", 1, 1),
@@ -59,7 +58,6 @@ FEEDS = [
     ("The Guardian", "https://www.theguardian.com/games/rss", 1, 1),
     ("The Guardian", "https://www.theguardian.com/tv-and-radio/rss", 1, 1),
     ("BBC News", "https://feeds.bbci.co.uk/news/entertainment_and_arts/rss.xml", 1, 1),
-    ("Vulture", "https://www.vulture.com/rss/index.xml", 1, 1),
 ]
 REFRESH_BUDGET = 8 * 60          # seconds for the whole nightly refresh
 GOOGLE = "https://news.google.com/rss/search"
@@ -194,58 +192,52 @@ def refresh(budget: float = REFRESH_BUDGET) -> dict:
     return STATS
 
 
-_KIND_WORDS = r"(film|movie|series|show|season|album|song|single|track|game|novel|book|author|sequel|remake|adaptation|reboot)"
+_QUOTES_OPEN, _QUOTES_CLOSE = "‘'\"“", "’'\"”"
 
 
 def _pattern(query: str):
     q = re.sub(r"\s*\([^)]*\)\s*$", "", query).strip()          # "Heist (2001 film)" → "Heist"
     if len(q) < 3:
-        return None, False
-    core = re.escape(q).replace(r"\ ", r"\s+")
-    rx = re.compile(r"(?<!\w)" + core + r"(?!\w)", re.I)
-    # One short word ("Heist", "Rocky", "Arthur") matches too much on its own.
-    loose = len(q.split()) == 1 and len(q) < 9
-    return rx, loose
+        return None
+    return re.escape(q).replace(r"\ ", r"\s+")
 
 
-def _core(rx) -> str:
-    return rx.pattern[len(r"(?<!\w)"):-len(r"(?!\w)")]
-
-
-def _matches(rx, loose: bool, title: str, summary: str) -> bool:
-    text = f"{title} {summary}"
-    if not rx.search(text):
-        return False
-    if loose:
-        # Needs quoting in the headline ('Rocky', “Heist”) or a word saying what it is nearby.
-        quoted = re.search(r"[‘'\"“]" + _core(rx) + r"[’'\"”]", title, re.I)
-        return bool(quoted or re.search(_KIND_WORDS, text, re.I))
-    return True
+def _matches(core: str, person: bool, headline: str) -> bool:
+    """Only headlines count (summaries mention whole filmographies). A work's title must be in
+    quotes, the way entertainment news writes titles (‘The Nightingale’ Trailer), so everyday
+    phrases ("lost in translation") and genre words ("heist") don't match. A person's full name
+    counts as it stands."""
+    if person:
+        return bool(len(core) > 5 and " " in core.replace(r"\s+", " ")
+                    and re.search(r"(?<!\w)" + core + r"(?!\w)", headline, re.I))
+    return bool(re.search(f"[{_QUOTES_OPEN}]" + core + r"(?:[:,]?\s[^’'\"”]{0,60})?" + f"[{_QUOTES_CLOSE}]", headline, re.I))
 
 
 def _evidence(source, date, title, url, summary) -> dict:
     return {"source": source, "date": date, "published": date, "text": title[:200], "url": url, "detail": summary[:300]}
 
 
-def library_search(query: str, around: dt.date, before: int = 14, after: int = 7, n: int = 6) -> list[dict]:
+def library_search(query: str, around: dt.date, before: int = 14, after: int = 7, n: int = 6,
+                   person: bool = False) -> list[dict]:
     refresh()
-    rx, loose = _pattern(query)
-    if rx is None:
+    core = _pattern(query)
+    if core is None:
         return []
     lo, hi = (around - dt.timedelta(days=before)).isoformat(), (around + dt.timedelta(days=after)).isoformat()
-    hits = [(d, src, t, u, s) for u, (d, src, t, s) in _load().items() if lo <= d <= hi and _matches(rx, loose, t, s)]
+    hits = [(d, src, t, u, s) for u, (d, src, t, s) in _load().items() if lo <= d <= hi and _matches(core, person, t)]
     hits.sort(reverse=True)
     return [_evidence(src, d, t, u, s) for d, src, t, u, s in hits[:n]]
 
 
-def google_search(query: str, around: dt.date, before: int = 14, after: int = 7, n: int = 6) -> list[dict]:
+def google_search(query: str, around: dt.date, before: int = 14, after: int = 7, n: int = 6,
+                  person: bool = False) -> list[dict]:
     """Google News, for when the library has nothing. Capped per night; switches itself off
     after repeated failures (it may start refusing automated requests)."""
     global _google_used, _google_off, _google_last
     if _google_off or _google_used >= GOOGLE_MAX:
         return []
-    rx, loose = _pattern(query)
-    if rx is None:
+    core = _pattern(query)
+    if core is None:
         return []
     q = re.sub(r"\s*\([^)]*\)\s*$", "", query).strip()
     lo, hi = around - dt.timedelta(days=before), around + dt.timedelta(days=after)
@@ -278,15 +270,15 @@ def google_search(query: str, around: dt.date, before: int = 14, after: int = 7,
         src = x["source"] or "Google News"
         if src and title.endswith(f" - {src}"):
             title = title[: -len(src) - 3]               # "Headline - Variety" → "Headline"
-        if _matches(rx, loose, title, ""):
+        if _matches(core, person, title):
             out.append(_evidence(src, x["date"], title, x["url"], ""))
         if len(out) >= n:
             break
     return out
 
 
-def news(query: str, around: dt.date, n: int = 6) -> list[dict]:
-    return library_search(query, around, n=n) or google_search(query, around, n=n)
+def news(query: str, around: dt.date, n: int = 6, person: bool = False) -> list[dict]:
+    return library_search(query, around, n=n, person=person) or google_search(query, around, n=n, person=person)
 
 
 if __name__ == "__main__":
@@ -302,8 +294,10 @@ if __name__ == "__main__":
     refresh(budget=300)
     today = dt.date.today()
     for q in args:
-        hits = library_search(q, today - dt.timedelta(days=5)) or []
-        g = google_search(q, today - dt.timedelta(days=5)) if not hits else []
+        person = q.startswith("@")
+        q = q.lstrip("@")
+        hits = library_search(q, today - dt.timedelta(days=5), person=person) or []
+        g = google_search(q, today - dt.timedelta(days=5), person=person) if not hits else []
         print(f"\n== {q}: {len(hits)} from the library, {len(g)} from Google News")
         for e in (hits or g)[:4]:
             print(f"   {e['published']}  {e['source']}: {e['text'][:90]}\n      {e['url'][:110]}")

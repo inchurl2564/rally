@@ -1278,13 +1278,16 @@ def main():
     for r in todo[:args.explain_max]:
         rip = r.get("ripple")
         title, name = (rip["title"], rip["name"]) if rip else (r["title"], r["label"] or r["title"].replace("_", " "))
-        e = explain.explain(args.project, title, name, r["spike_start"], with_news=not args.no_news)
+        # A ripple searches the connected person or franchise; otherwise the work's own title.
+        e = explain.explain(args.project, title, name, r["spike_start"], with_news=not args.no_news,
+                            person=bool(rip and rip.get("relation") not in
+                                        ("franchise", "series", "character", "source material", "sequel or adaptation")))
         r.update(evidence=e["evidence"], cause=e["cause"], edit_burst=e["edit_burst"])
         if e["cause"] and r["verdict"] == "unexplained":
             r["verdict"] = "coverage"
     for t in threads:
         if t.get("title"):
-            e = explain.explain(args.project, t["title"], t["name"], t["around"], with_news=not args.no_news)
+            e = explain.explain(args.project, t["title"], t["name"], t["around"], with_news=not args.no_news, person=True)
             t.update(evidence=e["evidence"], cause=e["cause"], edit_burst=e["edit_burst"])
     # Spot-check explained spikes against independent evidence (feeds the Accuracy tab).
     explained = [r for r in results if r["verdict"] in ("death", "derivative", "same-creator", "anniversary")]

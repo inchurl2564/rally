@@ -134,10 +134,10 @@ def edit_summaries(title: str, around: dt.date, limit: int = 30) -> list[dict]:
     return out
 
 
-def news(query: str, around: dt.date, n: int = 6) -> list[dict]:
+def news(query: str, around: dt.date, n: int = 6, person: bool = False) -> list[dict]:
     import newsfeeds
     try:
-        return newsfeeds.news(query, around, n)
+        return newsfeeds.news(query, around, n, person=person)
     except Exception as e:                     # news is a bonus: never let it stop the run
         print(f"      news lookup failed for {query}: {e}", file=sys.stderr)
         return []
@@ -152,12 +152,13 @@ def likely_cause(evidence: list[dict]) -> str | None:
     return max(scores, key=scores.get) if scores else None
 
 
-def explain(project: str, title: str, query: str, around: dt.date, with_news: bool = True) -> dict:
+def explain(project: str, title: str, query: str, around: dt.date, with_news: bool = True,
+            person: bool = False) -> dict:
     """Evidence for one spike. `query` is what to search news for (a work's or person's name)."""
     import annotations   # local import: annotations imports this module
     burst = edit_burst(project, title, around)
     # News articles first: they're dated and say why; Wikipedia edits fill in behind them.
-    ev = news(query, around) if with_news else []
+    ev = news(query, around, person=person) if with_news else []
     ev += annotations.added_text(title, around)       # sentences added, with the news source cited
     ev += edit_summaries(title, around)
     return {"edit_burst": burst, "evidence": ev[:10], "cause": likely_cause(ev)}
