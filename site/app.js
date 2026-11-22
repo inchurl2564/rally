@@ -397,7 +397,17 @@ function newsletterBox() {
   return h("aside", { class: "newsletter" },
     h("div", {}, h("h3", {}, "Comebacks in your inbox, every Friday"),
       h("p", {}, "The week's 5 biggest comebacks, the best unsolved mystery and what's coming next. Free, and one email a week.")),
-    h("a", { class: "btn", href: NEWSLETTER, target: "_blank", rel: "noopener" }, "Subscribe free"));
+    newsletterForm());
+}
+// Beehiiv's embedded form: its loader script puts an iframe right after itself.
+const NEWSLETTER_FORM = "2bf7c4db-3cb3-4be0-8b2f-9a189b360e3a";
+function newsletterForm() {
+  const slot = h("div", { class: "newsletter-form" });
+  const js = document.createElement("script");
+  js.async = true; js.src = "https://subscribe-forms.beehiiv.com/v3/loader.js";
+  js.setAttribute("data-beehiiv-form", NEWSLETTER_FORM);
+  slot.append(js, h("a", { class: "newsletter-alt small", href: NEWSLETTER, target: "_blank", rel: "noopener" }, "Form not showing? Sign up on our newsletter page"));
+  return slot;
 }
 
 function renderTabs() {
