@@ -187,4 +187,4 @@ and today's top stories are written into `index.html` so the homepage has text b
 Feed entries use the same plain-English reasons, link to the title page and are tagged by medium and reason.
 Title pages with too little to say yet (one comeback of 2 days or less, no known reason) carry `noindex` and are
 left out of the sitemap until they grow. `site/og.png` is the default share picture (made from an HTML card;
-replace it once there's a logo).
+replace it once there's a logo). Each week also gets a permanent roundup page at `/week/<2026-W47>`, listed at `/week/`.

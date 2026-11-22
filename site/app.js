@@ -1830,7 +1830,8 @@ function weekPage() {
     const maxShare = Math.max(...L.decades.map((d) => d.share), 0.01);
     box.replaceChildren(...[
       h("p", { class: "intro" }, `This week in comebacks: ${fmtDate(W.from).replace(/, \d{4}/, "")} to ${fmtDate(W.to)}.`),
-      h("p", { class: "contents" }, h("b", {}, fmt(W.comebacks)), " comebacks so far this week · ", pickWeek),
+      h("p", { class: "contents" }, h("b", {}, fmt(W.comebacks)), " comebacks so far this week · ", pickWeek,
+        " · ", h("a", { href: `week/${key}` }, "Permanent page"), " · ", h("a", { href: "week/" }, "Every week")),
       sectionHead("The 5 biggest", "One per story, by Rallyback Score."),
       h("ol", { class: "ranked" }, W.top.map(rank)),
       newsletterBox(),

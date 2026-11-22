@@ -23,6 +23,7 @@ import datetime as dt
 import html
 import json
 import os
+import re
 import sys
 import urllib.parse
 
@@ -205,10 +206,10 @@ def build(site: str, site_url: str = "") -> None:
     index.sort(key=lambda x: (-x[4], -(x[6] or 0)))
     _save(os.path.join(wdir, "index.json"), {"fields": ["qid", "label", "year", "kind", "comebacks", "last_seen", "best_score"],
                                             "works": index, "updated": today_run})
-    pages(site, site_url, [q for q, *_ in index], hist)
-    homepage(site, latest, hist)
     leaders(site, hist, runs)
     weekly(site, hist, runs, latest)
+    pages(site, site_url, [q for q, *_ in index], hist)
+    homepage(site, latest, hist)
     log(f"      archive: {len(index)} titles ({written} pages updated)")
 
 
@@ -277,6 +278,10 @@ h2{font:800 22px/1.2 "Playfair Display",Georgia,serif;margin:32px 0 8px;padding-
 table{width:100%;border-collapse:collapse;font-size:15px}th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--hair);vertical-align:top}
 th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}.num{text-align:right;white-space:nowrap}
 ul{padding-left:20px}li{margin:4px 0}
+.ranked{padding-left:24px}.ranked li{margin:0 0 18px}.ranked h3{font:800 20px/1.25 "Playfair Display",Georgia,serif;margin:0 0 4px}.ranked p{margin:0 0 6px}
+svg.mini{width:100%;max-width:320px;height:36px;display:block;background:var(--paper-2)}
+svg.mini .area{fill:var(--tint)}svg.mini .line{fill:none;stroke:var(--red);stroke-width:2;vector-effect:non-scaling-stroke}
+svg.mini .base{stroke:var(--muted);stroke-dasharray:3 3;stroke-width:1;vector-effect:non-scaling-stroke}
 .btn{display:inline-block;background:var(--red);color:var(--red-ink);font:700 13px/1 "Libre Franklin",sans-serif;text-transform:uppercase;letter-spacing:.06em;padding:13px 18px;text-decoration:none;margin:24px 0 8px}
 footer{margin-top:48px;padding:20px 0 40px;border-top:3px solid var(--ink);background:var(--paper-2);font-size:14px;color:var(--muted)}
 """
@@ -359,15 +364,22 @@ def _page(site_url: str, doc: dict) -> str:
     parts.append('<p class="small">Interest is measured from daily views of '
                  + (f'<a href="{e(wiki)}" rel="noopener">its Wikipedia article</a>' if wiki else "its Wikipedia article")
                  + f', against its usual level over the previous year. Updated {_day(doc.get("updated") or last["last_seen"])}.</p>')
+    return _shell(base, title, desc, canon, share_img, ld, parts, noindex=thin(doc))
+
+
+def _shell(base: str, title: str, desc: str, canon: str, img: str, ld: dict, parts: list, noindex: bool = False,
+           og_type: str = "article") -> str:
+    """The plain-HTML page around a title page or a weekly roundup."""
+    e = html.escape
     ld_json = json.dumps(ld, ensure_ascii=False).replace("</", "<\\/")
     return f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <title>{e(title)}</title><meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="{e(desc)}">
 <link rel="canonical" href="{e(canon)}">
-<meta property="og:type" content="article"><meta property="og:site_name" content="The Rallyback"><meta property="og:url" content="{e(canon)}">
+<meta property="og:type" content="{og_type}"><meta property="og:site_name" content="The Rallyback"><meta property="og:url" content="{e(canon)}">
 <meta property="og:title" content="{e(title.replace(" | The Rallyback", ""))}"><meta property="og:description" content="{e(desc)}">
-<meta property="og:image" content="{e(share_img)}"><meta name="twitter:card" content="summary_large_image">
-{'<meta name="robots" content="noindex, follow">' if thin(doc) else ''}
+<meta property="og:image" content="{e(img)}"><meta name="twitter:card" content="summary_large_image">
+{'<meta name="robots" content="noindex, follow">' if noindex else ''}
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;700;800&family=Playfair+Display:wght@800;900&display=swap">
 <style>{PAGE_CSS}</style>
@@ -379,9 +391,133 @@ def _page(site_url: str, doc: dict) -> str:
 {chr(10).join(p for p in parts if p)}
 </main>
 <footer><div class="wrap">Every morning, The Rallyback finds older movies, shows, songs, games and books that people are suddenly into again, and tells you why.
-<a href="{e(base)}/">Today’s comebacks</a> · <a href="{e(base)}/?tab=about">About us</a> · <a href="https://therallyback.beehiiv.com/subscribe" rel="noopener">Weekly newsletter</a></div></footer>
+<a href="{e(base)}/">Today’s comebacks</a> · <a href="{e(base)}/week/">Every week</a> · <a href="{e(base)}/?tab=about">About us</a> · <a href="https://therallyback.beehiiv.com/subscribe" rel="noopener">Weekly newsletter</a></div></footer>
 </body></html>
 """
+
+
+def _spark(vals: list, baseline: float) -> str:
+    """A tiny three-week trend line for the weekly roundup."""
+    import math
+    vals = [v or 0 for v in vals or []]
+    if len(vals) < 5:
+        return ""
+    n, H = len(vals), 30
+    top = max(max(vals), (baseline or 1) * 2, 1)
+    y = lambda x: H - (math.log10(1 + x) / math.log10(1 + top)) * (H - 3)
+    pts = " ".join(f"{i},{y(v):.1f}" for i, v in enumerate(vals))
+    return (f'<svg class="mini" viewBox="0 0 {n - 1} {H}" preserveAspectRatio="none" aria-hidden="true">'
+            f'<polygon class="area" points="0,{H} {pts} {n - 1},{H}"/>'
+            f'<line class="base" x1="0" x2="{n - 1}" y1="{y(baseline or 0):.1f}" y2="{y(baseline or 0):.1f}"/>'
+            f'<polyline class="line" points="{pts}"/></svg>')
+
+
+def _span(a: str, b: str) -> str:
+    """'Nov 16–22, 2026' or 'Nov 30 – Dec 6, 2026'."""
+    d1, d2 = dt.date.fromisoformat(a), dt.date.fromisoformat(b)
+    if d1.month == d2.month:
+        return f"{d1:%b %-d}–{d2:%-d, %Y}"
+    return f"{d1:%b %-d} – {d2:%b %-d, %Y}" if d1.year == d2.year else f"{d1:%b %-d, %Y} – {d2:%b %-d, %Y}"
+
+
+def week_pages(site: str, site_url: str, titles: set[str]) -> list[tuple[str, str]]:
+    """A permanent, readable page per week (site/week/<2026-W47>.html) and a list of every week.
+    Returns (address, last updated) pairs for the sitemap."""
+    e = html.escape
+    base = site_url.rstrip("/")
+    wdir, out_dir = os.path.join(site, "data", "weekly"), os.path.join(site, "week")
+    os.makedirs(out_dir, exist_ok=True)
+    keys = sorted(_load(os.path.join(wdir, "index.json"), []))
+    link = lambda q, text: f'<a href="{e(base)}/w/{e(q)}">{e(text)}</a>' if q in titles else e(text)
+    done = []
+    for i, key in enumerate(keys):
+        W = _load(os.path.join(wdir, f"{key}.json"), None)
+        if not W:
+            continue
+        span = _span(W["from"], W["to"])
+        open_week = W["updated"] < W["to"]
+        canon = f"{base}/week/{key}"
+        title = f"The week’s biggest comebacks, {span} | The Rallyback"
+        top = W.get("top") or []
+        names = ", ".join(t["label"] for t in top[:3])
+        desc = (f"The biggest comebacks of older movies, shows, songs, games and books, the week of {span}."
+                + (f" Led by {names}." if names else ""))
+        parts = [f'<p class="kicker">This week in comebacks</p>', f"<h1>{e(span)}</h1>",
+                 f'<p class="dek">{W["comebacks"]:,} older titles drew unusual interest {"so far this week" if open_week else "this week"}. '
+                 f'Here are the biggest stories, the best mystery and what’s coming next.</p>']
+        if open_week:
+            parts.append(f'<p class="small">This week isn’t over: updated {_day(W["updated"])}, every morning until {_day(W["to"])}.</p>')
+        if top:
+            items = []
+            for t in top:
+                more = f" and {t['more']} more title{'s' if t['more'] > 1 else ''}" if t.get("more") else ""
+                kind = NOUN.get(t["kind"], t["kind"])
+                items.append(f'<li><h3>{link(t["qid"], t["label"] + " (" + str(t["year"]) + ")")}{e(more)}</h3>'
+                             f'<p>The {e(str(t["year"]))} {e(kind)} reached {t["lift"]}× its usual interest. '
+                             f'{e("Why: " + _sentence(t["why"]) if t.get("why") else "")}</p>'
+                             f'{_spark(t.get("trend"), t.get("baseline"))}</li>')
+            parts.append("<h2>The 5 biggest</h2><ol class='ranked'>" + "".join(items) + "</ol>")
+        m = W.get("mystery")
+        if m:
+            parts.append(f"<h2>Best mystery</h2><p>{link(m['qid'], m['label'] + ' (' + str(m['year']) + ')')}: "
+                         f"{m['lift']}× its usual interest since {_day(m['start'])}, and we can’t find out why. "
+                         f'<a href="{e(base)}/?tab=mysteries">Know why? Tell us</a>.</p>')
+        if W.get("coming"):
+            parts.append("<h2>Coming up next week</h2><ul>" + "".join(
+                f"<li>{_day(c['date'])}: {link(c['qid'], re.sub(r' [(][^)]*[)]$', '', c['label']))}, {e(c['what'])}"
+                + (f" <span class='small'>(expect about {c['prediction']['expected']}× its usual interest)</span>"
+                   if (c.get('prediction') or {}).get('expected') else "") + "</li>" for c in sorted(W["coming"], key=lambda c: c["date"])) + "</ul>")
+        if W.get("results"):
+            parts.append("<h2>How our predictions did</h2><ul>" + "".join(
+                f"<li>{e(x['label'])}: {'came true' if x.get('hit') else 'no bump'}"
+                f" ({x['ratio']}× its usual interest)</li>" for x in W["results"] if x.get("ratio") is not None) + "</ul>")
+        nav = []
+        if i > 0:
+            nav.append(f'<a href="{e(base)}/week/{keys[i - 1]}">← Week of {_span(*_week_dates(keys[i - 1]))}</a>')
+        nav.append(f'<a href="{e(base)}/week/">Every week</a>')
+        if i < len(keys) - 1:
+            nav.append(f'<a href="{e(base)}/week/{keys[i + 1]}">Week of {_span(*_week_dates(keys[i + 1]))} →</a>')
+        parts.append(f'<a class="btn" href="https://therallyback.beehiiv.com/subscribe" rel="noopener">Get this every Friday, free</a>'
+                     f'<p class="small">{" · ".join(nav)}</p>')
+        ld = {"@context": "https://schema.org", "@type": "Article", "headline": title.replace(" | The Rallyback", ""),
+              "url": canon, "description": desc, "datePublished": W["from"], "dateModified": W["updated"], "inLanguage": "en",
+              "image": f"{base}/og.png", "author": {"@type": "Organization", "name": "The Rallyback", "url": base + "/"},
+              "publisher": {"@type": "Organization", "name": "The Rallyback", "url": base + "/"}}
+        page = _shell(base, title, desc, canon, f"{base}/og.png", ld, parts)
+        _write_if_changed(os.path.join(out_dir, f"{key}.html"), page)
+        done.append((canon, W["updated"]))
+    # The list of every week.
+    rows = []
+    for key in reversed(keys):
+        W = _load(os.path.join(wdir, f"{key}.json"), None)
+        if W:
+            top = W.get("top") or []
+            rows.append(f'<li><a href="{e(base)}/week/{key}">{_span(W["from"], W["to"])}</a> '
+                        f'<span class="small">· {W["comebacks"]:,} titles{": " + e(", ".join(t["label"] for t in top[:3])) if top else ""}</span></li>')
+    ld = {"@context": "https://schema.org", "@type": "CollectionPage", "name": "Every week in comebacks", "url": f"{base}/week/"}
+    page = _shell(base, "Every week in comebacks | The Rallyback", "The biggest comebacks of older movies, shows, songs, games and books, week by week.",
+                  f"{base}/week/", f"{base}/og.png", ld,
+                  ['<p class="kicker">The archive</p>', "<h1>Every week in comebacks</h1>",
+                   '<p class="dek">The biggest stories each week, newest first.</p>', "<ul>" + "".join(rows) + "</ul>"], og_type="website")
+    _write_if_changed(os.path.join(out_dir, "index.html"), page)
+    return [(f"{base}/week/", keys and _load(os.path.join(wdir, f"{keys[-1]}.json"), {}).get("updated", ""))] + list(reversed(done))
+
+
+def _week_dates(key: str) -> tuple[str, str]:
+    y, w = key.split("-W")
+    mon = dt.date.fromisocalendar(int(y), int(w), 1)
+    return mon.isoformat(), (mon + dt.timedelta(days=6)).isoformat()
+
+
+def _write_if_changed(path: str, text: str) -> None:
+    try:
+        with open(path) as f:
+            if f.read() == text:
+                return
+    except OSError:
+        pass
+    with open(path, "w") as f:
+        f.write(text)
 
 
 def pages(site: str, site_url: str, qids: list[str], hist: dict) -> None:
@@ -411,7 +547,9 @@ def pages(site: str, site_url: str, qids: list[str], hist: dict) -> None:
             f.write(page)
     base = site_url.rstrip("/")
     if base:
+        weeks = week_pages(site, site_url, set(docs))
         urls = [f"  <url><loc>{base}/</loc></url>"] + [
+            f"  <url><loc>{u}</loc>{f'<lastmod>{d}</lastmod>' if d else ''}</url>" for u, d in weeks] + [
             f"  <url><loc>{base}/w/{q}</loc><lastmod>{d.get('updated') or d['episodes'][-1]['last_seen']}</lastmod></url>"
             for q, d in sorted(docs.items(), key=lambda kv: kv[1].get("updated") or "", reverse=True) if not thin(d)]
         with open(os.path.join(site, "sitemap.xml"), "w") as f:
@@ -455,7 +593,7 @@ def homepage(site: str, latest: dict, hist: dict) -> None:
         items.append(f'<li><a href="w/{e(r["qid"])}">{e(r["label"])} ({e(str(r.get("release_year", "")))})</a>{more}: '
                      f'{r["lift"]}× its usual interest. {e("Why: " + _sentence(why[0]) if why else "Reason unknown yet.")}</li>')
     block = (f'{HOME_START}\n    <section class="static-today"><h2>Today’s top comebacks{f", {_day(run)}" if run else ""}</h2>\n'
-             f'    <ol>{"".join(items)}</ol></section>\n    {HOME_END}')
+             f'    <ol>{"".join(items)}</ol>\n    <p><a href="week/">The biggest comebacks, week by week</a></p></section>\n    {HOME_END}')
     new = page[:page.index(HOME_START)] + block + page[page.index(HOME_END) + len(HOME_END):]
     if new != page:
         with open(path, "w") as f:
