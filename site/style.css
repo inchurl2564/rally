@@ -496,3 +496,6 @@ p, li, .dek, .about .mission { text-wrap: pretty; }
 .static-today { margin: 24px 0; }
 .static-today h2 { font: 800 24px/1.2 var(--serif); margin: 0 0 8px; }
 .static-today ol { padding-left: 22px; } .static-today li { margin: 6px 0; }
+
+.week-links { margin: 40px 0 8px; padding-top: 14px; border-top: 1px solid var(--hair); }
+.week-links a { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }

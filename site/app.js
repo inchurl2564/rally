@@ -1830,8 +1830,7 @@ function weekPage() {
     const maxShare = Math.max(...L.decades.map((d) => d.share), 0.01);
     box.replaceChildren(...[
       h("p", { class: "intro" }, `This week in comebacks: ${fmtDate(W.from).replace(/, \d{4}/, "")} to ${fmtDate(W.to)}.`),
-      h("p", { class: "contents" }, h("b", {}, fmt(W.comebacks)), " comebacks so far this week · ", pickWeek,
-        " · ", h("a", { href: `week/${key}` }, "Permanent page"), " · ", h("a", { href: "week/" }, "Every week")),
+      h("p", { class: "contents" }, h("b", {}, fmt(W.comebacks)), " comebacks so far this week · ", pickWeek),
       sectionHead("The 5 biggest", "One per story, by Rallyback Score."),
       h("ol", { class: "ranked" }, W.top.map(rank)),
       newsletterBox(),
@@ -1859,7 +1858,10 @@ function weekPage() {
         h("span", { class: "bar-val" }, `${Math.round(d.share * 100)}%${d.usual_share != null ? ` (usually ${Math.round(d.usual_share * 100)}%)` : ""}`)))),
       L.franchises.length ? sectionHead("Franchises this week", "Series with more than one title back at once.") : null,
       L.franchises.length ? h("ul", { class: "plain related" }, L.franchises.map((f) => h("li", {}, h("b", {}, f.name), ` · ${f.titles} titles: `,
-        ...f.top.flatMap((x, i) => [i ? ", " : "", titleLink(x.qid, plain(x.label))])))) : null].filter(Boolean));
+        ...f.top.flatMap((x, i) => [i ? ", " : "", titleLink(x.qid, plain(x.label))])))) : null,
+      // Each week also has a permanent page of its own (plain HTML, good for sharing and search).
+      h("p", { class: "week-links small muted" }, "Share this roundup: ", h("a", { href: `week/${key}` }, "this week’s page"),
+        ". Looking for an earlier week? ", h("a", { href: "week/" }, "See every week"), ".")].filter(Boolean));
   }).catch(() => box.replaceChildren(h("p", { class: "status" }, "This week's roundup isn't ready yet. It's built with each morning's edition.")));
   return [box];
 }
