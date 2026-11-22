@@ -658,13 +658,33 @@ window.addEventListener("resize", () => {
 // How it works: always open on wide screens. On phones it's one tappable line,
 // open only on someone's first visit (remembered in this browser, if it allows).
 const PHONE = matchMedia("(max-width: 720px)");
+// Phones get shorter pages: fewer items per list, each with a way to see the rest.
+const SMALL = matchMedia("(max-width: 600px)");
+const few = (n) => (SMALL.matches ? Math.min(n, 5) : n);
+// Hide all but the first n children of a list on phones, with a button to show the rest.
+const foldedList = (list, n, noun) => [list, foldExtras(list, n, noun)];
+// A secondary section: a full section on wide screens, one tappable line on phones.
+const phoneFold = (title, sub, ...body) => (SMALL.matches
+  ? [h("details", { class: "phone-fold" }, h("summary", {}, title), sub ? h("p", { class: "small muted" }, sub) : null, ...body)]
+  : [sectionHead(title, sub), ...body]);
+function foldExtras(container, n, noun) {
+  const kids = [...container.children];
+  if (!SMALL.matches || kids.length <= n) return null;
+  const extra = kids.slice(n);
+  const btn = h("button", { type: "button", class: "btn ghost show-all", "aria-expanded": "false" });
+  const set = (open) => { extra.forEach((k) => { k.hidden = !open; }); btn.setAttribute("aria-expanded", String(open));
+    btn.textContent = open ? `Show fewer` : `Show ${extra.length} more ${noun}`; };
+  btn.addEventListener("click", () => { const open = btn.getAttribute("aria-expanded") !== "true"; set(open);
+    if (!open) container.scrollIntoView({ block: "nearest" }); });
+  set(false);
+  return btn;
+}
 const store = { get: (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } },
   set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* private mode: fine */ } } };
 function howItWorks() {
   // Decided once per page load, so it stays open while a first-time reader moves between pages.
   if (howItWorks.first == null) { howItWorks.first = !store.get("rb-how-seen"); store.set("rb-how-seen", "1"); }
-  const firstVisit = howItWorks.first;
-  const box = h("details", { class: "how", "aria-label": "How The Rallyback works", open: !PHONE.matches || firstVisit ? "" : null },
+  const box = h("details", { class: "how", "aria-label": "How The Rallyback works", open: !PHONE.matches ? "" : null },
     h("summary", {}, "How it works"),
     h("ol", {},
       h("li", {}, h("b", {}, "We watch."), " Every day we track how much attention older movies, shows, songs, games and books are getting."),
@@ -799,11 +819,11 @@ function todayPage() {
       h("aside", { class: "index" },
         h("h2", {}, "Top 10 comebacks"),
         h("p", {}, "Ranked by Rallyback Score, the number in the yellow circle."),
-        h("ol", {}, topStories(lead, rest, 10).map(({ r, g }) => h("li", {}, h("div", {},
+        foldedList(h("ol", {}, topStories(lead, rest, 10).map(({ r, g }) => h("li", {}, h("div", {},
           h("div", { class: "t" }, g ? h("a", { href: `#${g.id}`, onclick: (e) => { e.preventDefault(); focusGroup(g); } }, oldNames(g.works))
             : link(r, r.label)),
           h("div", { class: "s" }, scoreDot(r.rally_score), " ",
-            g ? `${g.works.length} titles · ${g.story.kicker}` : `${mult(r)} usual interest · ${story(r).kicker}`))))))),
+            g ? `${g.works.length} titles · ${g.story.kicker}` : `${mult(r)} usual interest · ${story(r).kicker}`))))), 5, "stories"))),
   ];
   // Each section is one grid of same-shaped cards: stories about several titles (one per cause)
   // and stories about one title, biggest first. The lead's own story isn't repeated.
@@ -825,7 +845,8 @@ function todayPage() {
     // The section title already says why they're back; the label on each story would repeat it.
     items.forEach((el) => el.querySelector(".kicker")?.remove());
     out.push(sectionHead(title, sub, more && more[0], more && more[1]));
-    out.push(h("div", { class: "grid", style: SECTION_COLOR[title] ? `--sec:${SECTION_COLOR[title]}` : null }, items));
+    const grid = h("div", { class: "grid", style: SECTION_COLOR[title] ? `--sec:${SECTION_COLOR[title]}` : null }, items);
+    out.push(grid, foldExtras(grid, 3, "stories"));
   };
   section("news", "In the news", "Old favorites riding news about a star, a story or a franchise.");
   section("release", "New releases", "A sequel, remake or new work sends fans back to the original.");
@@ -838,8 +859,7 @@ function todayPage() {
     if (soonBirthdays(cu).length) out.push(h("h3", { class: "rail-head" }, "Big anniversaries"), h("div", { class: "rail" }, bigAnniversaries(soonBirthdays(cu), 10).map(annMini)));
   }
   out.push(newsletterBox());
-  out.push(sectionHead(`All comebacks (${state.data.results.length})`, "Search, filter by reason, and dig into the numbers."));
-  out.push(listSection());
+  out.push(...phoneFold(`All comebacks (${state.data.results.length})`, "Search, filter by reason, and dig into the numbers.", listSection()));
   return out.filter(Boolean);
 }
 
@@ -914,7 +934,7 @@ function groupStoryCard(g) {
     h("div", { class: "story-foot" },
       h("div", { class: "bigstat" }, scoreDot(scores.length ? Math.max(...scores) : null, true, "Top Rallyback Score in this group"),
         h("b", {}, String(ws.length)), h("span", {}, `titles back at once · biggest ${mult(best)}`), combinedSpark(ws)),
-      h("details", { class: "more-info sources" }, h("summary", {}, `The ${ws.length} titles`), workChips(ws), ...(g.sources() || []).filter(Boolean)),
+      h("details", { class: "more-info sources titles" }, h("summary", {}, `The ${ws.length} titles`), workChips(ws), ...(g.sources() || []).filter(Boolean)),
       open ? h("div", {}, tipLink(best)) : null));
 }
 
@@ -1244,7 +1264,7 @@ function renderList() {
   const of = list.length === all.length ? `${all.length} comebacks` : `${list.length} of ${all.length} comebacks`;
   $("count").textContent = rows.length < list.length ? `${of}, from ${rows.length} stories` : of;
   const filtering = state.q || state.verdicts.size || state.kinds.size || state.stages.size;
-  const cap = state.view === "today" && !state.showAll && !filtering ? 12 : Infinity;
+  const cap = state.view === "today" && !state.showAll && !filtering ? few(12) : Infinity;
   const shown = rows.slice(0, cap);
   const more = rows.length > shown.length
     ? h("button", { type: "button", class: "btn ghost show-all", onclick: () => { state.showAll = true; renderList(); } }, `Show all ${rows.length} stories`) : null;
@@ -1537,6 +1557,7 @@ function comingPage() {
 }
 // `cap` shows the first rows, with a link that shows the rest and one that folds them away again.
 function table(head, rows, cap = Infinity, noun = "rows") {
+  if (Number.isFinite(cap)) cap = few(cap);
   if (!rows.length) return h("p", { class: "muted" }, "Nothing here yet. This fills in once the daily run has built its watchlist.");
   if (rows.length > cap) {
     const full = table(head, rows);
@@ -1629,13 +1650,12 @@ function aboutPage() {
       h("p", { class: "mission" }, "Questions, ideas, press or partnerships: send us a note below or write to ", contactLink(), ". For a tip or a correction about a story, the links on the story itself are fastest."),
       TIPS_FORM.action ? contactForm() : null),
     newsletterBox(),
-    sectionHead("Embed the chart", "Put today's top comebacks on your own site. It updates itself every morning."),
-    embedBox(base),
-    sectionHead("Feeds", "Get new comebacks every morning. Copy a link into any feed reader: Feedly, Inoreader, NetNewsWire, Outlook, Slack and others."),
-    h("ul", { class: "plain" }, feeds.map(([n, d]) => h("li", {},
-      h("a", { href: `feeds/${n}.xml` }, h("b", {}, `${n}.xml`)),
-      h("button", { type: "button", class: "copy", onclick: (e) => copy(`${base}feeds/${n}.xml`, e.target) }, "Copy link"),
-      h("div", { class: "small muted" }, d)))),
+    ...phoneFold("Embed the chart", "Put today's top comebacks on your own site. It updates itself every morning.", embedBox(base)),
+    ...phoneFold("Feeds", "Get new comebacks every morning. Copy a link into any feed reader: Feedly, Inoreader, NetNewsWire, Outlook, Slack and others.",
+      h("ul", { class: "plain" }, feeds.map(([n, d]) => h("li", {},
+        h("a", { href: `feeds/${n}.xml` }, h("b", {}, `${n}.xml`)),
+        h("button", { type: "button", class: "copy", onclick: (e) => copy(`${base}feeds/${n}.xml`, e.target) }, "Copy link"),
+        h("div", { class: "small muted" }, d))))),
   ];
 }
 function copy(text, btn) {
@@ -1852,13 +1872,17 @@ function weekPage() {
       // Shown once the year holds more than this month (the record starts in November 2026).
       L.covers_from < L.updated.slice(0, 8) + "01" ? sectionHead("Biggest this year", "One per story.") : null,
       L.covers_from < L.updated.slice(0, 8) + "01" ? table(["Title", "Started", "Peak", "Score"], L.year.map(leadRow), 10, "comebacks") : null,
-      sectionHead("Decades this week", "Which eras people are going back to: comebacks this week by when the work came out."),
-      h("div", { class: "bars" }, L.decades.slice(0, 10).map((d) => h("div", { class: "bar-row" },
-        h("span", { class: "bar-label" }, d.decade), h("span", { class: "bar" }, h("i", { style: `width:${(100 * d.share / maxShare).toFixed(1)}%` })),
-        h("span", { class: "bar-val" }, `${Math.round(d.share * 100)}%${d.usual_share != null ? ` (usually ${Math.round(d.usual_share * 100)}%)` : ""}`)))),
-      L.franchises.length ? sectionHead("Franchises this week", "Series with more than one title back at once.") : null,
-      L.franchises.length ? h("ul", { class: "plain related" }, L.franchises.map((f) => h("li", {}, h("b", {}, f.name), ` · ${f.titles} titles: `,
-        ...f.top.flatMap((x, i) => [i ? ", " : "", titleLink(x.qid, plain(x.label))])))) : null,
+      ...phoneFold("Decades this week", "Which eras people are going back to: comebacks this week by when the work came out.",
+        h("div", { class: "bars" }, L.decades.slice(0, 10).map((d) => h("div", { class: "bar-row" },
+          h("span", { class: "bar-label" }, d.decade), h("span", { class: "bar" }, h("i", { style: `width:${(100 * d.share / maxShare).toFixed(1)}%` })),
+          h("span", { class: "bar-val" }, `${Math.round(d.share * 100)}%${d.usual_share != null ? ` (usually ${Math.round(d.usual_share * 100)}%)` : ""}`))))),
+      ...(L.franchises.length ? phoneFold("Franchises this week", "Series with more than one title back at once.",
+        h("ul", { class: "plain related" }, L.franchises.map((f) => {
+          // Phones name the top few titles, not all 40 of a big series.
+          const shown = SMALL.matches ? f.top.slice(0, 4) : f.top, rest = f.titles - shown.length;
+          return h("li", {}, h("b", {}, f.name), ` · ${f.titles} titles: `,
+            ...shown.flatMap((x, i) => [i ? ", " : "", titleLink(x.qid, plain(x.label))]), rest > 0 && SMALL.matches ? ` and ${rest} more` : "");
+        }))) : []),
       // Each week also has a permanent page of its own (plain HTML, good for sharing and search).
       h("p", { class: "week-links small muted" }, "Share this roundup: ", h("a", { href: `week/${key}` }, "this week’s page"),
         ". Looking for an earlier week? ", h("a", { href: "week/" }, "See every week"), ".")].filter(Boolean));

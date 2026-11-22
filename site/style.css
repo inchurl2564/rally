@@ -499,3 +499,42 @@ p, li, .dek, .about .mission { text-wrap: pretty; }
 
 .week-links { margin: 40px 0 8px; padding-top: 14px; border-top: 1px solid var(--hair); }
 .week-links a { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+
+/* ---------- phones: shorter, calmer pages ---------- */
+[hidden] { display: none !important; }   /* "Show more" folds win over cards' own display rules */
+.phone-fold { margin: 14px 0; border-top: 1px solid var(--hair); border-bottom: 1px solid var(--hair); padding: 12px 0; }
+.phone-fold > summary { cursor: pointer; list-style: none; font: 800 13px/1.2 var(--sans); letter-spacing: .08em; text-transform: uppercase; }
+.phone-fold > summary::-webkit-details-marker { display: none; }
+.phone-fold > summary::after { content: " +"; color: var(--muted); }
+.phone-fold[open] > summary::after { content: " −"; }
+@media (max-width: 600px) {
+  /* Masthead: smaller name, one-line tagline */
+  .mast-title { padding-top: 10px; padding-bottom: 8px; }
+  .mast-title h1 { font-size: 46px; }
+  .tag { font-size: 13px; margin-top: 2px; }
+  /* Story cards: headline, short text and one line of numbers. The chart, label, Follow and
+     sources live on the title's own page (and in the full card on wider screens). */
+  .story .story-foot .spark, .story .story-foot .foot-row, .story .story-foot .sources:not(.titles) { display: none; }
+  .story .bigstat { display: flex; align-items: center; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
+  .story .bigstat .score-dot.big { width: 30px; height: 30px; font-size: 13px; }
+  .story .bigstat b { font-size: 20px; }
+  .story .bigstat span { font-size: 13px; }
+  .grid { gap: 22px; }
+  .section-head { margin-top: 36px; }
+  .section-head h2 { font-size: 24px; }
+  .section-head p { font-size: 14px; }
+  .show-all { display: block; margin: 14px auto 0; }
+}
+/* Phones: list tables (Unexplained, Coming up) become stacked rows: the title on top, the
+   date, reason and outlook on one small line under it, instead of four squeezed columns. */
+@media (max-width: 600px) {
+  .narrow-only table thead { display: none; }
+  .narrow-only table tr:not(.card-row) { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 12px; row-gap: 2px;
+    padding: 12px 0; border-bottom: 1px solid var(--hair); }
+  .narrow-only table tr:not(.card-row) > td { display: block; padding: 0; border: 0; font-size: 14px; color: var(--muted); text-align: left; }
+  .narrow-only table tr:not(.card-row) > td:has(.row-open, b.t) { order: -1; flex-basis: 100%; color: var(--ink); font-size: 16px; }
+  .narrow-only table tr:not(.card-row) > td .small, .narrow-only table tr:not(.card-row) > td div { display: inline; margin-left: 5px; }
+  .narrow-only table tr:not(.card-row) > td .outlook { margin: 0; }
+  .narrow-only table tr.card-row, .narrow-only table tr.card-row > td { display: block; }
+}
+@media (max-width: 600px) { .narrow-only table tr:not(.card-row) > td.tipcol { display: none; } }
