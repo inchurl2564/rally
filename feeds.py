@@ -17,6 +17,11 @@ import json
 import os
 import re
 
+import archive
+
+MEDIUM = {"film": "Film", "TV series": "TV", "song": "Music", "album": "Music", "musical": "Music",
+          "video game": "Games", "book": "Books", "manga/comic": "Books"}
+
 FEEDS = {
     "all": ("The Rallyback: all new comebacks", lambda e: True),
     "unexplained": ("The Rallyback: unexplained comebacks",
@@ -34,26 +39,37 @@ def _x(s):
     return html.escape(str(s), quote=True)
 
 
-def _entries_for_run(data: dict, prev: dict | None, site_url: str, labels: dict) -> list[dict]:
+def _entries_for_run(site: str, data: dict, prev: dict | None, site_url: str, labels: dict) -> list[dict]:
     run = data["meta"]["window_end"]
     prev_q = {r["qid"] for r in (prev or {}).get("results", [])}
     prev_events = {t["qid"] for t in (prev or {}).get("shared_triggers", [])} | \
                   {t["qid"] for t in (prev or {}).get("common_threads", [])}
     prev_fc = {(c.get("new"), c.get("old")) for c in (prev or {}).get("coming_up", {}).get("derivatives", [])}
     by_q = {r["qid"]: r for r in data["results"]}
+    # The same plain-English reasons as the title pages, from tonight's permanent record.
+    try:
+        hist = archive.load_history(site)
+        rows = hist["days"].get(run, {})
+        notes = {n["id"]: n.get("note") for n in archive._load("annotations.json", []) if isinstance(n, dict) and n.get("id")}
+        why_of = lambda q: archive._causes((rows.get(q) or {}).get("causes") or [], hist["names"], notes)
+    except Exception:
+        why_of = lambda q: []
     out = []
     for r in data["results"]:
         if r["qid"] in prev_q or r["verdict"] in ("seasonal", "automated?", "front page"):
             continue
-        why = r["triggers"][0]["text"] if r["triggers"] else (
-            f"Likely cause from coverage: {r['cause']}" if r.get("cause") else "No recorded cause yet")
-        stage = f" · {r['stage']}" if r.get("stage") else ""
+        why = why_of(r["qid"])
+        noun = archive.NOUN.get(r["kind"], r["kind"])
+        conf = archive.CONFIDENCE.get(r["verdict"])
+        summary = (f"{r['label']}, the {r['release_year']} {noun}, is drawing {r['lift']}× its usual interest "
+                   f"since {archive._day(r['spike_start'])}. "
+                   + (f"Why: {archive._sentence(why[0])}" + (f" How sure: {conf[0].lower()}." if conf else "")
+                      if why and r["verdict"] not in archive.UNEXPLAINED
+                      else "We don't know why yet." + (f" {archive._sentence(why[0])}" if why else "") + " Know why? Tell us on the site."))
         out.append({"id": f"work-{r['qid']}-{r['spike_start']}", "kind_of": "work", "verdict": r["verdict"],
                     "medium": r["kind"], "date": run,
-                    "title": f"{r['label']} ({r['release_year']}) is back: {r['lift']}× usual attention",
-                    "summary": f"{labels.get(r['verdict'], r['verdict'])}{stage}. {why}. "
-                               f"Spike began {r['spike_start']}; usual {r['baseline']:,} views/day.",
-                    "link": f"{site_url}?run={run}#w-{r['qid']}"})
+                    "title": f"{r['label']} ({r['release_year']}) is back: {r['lift']}× its usual interest",
+                    "summary": summary, "link": f"{site_url}w/{r['qid']}.html"})
     for t in data.get("shared_triggers", []):
         if t["qid"] in prev_events:
             continue
@@ -96,14 +112,35 @@ def _entries_for_run(data: dict, prev: dict | None, site_url: str, labels: dict)
     return out
 
 
+def _link(e: dict, site_url: str) -> str:
+    """Older entries pointed at a spot on that day's page; a title's own page is a better home."""
+    if e.get("kind_of") == "work" and "#w-" in e.get("link", ""):
+        return f"{site_url}w/{e['link'].rsplit('#w-', 1)[1]}.html"
+    return e["link"]
+
+
+def _categories(e: dict) -> str:
+    """Tags a feed reader can filter on: the medium, and why it's back."""
+    tags = []
+    if MEDIUM.get(e.get("medium")):
+        tags.append(MEDIUM[e["medium"]])
+    reason = {"forecast": "Coming up", "measure": "Track record", "shared": "New release"}.get(e.get("verdict")) \
+        or archive.REASON.get(e.get("verdict"))
+    if e.get("kind_of") == "thread":
+        reason = "Unexplained"
+    if reason and reason != "Set aside":
+        tags.append(reason)
+    return "".join(f'\n    <category term="{_x(t)}"/>' for t in tags)
+
+
 def _atom(name: str, title: str, entries: list[dict], site_url: str) -> str:
     updated = (entries[0]["date"] if entries else dt.date.today().isoformat()) + "T06:00:00Z"
     items = "".join(f"""
   <entry>
     <id>{_x(site_url)}#{_x(e['id'])}</id>
     <title>{_x(e['title'])}</title>
-    <link href="{_x(e['link'])}"/>
-    <updated>{_x(e['date'])}T06:00:00Z</updated>
+    <link href="{_x(_link(e, site_url))}"/>
+    <updated>{_x(e['date'])}T06:00:00Z</updated>{_categories(e)}
     <summary>{_x(e['summary'])}</summary>
   </entry>""" for e in entries)
     return f"""<?xml version="1.0" encoding="utf-8"?>
@@ -125,7 +162,7 @@ def write(site: str, data: dict, prev: dict | None, site_url: str, labels: dict)
             old = json.load(f)
     except (OSError, json.JSONDecodeError):
         old = []
-    new = _entries_for_run(data, prev, site_url, labels)
+    new = _entries_for_run(site, data, prev, site_url, labels)
     ids = {e["id"] for e in old}
     merged = ([e for e in new if e["id"] not in ids] + old)[:KEEP]
     with open(store, "w") as f:

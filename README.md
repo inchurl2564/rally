@@ -177,3 +177,11 @@ every push to `main` publishes within minutes. `site/_headers` makes browsers al
 code. The old GitHub Pages address publishes `.github/pages-pointer` instead: it forwards every page to
 the same page on therallyback.com and keeps serving the feeds.
 
+## Title pages, search engines and the feed
+
+Every title The Rallyback has caught gets a readable page at `/w/<Wikidata ID>.html` (written by
+`archive.py` each night, plain HTML with no script needed): why it's back, how sure we are, a 12-month
+chart, every comeback, related titles and, for books, free ways to read it (Project Gutenberg, Open
+Library; looked up by `reading.py`). `sitemap.xml` and `robots.txt` list the pages for search engines,
+and today's top stories are written into `index.html` so the homepage has text before the app loads.
+Feed entries use the same plain-English reasons, link to the title page and are tagged by medium and reason.

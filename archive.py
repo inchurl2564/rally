@@ -6,8 +6,12 @@ permanent record (site/data/history), today's edition and the forecast checks.
   site/data/works/<qid>.json   one title: every comeback (dates, size, causes), its chart,
                                what's coming for it, related titles
   site/data/works/index.json   every title, compact, for "Has it come back before?" search
-  site/w/<qid>.html            a tiny share page per title (title, description and picture
-                               for link previews), which opens the title page on the site
+  site/w/<qid>.html            a readable page per title, written out in plain HTML so search
+                               engines and link previews see it: why it's back, every comeback,
+                               a chart, free ways to read it (books), related titles
+  site/sitemap.xml, robots.txt the list of those pages, for search engines
+  site/index.html              today's top 10 written into the homepage (between markers), so
+                               the page has real text before the app loads
   site/data/leaders.json       biggest comebacks this month and year; decades and franchises
                                that are hot this week
   site/data/weekly/<week>.json "This week in comebacks", one file per ISO week
@@ -21,6 +25,8 @@ import json
 import os
 import sys
 import urllib.parse
+
+import reading
 
 EPISODE_GAP = 7          # days off the list before a return counts as a new comeback
 UNEXPLAINED = {"unexplained", "weak link", "lookup failed", "common thread"}
@@ -95,8 +101,10 @@ def _cause_text(c: list, names: dict, notes: dict) -> str | None:
         return f"{(detail or 'New release')[0].upper()}{(detail or 'new release')[1:]}: {who}{when}"
     if kind == "anniversary":
         return f"{(detail or 'Anniversary')[0].upper()}{(detail or 'anniversary')[1:]}{when}"
-    if kind in ("ripple", "common thread") and who:
-        return f"News about {who}{f' ({detail})' if detail and kind == 'ripple' else ''}{when}"
+    if kind == "ripple" and who:
+        return f"News about {who}{f' ({detail})' if detail else ''}{when}"
+    if kind == "common thread" and who:            # a shared person, not a known reason
+        return f"Other work with {who} came back at the same time{when}"
     if kind == "note":
         return notes.get(detail)
     if kind == "coverage" and detail:
@@ -176,7 +184,8 @@ def build(site: str, site_url: str = "") -> None:
                     for o in by_cause.get(c[1], ()):
                         if o != q:
                             rel.setdefault(o, f"Also back with {names.get(c[1], 'the same story')}")
-        related = sorted(rel.items(), key=lambda kv: kv[0] not in R)[:8]        # titles back right now first
+        # Titles back right now first, then a fixed order (sets have no order; this keeps files from churning).
+        related = sorted(rel.items(), key=lambda kv: (kv[0] not in R, -(R.get(kv[0], {}).get("score") or 0), kv[0]))[:8]
         doc = {
             "qid": q, "label": label, "kind": kind, "year": str(year),
             "title": r.get("title") or old.get("title"),
@@ -192,41 +201,254 @@ def build(site: str, site_url: str = "") -> None:
             "updated": today_run,
         }
         _save(path, doc)
-        _stub(site, site_url, doc)
         written += 1
     index.sort(key=lambda x: (-x[4], -(x[6] or 0)))
     _save(os.path.join(wdir, "index.json"), {"fields": ["qid", "label", "year", "kind", "comebacks", "last_seen", "best_score"],
                                             "works": index, "updated": today_run})
+    pages(site, site_url, [q for q, *_ in index], hist)
+    homepage(site, latest, hist)
     leaders(site, hist, runs)
     weekly(site, hist, runs, latest)
     log(f"      archive: {len(index)} titles ({written} pages updated)")
 
 
-def _stub(site: str, site_url: str, doc: dict) -> None:
-    """A tiny page per title so a shared link shows the title, a line and the picture, then opens the site."""
+# ---------- readable title pages (plain HTML, no script needed) ----------
+
+REASON = {**{v: "In the news" for v in ("ripple", "editor", "coverage")},
+          **{v: "New release" for v in ("derivative", "same-creator", "editor-release")},
+          **{v: "In memoriam" for v in ("death", "editor-death")}, "anniversary": "Anniversary",
+          **{v: "Unexplained" for v in UNEXPLAINED}, **{v: "Set aside" for v in SET_ASIDE}}
+CONFIDENCE = {**{v: ("Confirmed", "an editor checked the reason against a published source") for v in ("editor", "editor-release", "editor-death")},
+              **{v: ("Likely", "a matching event is on record at the right time") for v in ("death", "derivative", "same-creator", "anniversary")},
+              **{v: ("Possible", "inferred from news headlines, Wikipedia edits or a related page jumping") for v in ("ripple", "coverage")}}
+NOUN = {"manga/comic": "comic"}
+SCHEMA_TYPE = {"film": "Movie", "TV series": "TVSeries", "song": "MusicRecording", "album": "MusicAlbum",
+               "video game": "VideoGame", "book": "Book", "manga/comic": "Book"}
+
+
+def _day(s: str) -> str:
+    return f"{dt.date.fromisoformat(s[:10]):%b %-d, %Y}"
+
+
+def _sentence(s: str) -> str:
+    """A cause as a sentence: exactly one full stop at the end."""
+    return s.rstrip(". ") + "."
+
+
+def _times(n: int) -> str:
+    return "once" if n == 1 else "twice" if n == 2 else f"{n} times"
+
+
+def _chart(spark: list, baseline: float, label: str) -> str:
+    """The last 12 months of daily views, as a small inline picture (same log scale as the site)."""
+    import math
+    vals = [v or 0 for v in (spark or [])][-365:]
+    if len(vals) < 30:
+        return ""
+    n, H = len(vals), 60
+    top = max(max(vals), (baseline or 1) * 2, 1)
+    y = lambda x: H - (math.log10(1 + x) / math.log10(1 + top)) * (H - 4)
+    pts = " ".join(f"{i},{y(v):.1f}" for i, v in enumerate(vals))
+    peak = max(vals)
+    return (f'<figure class="chart"><svg viewBox="0 0 {n - 1} {H}" preserveAspectRatio="none" role="img" '
+            f'aria-label="Daily Wikipedia views over the last 12 months for {html.escape(label)}: usually about {round(baseline or 0):,} a day, peak {peak:,}.">'
+            f'<polygon class="area" points="0,{H} {pts} {n - 1},{H}"/>'
+            f'<line class="base" x1="0" x2="{n - 1}" y1="{y(baseline or 0):.1f}" y2="{y(baseline or 0):.1f}"/>'
+            f'<polyline class="line" points="{pts}"/></svg>'
+            f'<figcaption>Daily views, last 12 months. Dashed line: its usual level (about {round(baseline or 0):,} a day).</figcaption></figure>')
+
+
+PAGE_CSS = """
+:root{--paper:#faf8f4;--paper-2:#f2eee7;--ink:#1b1a1f;--muted:#6e6a64;--hair:#e5e0d7;--red:#c2401e;--red-ink:#fff;--tint:rgba(194,64,30,.07)}
+@media (prefers-color-scheme:dark){:root{--paper:#141317;--paper-2:#1d1c21;--ink:#efece6;--muted:#a29d96;--hair:#2e2c32;--red:#ff7a52;--red-ink:#141317;--tint:rgba(255,122,82,.12)}}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.55 "Libre Franklin",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:820px;margin:0 auto;padding:0 16px}a{color:inherit;text-underline-offset:3px}
+.mast{border-bottom:3px solid var(--ink);padding:18px 0 12px}.brand{font:900 30px/1 "Playfair Display",Georgia,serif;letter-spacing:-.02em;text-decoration:none}
+.tag{margin:4px 0 0;color:var(--muted);font-size:14px}
+.kicker{font:800 12px/1.2 "Libre Franklin",sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--red);margin:28px 0 6px}
+h1{font:900 clamp(30px,6vw,46px)/1.05 "Playfair Display",Georgia,serif;letter-spacing:-.02em;margin:0 0 10px}
+h2{font:800 22px/1.2 "Playfair Display",Georgia,serif;margin:32px 0 8px;padding-top:12px;border-top:1px solid var(--hair)}
+.dek{font-size:19px;line-height:1.45;margin:0 0 14px}.muted,figcaption,.small{color:var(--muted);font-size:14px}
+.photo{margin:16px 0;max-width:480px}.photo img{width:100%;height:auto;display:block;background:var(--paper-2)}
+.chart{margin:16px 0}.chart svg{width:100%;height:90px;display:block;background:var(--paper-2)}
+.chart .area{fill:var(--tint)}.chart .line{fill:none;stroke:var(--red);stroke-width:2;vector-effect:non-scaling-stroke}
+.chart .base{stroke:var(--muted);stroke-dasharray:4 4;stroke-width:1;vector-effect:non-scaling-stroke}
+.conf{display:inline-block;font:700 12px/1 "Libre Franklin",sans-serif;text-transform:uppercase;letter-spacing:.06em;padding:5px 8px;border:1px solid var(--hair);margin-right:6px}
+table{width:100%;border-collapse:collapse;font-size:15px}th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--hair);vertical-align:top}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}.num{text-align:right;white-space:nowrap}
+ul{padding-left:20px}li{margin:4px 0}
+.btn{display:inline-block;background:var(--red);color:var(--red-ink);font:700 13px/1 "Libre Franklin",sans-serif;text-transform:uppercase;letter-spacing:.06em;padding:13px 18px;text-decoration:none;margin:24px 0 8px}
+footer{margin-top:48px;padding:20px 0 40px;border-top:3px solid var(--ink);background:var(--paper-2);font-size:14px;color:var(--muted)}
+"""
+
+
+def _page(site_url: str, doc: dict) -> str:
+    e = html.escape
+    base = site_url.rstrip("/")
+    q, label, year, kind = doc["qid"], doc["label"], doc["year"], doc["kind"]
     eps = doc["episodes"]
     last = eps[-1]
-    times = f"{len(eps)} comebacks" if len(eps) > 1 else "a comeback"
-    why = (last["causes"] or ["Reason unknown yet"])[0]
-    title = f"{doc['label']} ({doc['year']}) on The Rallyback"
-    desc = f"{times.capitalize()} tracked. Latest: {last['peak_lift']}× its usual interest from {dt.date.fromisoformat(last['start']):%b %-d, %Y}. {why}."
+    noun = NOUN.get(kind, kind)
+    reason = REASON.get(last["verdict"], "")
+    why = last["causes"]
+    app = f"{base}/?work={q}"
+    if doc.get("on_today"):
+        lead = f"{label}, the {year} {noun}, is back: {last['peak_lift']}× its usual interest since {_day(last['start'])}."
+        title = f"Why is {label} ({year}) back? | The Rallyback"
+    else:
+        lead = f"{label}, the {year} {noun}, last came back on {_day(last['start'])}, reaching {last['peak_lift']}× its usual interest."
+        title = f"{label} ({year}): its comebacks and why | The Rallyback"
+    if len(eps) > 1:
+        lead += f" It has come back {_times(len(eps))} since we started tracking in November 2026."
+    desc = lead + (f" Why: {_sentence(why[0])}" if why and last["verdict"] not in UNEXPLAINED else " The reason isn't known yet.")
+    conf = CONFIDENCE.get(last["verdict"])
     img = (f"https://commons.wikimedia.org/wiki/Special:FilePath/{urllib.parse.quote(doc['image'])}?width=1200"
            if doc.get("image") else "")
-    target = f"../?work={doc['qid']}"
-    e = html.escape
-    page = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
+    wiki = f"https://en.wikipedia.org/wiki/{urllib.parse.quote(doc['title'])}" if doc.get("title") else ""
+    canon = f"{base}/w/{q}.html"
+    ld = {"@context": "https://schema.org", "@type": "WebPage", "name": title, "url": canon, "description": desc,
+          "dateModified": doc.get("updated"), "inLanguage": "en",
+          "publisher": {"@type": "Organization", "name": "The Rallyback", "url": base + "/"},
+          "about": {"@type": SCHEMA_TYPE.get(kind, "CreativeWork"), "name": label, "dateCreated": str(year),
+                    "sameAs": [f"https://www.wikidata.org/wiki/{q}"] + ([wiki] if wiki else [])}}
+    if img:
+        ld["image"] = img
+    parts = [f'<p class="kicker">{e(reason + " · " if reason and reason != "Set aside" else "")}{e(kind[0].upper() + kind[1:])}, {e(str(year))}</p>',
+             f"<h1>{e(label)} ({e(str(year))})</h1>", f'<p class="dek">{e(lead)}</p>']
+    if img:
+        alt = f"{doc['image_of']}, connected to {label}" if doc.get("image_of") else label
+        cap = f"<figcaption>Pictured: {e(doc['image_of'])}</figcaption>" if doc.get("image_of") else ""
+        parts.append(f'<figure class="photo"><img src="{e(img.replace("width=1200", "width=800"))}" alt="{e(alt)}" loading="lazy">{cap}</figure>')
+    parts.append(f"<h2>{'Why it’s back' if doc.get('on_today') else 'Why it came back'}</h2>")
+    if why and last["verdict"] in UNEXPLAINED:
+        parts.append("<p>We don’t know for sure yet. What we do know:</p><ul>" + "".join(f"<li>{e(c)}</li>" for c in why) + "</ul>"
+                     f'<p><a href="{e(app)}">Know why? Tell us on The Rallyback</a>.</p>')
+    elif why:
+        parts.append("<ul>" + "".join(f"<li>{e(c)}</li>" for c in why) + "</ul>")
+        if conf:
+            parts.append(f'<p class="small"><span class="conf">{conf[0]}</span>How sure we are: {e(conf[1])}.</p>')
+    else:
+        parts.append(f'<p>We don’t know yet. Nothing on record explains it: no new release, death or anniversary at the right time. '
+                     f'<a href="{e(app)}">Know why? Tell us on The Rallyback</a>.</p>')
+    parts.append(_chart(doc.get("spark") or [], doc.get("baseline") or 0, label))
+    if doc.get("read"):
+        parts.append("<h2>Read it free</h2><ul>" + "".join(
+            f'<li><a href="{e(x["url"])}" rel="noopener">{e(x["label"])}</a></li>' for x in doc["read"]) + "</ul>")
+    rows = "".join(f'<tr><td>{_day(x["start"])}</td><td>{e(" · ".join(x["causes"]) or "Reason unknown")}</td>'
+                   f'<td class="num">{x["peak_lift"]}×</td><td class="num">{x["days"]} day{"" if x["days"] == 1 else "s"}</td></tr>'
+                   for x in reversed(eps))
+    parts.append(f"<h2>Every comeback</h2><table><thead><tr><th>Started</th><th>Why</th><th class='num'>Peak</th><th class='num'>On our list</th></tr></thead><tbody>{rows}</tbody></table>"
+                 '<p class="small">Peak: how many times its usual daily interest it reached.</p>')
+    if doc.get("coming"):
+        parts.append("<h2>Coming up</h2><ul>" + "".join(f"<li>{_day(c['date'])}: {e(c['text'])}</li>" for c in doc["coming"]) + "</ul>")
+    if doc.get("related"):
+        parts.append("<h2>Related</h2><ul>" + "".join(
+            f'<li><a href="{e(base)}/w/{e(r["qid"])}.html">{e(r["label"])} ({e(r["year"])})</a> <span class="small">· {e(r["why"])}</span></li>'
+            for r in doc["related"]) + "</ul>")
+    parts.append(f'<a class="btn" href="{e(app)}">Open on The Rallyback</a>'
+                 '<p class="small">Follow this title, see today’s other comebacks and tell us what we got wrong.</p>')
+    parts.append('<p class="small">Interest is measured from daily views of '
+                 + (f'<a href="{e(wiki)}" rel="noopener">its Wikipedia article</a>' if wiki else "its Wikipedia article")
+                 + f', against its usual level over the previous year. Updated {_day(doc.get("updated") or last["last_seen"])}.</p>')
+    ld_json = json.dumps(ld, ensure_ascii=False).replace("</", "<\\/")
+    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <title>{e(title)}</title><meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="{e(desc)}">
-<meta property="og:type" content="article"><meta property="og:site_name" content="The Rallyback">
-<meta property="og:title" content="{e(title)}"><meta property="og:description" content="{e(desc)}">
+<link rel="canonical" href="{e(canon)}">
+<meta property="og:type" content="article"><meta property="og:site_name" content="The Rallyback"><meta property="og:url" content="{e(canon)}">
+<meta property="og:title" content="{e(title.replace(" | The Rallyback", ""))}"><meta property="og:description" content="{e(desc)}">
 {f'<meta property="og:image" content="{e(img)}"><meta name="twitter:card" content="summary_large_image">' if img else '<meta name="twitter:card" content="summary">'}
-{f'<link rel="canonical" href="{e(site_url.rstrip("/"))}/w/{doc["qid"]}.html">' if site_url else ''}
-<meta http-equiv="refresh" content="0; url={e(target)}">
-</head><body><p><a href="{e(target)}">{e(title)}</a></p></body></html>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;700;800&family=Playfair+Display:wght@800;900&display=swap">
+<style>{PAGE_CSS}</style>
+<script type="application/ld+json">{ld_json}</script>
+</head><body>
+<header class="mast"><div class="wrap"><a class="brand" href="{e(base)}/">The Rallyback</a>
+<p class="tag">Old movies, shows, songs, games and books people are suddenly into again, and why.</p></div></header>
+<main class="wrap">
+{chr(10).join(p for p in parts if p)}
+</main>
+<footer><div class="wrap">Every morning, The Rallyback finds older movies, shows, songs, games and books that people are suddenly into again, and tells you why.
+<a href="{e(base)}/">Today’s comebacks</a> · <a href="{e(base)}/?tab=about">About us</a> · <a href="https://therallyback.beehiiv.com/subscribe" rel="noopener">Weekly newsletter</a></div></footer>
+</body></html>
 """
-    os.makedirs(os.path.join(site, "w"), exist_ok=True)
-    with open(os.path.join(site, "w", f"{doc['qid']}.html"), "w") as f:
-        f.write(page)
+
+
+def pages(site: str, site_url: str, qids: list[str], hist: dict) -> None:
+    """Write every title's page (cheap: plain text from files already on disk), the sitemap and robots.txt."""
+    wdir, pdir = os.path.join(site, "data", "works"), os.path.join(site, "w")
+    os.makedirs(pdir, exist_ok=True)
+    docs = {}
+    for q in qids:
+        d = _load(os.path.join(wdir, f"{q}.json"), None)
+        if d and d.get("episodes"):
+            docs[q] = d
+    books = [q for q, d in docs.items() if d.get("kind") in reading.BOOK_KINDS]
+    free = reading.lookup(site, books, max(hist["days"]) if hist.get("days") else None)
+    for q, d in docs.items():
+        if d.get("kind") in reading.BOOK_KINDS and d.get("read", []) != free.get(q, []):
+            d["read"] = free.get(q, [])
+            _save(os.path.join(wdir, f"{q}.json"), d)
+        page = _page(site_url, d)
+        path = os.path.join(pdir, f"{q}.html")
+        try:
+            with open(path) as f:
+                if f.read() == page:
+                    continue
+        except OSError:
+            pass
+        with open(path, "w") as f:
+            f.write(page)
+    base = site_url.rstrip("/")
+    if base:
+        urls = [f"  <url><loc>{base}/</loc></url>"] + [
+            f"  <url><loc>{base}/w/{q}.html</loc><lastmod>{d.get('updated') or d['episodes'][-1]['last_seen']}</lastmod></url>"
+            for q, d in sorted(docs.items(), key=lambda kv: kv[1].get("updated") or "", reverse=True)]
+        with open(os.path.join(site, "sitemap.xml"), "w") as f:
+            f.write('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+                    + "\n".join(urls) + "\n</urlset>\n")
+        with open(os.path.join(site, "robots.txt"), "w") as f:
+            f.write(f"User-agent: *\nAllow: /\n\nSitemap: {base}/sitemap.xml\n")
+    log(f"      title pages: {len(docs)} ({len(free)} books with a free copy)")
+
+
+HOME_START, HOME_END = "<!-- today:start -->", "<!-- today:end -->"
+
+
+def homepage(site: str, latest: dict, hist: dict) -> None:
+    """Today's top 10 written straight into index.html, so the homepage has real text before the
+    app loads (search engines, link previews, slow connections). The app replaces it on load."""
+    path = os.path.join(site, "index.html")
+    try:
+        with open(path) as f:
+            page = f.read()
+    except OSError:
+        return
+    if HOME_START not in page or HOME_END not in page:
+        return
+    run = (latest.get("meta") or {}).get("window_end")
+    rows = hist["days"].get(run, {}) if run else {}
+    notes = {n["id"]: n.get("note") for n in _load("annotations.json", []) if isinstance(n, dict) and n.get("id")}
+    live = sorted((r for r in latest.get("results", []) if r.get("verdict") not in SET_ASIDE),
+                  key=lambda r: -(r.get("score") or 0))[:60]
+    e = html.escape
+    # One line per story: seven Grand Theft Auto games back for one new release is one story.
+    stories: dict[str, list] = {}
+    for r in live:
+        why = _causes((rows.get(r["qid"]) or {}).get("causes") or [], hist["names"], notes)
+        stories.setdefault(why[0] if why else r["qid"], []).append((r, why))
+    items = []
+    for group in list(stories.values())[:10]:
+        r, why = group[0]
+        more = f" and {len(group) - 1} more title{'s' if len(group) > 2 else ''}" if len(group) > 1 else ""
+        items.append(f'<li><a href="w/{e(r["qid"])}.html">{e(r["label"])} ({e(str(r.get("release_year", "")))})</a>{more}: '
+                     f'{r["lift"]}× its usual interest. {e("Why: " + _sentence(why[0]) if why else "Reason unknown yet.")}</li>')
+    block = (f'{HOME_START}\n    <section class="static-today"><h2>Today’s top comebacks{f", {_day(run)}" if run else ""}</h2>\n'
+             f'    <ol>{"".join(items)}</ol></section>\n    {HOME_END}')
+    new = page[:page.index(HOME_START)] + block + page[page.index(HOME_END) + len(HOME_END):]
+    if new != page:
+        with open(path, "w") as f:
+            f.write(new)
 
 
 def _cause_key(causes: list) -> str | None:

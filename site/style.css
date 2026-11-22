@@ -491,3 +491,8 @@ p, li, .dek, .about .mission { text-wrap: pretty; }
 .newsletter-form iframe { background: transparent; }
 .newsletter-alt { display: inline-block; margin-top: 6px; color: var(--muted); }
 @media (max-width: 600px) { .newsletter { padding: 16px; } }
+
+/* today's top 10, written into the page each night; shown until the app has loaded */
+.static-today { margin: 24px 0; }
+.static-today h2 { font: 800 24px/1.2 var(--serif); margin: 0 0 8px; }
+.static-today ol { padding-left: 22px; } .static-today li { margin: 6px 0; }

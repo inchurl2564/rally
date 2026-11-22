@@ -1735,6 +1735,8 @@ function workView(w) {
           w.on_today && r ? h("button", { type: "button", class: "linkish", onclick: () => { goto("today"); setTimeout(() => focusCard(w.qid), 60); } }, "On today's list →") : null),
         w.franchises.length ? h("p", { class: "small muted" }, "Part of ", w.franchises.map((f) => f.name).join(", "), ".") : null)),
     chart ? h("div", { class: "work-chart" }, chart) : null,
+    (w.read || []).length ? sectionHead("Read it free", "Free ebooks are public domain; Open Library lends copies when one is available.") : null,
+    (w.read || []).length ? h("ul", { class: "plain related" }, w.read.map((x) => h("li", {}, ext(x.url, x.label)))) : null,
     sectionHead("Every comeback", "Each time it came back since we started keeping the record, newest first."),
     table(["Started", "Why", "Peak", "Score", "On our list"], eps.map(epRow), 12, "comebacks"),
     w.coming.length ? sectionHead("Coming up", "What could bring it back next.") : null,
