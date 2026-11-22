@@ -305,7 +305,7 @@ def _page(site_url: str, doc: dict) -> str:
     img = (f"https://commons.wikimedia.org/wiki/Special:FilePath/{urllib.parse.quote(doc['image'])}?width=1200"
            if doc.get("image") else "")
     wiki = f"https://en.wikipedia.org/wiki/{urllib.parse.quote(doc['title'])}" if doc.get("title") else ""
-    canon = f"{base}/w/{q}.html"
+    canon = f"{base}/w/{q}"
     ld = {"@context": "https://schema.org", "@type": "WebPage", "name": title, "url": canon, "description": desc,
           "dateModified": doc.get("updated"), "inLanguage": "en",
           "publisher": {"@type": "Organization", "name": "The Rallyback", "url": base + "/"},
@@ -343,7 +343,7 @@ def _page(site_url: str, doc: dict) -> str:
         parts.append("<h2>Coming up</h2><ul>" + "".join(f"<li>{_day(c['date'])}: {e(c['text'])}</li>" for c in doc["coming"]) + "</ul>")
     if doc.get("related"):
         parts.append("<h2>Related</h2><ul>" + "".join(
-            f'<li><a href="{e(base)}/w/{e(r["qid"])}.html">{e(r["label"])} ({e(r["year"])})</a> <span class="small">· {e(r["why"])}</span></li>'
+            f'<li><a href="{e(base)}/w/{e(r["qid"])}">{e(r["label"])} ({e(r["year"])})</a> <span class="small">· {e(r["why"])}</span></li>'
             for r in doc["related"]) + "</ul>")
     parts.append(f'<a class="btn" href="{e(app)}">Open on The Rallyback</a>'
                  '<p class="small">Follow this title, see today’s other comebacks and tell us what we got wrong.</p>')
@@ -402,7 +402,7 @@ def pages(site: str, site_url: str, qids: list[str], hist: dict) -> None:
     base = site_url.rstrip("/")
     if base:
         urls = [f"  <url><loc>{base}/</loc></url>"] + [
-            f"  <url><loc>{base}/w/{q}.html</loc><lastmod>{d.get('updated') or d['episodes'][-1]['last_seen']}</lastmod></url>"
+            f"  <url><loc>{base}/w/{q}</loc><lastmod>{d.get('updated') or d['episodes'][-1]['last_seen']}</lastmod></url>"
             for q, d in sorted(docs.items(), key=lambda kv: kv[1].get("updated") or "", reverse=True)]
         with open(os.path.join(site, "sitemap.xml"), "w") as f:
             f.write('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
@@ -441,7 +441,7 @@ def homepage(site: str, latest: dict, hist: dict) -> None:
     for group in list(stories.values())[:10]:
         r, why = group[0]
         more = f" and {len(group) - 1} more title{'s' if len(group) > 2 else ''}" if len(group) > 1 else ""
-        items.append(f'<li><a href="w/{e(r["qid"])}.html">{e(r["label"])} ({e(str(r.get("release_year", "")))})</a>{more}: '
+        items.append(f'<li><a href="w/{e(r["qid"])}">{e(r["label"])} ({e(str(r.get("release_year", "")))})</a>{more}: '
                      f'{r["lift"]}× its usual interest. {e("Why: " + _sentence(why[0]) if why else "Reason unknown yet.")}</li>')
     block = (f'{HOME_START}\n    <section class="static-today"><h2>Today’s top comebacks{f", {_day(run)}" if run else ""}</h2>\n'
              f'    <ol>{"".join(items)}</ol></section>\n    {HOME_END}')

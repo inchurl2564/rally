@@ -69,7 +69,7 @@ def _entries_for_run(site: str, data: dict, prev: dict | None, site_url: str, la
         out.append({"id": f"work-{r['qid']}-{r['spike_start']}", "kind_of": "work", "verdict": r["verdict"],
                     "medium": r["kind"], "date": run,
                     "title": f"{r['label']} ({r['release_year']}) is back: {r['lift']}× its usual interest",
-                    "summary": summary, "link": f"{site_url}w/{r['qid']}.html"})
+                    "summary": summary, "link": f"{site_url}w/{r['qid']}"})
     for t in data.get("shared_triggers", []):
         if t["qid"] in prev_events:
             continue
@@ -113,9 +113,11 @@ def _entries_for_run(site: str, data: dict, prev: dict | None, site_url: str, la
 
 
 def _link(e: dict, site_url: str) -> str:
-    """Older entries pointed at a spot on that day's page; a title's own page is a better home."""
+    """A title's own page is the best home for an entry (served without ".html" on Cloudflare)."""
+    if e.get("link", "").endswith(".html") and "/w/" in e["link"]:
+        return e["link"][:-5]
     if e.get("kind_of") == "work" and "#w-" in e.get("link", ""):
-        return f"{site_url}w/{e['link'].rsplit('#w-', 1)[1]}.html"
+        return f"{site_url}w/{e['link'].rsplit('#w-', 1)[1]}"
     return e["link"]
 
 

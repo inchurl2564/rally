@@ -1721,7 +1721,7 @@ function workView(w) {
     h("td", { class: "num" }, scoreDot(e.score)),
     h("td", { class: "num nowrap" }, `${e.days} day${e.days === 1 ? "" : "s"}`));
   const comeRow = (c) => h("tr", {}, h("td", { class: "nowrap" }, fmtDate(c.date)), h("td", {}, c.text), outlookCell(c.prediction));
-  const shareUrl = new URL(`w/${w.qid}.html`, location.href.split("?")[0]).href;
+  const shareUrl = new URL(`w/${w.qid}`, location.href.split("?")[0]).href;
   return [
     h("div", { class: "work-head" },
       w.image ? pic(null, w.image, w.label, 480, w.image_of) : null,
