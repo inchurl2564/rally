@@ -391,13 +391,23 @@ const fail = (msg) => setStatus(msg, true);
 const CONTACT = ["hello", "therallyback.com"].join("@");
 const contactLink = () => h("a", { href: "mailto:" + CONTACT }, CONTACT);
 
+// The weekly newsletter (Beehiiv, free plan). Sign-ups happen on Beehiiv's own page.
+const NEWSLETTER = "https://therallyback.beehiiv.com/subscribe";
+function newsletterBox() {
+  return h("aside", { class: "newsletter" },
+    h("div", {}, h("h3", {}, "Comebacks in your inbox, every Friday"),
+      h("p", {}, "The week's 5 biggest comebacks, the best unsolved mystery and what's coming next. Free, and one email a week.")),
+    h("a", { class: "btn", href: NEWSLETTER, target: "_blank", rel: "noopener" }, "Subscribe free"));
+}
+
 function renderTabs() {
   const tab = (key) => h("button", { type: "button", class: "tab", "aria-current": key === state.view ? "page" : null, onclick: () => goto(key) }, VIEWS[key].label);
   // The main menu is for everyone; the professional views are linked from the footer.
   $("tabs").replaceChildren(...Object.keys(VIEWS).filter((k) => !VIEWS[k].pro && !VIEWS[k].hidden).map(tab));
   updateFollowLink();
   const contact = $("contact");
-  if (contact && !contact.firstChild) contact.replaceChildren("Contact: ", contactLink());
+  if (contact && !contact.firstChild) contact.replaceChildren("Contact: ", contactLink(), " · Weekly newsletter: ",
+    h("a", { href: NEWSLETTER, target: "_blank", rel: "noopener" }, "subscribe free"));
   const foot = $("pro-links");
   if (foot) foot.replaceChildren("For professionals: ", ...Object.keys(VIEWS).filter((k) => VIEWS[k].pro).flatMap((k, i) => [
     i ? " · " : "", h("a", { href: `?tab=${k}`, onclick: (e) => { e.preventDefault(); goto(k); } }, VIEWS[k].label)]));
@@ -810,6 +820,7 @@ function todayPage() {
     if (soonReleases(cu).length) out.push(h("h3", { class: "rail-head" }, "New releases on the way"), h("div", { class: "rail" }, pictured(soonReleases(cu)).slice(0, 10).map(derivMini)));
     if (soonBirthdays(cu).length) out.push(h("h3", { class: "rail-head" }, "Big anniversaries"), h("div", { class: "rail" }, bigAnniversaries(soonBirthdays(cu), 10).map(annMini)));
   }
+  out.push(newsletterBox());
   out.push(sectionHead(`All comebacks (${state.data.results.length})`, "Search, filter by reason, and dig into the numbers."));
   out.push(listSection());
   return out.filter(Boolean);
@@ -1600,6 +1611,7 @@ function aboutPage() {
       h("h3", {}, "Contact us"),
       h("p", { class: "mission" }, "Questions, ideas, press or partnerships: send us a note below or write to ", contactLink(), ". For a tip or a correction about a story, the links on the story itself are fastest."),
       TIPS_FORM.action ? contactForm() : null),
+    newsletterBox(),
     sectionHead("Embed the chart", "Put today's top comebacks on your own site. It updates itself every morning."),
     embedBox(base),
     sectionHead("Feeds", "Get new comebacks every morning. Copy a link into any feed reader: Feedly, Inoreader, NetNewsWire, Outlook, Slack and others."),
@@ -1801,6 +1813,7 @@ function weekPage() {
       h("p", { class: "contents" }, h("b", {}, fmt(W.comebacks)), " comebacks so far this week · ", pickWeek),
       sectionHead("The 5 biggest", "One per story, by Rallyback Score."),
       h("ol", { class: "ranked" }, W.top.map(rank)),
+      newsletterBox(),
       W.mystery ? sectionHead("Best mystery", "The biggest comeback we still can't explain. Know why?") : null,
       W.mystery ? h("div", { class: "mystery" }, h("b", {}, titleLink(W.mystery.qid, `${plain(W.mystery.label)} (${W.mystery.year})`)),
         ` · ${fmtX(W.mystery.lift)} its usual interest since ${fmtDate(W.mystery.start)}. `,
