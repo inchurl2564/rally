@@ -70,12 +70,10 @@ The daily email digest (a GitHub issue each run) is paused. To turn it back on, 
 
 ## Reader tips
 
-Each mystery has a **Know why? Tell us** link that opens a short form (what's bringing it back, an optional link, an optional email). It posts to a form service you own. Set `TIPS_FORM` at the top of `site/app.js`:
-
-- **Google Forms** (free; replies go to a Google Sheet and can email you): make a form with four short-answer/paragraph questions (*Work*, *Why*, *Link*, *Email*), then use **⋮ → Get pre-filled link** to find each question's `entry.NNN` name. `action` is `https://docs.google.com/forms/d/e/<form id>/formResponse`.
-- **Formspree or similar:** `action` is your endpoint; field names can be anything.
-
-Until `action` is set, the link opens a pre-filled GitHub issue instead.
+"Know why? Tell us" opens a short form on the page that sends the tip to the Google Form
+"The Rallyback: reader tips" (set in `TIPS_FORM` in `site/app.js`). Tips arrive in that form's
+Responses tab (turn on email notifications there); readers never need a GitHub account. The title,
+year, edition and what the site said are filled in automatically.
 
 When a tip checks out, add an editor's note to `annotations.json` with a `source` link and `"via": "reader tip"`.
 The next nightly run moves the title out of Unexplained, and the **Case closed** strip on the Unexplained page

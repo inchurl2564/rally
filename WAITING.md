@@ -9,7 +9,6 @@ Updated as items move. Last updated: 2026-11-21 (site moved to therallyback.com;
 | --- | --- | --- |
 | "Where to watch / listen / read / play" links (affiliate) | Joining Apple, Amazon, Bookshop.org and a game-store affiliate program | Buttons on every title and story card, plus the disclosure line |
 | Newsletter sign-up and the weekly issue | Picking a newsletter service (Beehiiv suggested, free to 2,500 subscribers) | Sign-up boxes on the site; the This week page becomes the Friday issue |
-| Reader tips going to a form instead of GitHub | A Google Form (or Formspree) link | Set `TIPS_FORM` in `site/app.js`; tips stop opening GitHub issues |
 | A contact address on About us | Choosing an address you're happy to publish | Add it to About us and the footer |
 | Email digest | Turning it back on (paused by choice: feeds only) | Add the `EMAIL_DIGEST = true` repository variable |
 | Leftover GitHub branches (`simplify`, `preview-template`, `predictions`) | Deleting them on GitHub (it won't let me) | Repo → Branches → delete |

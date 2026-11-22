@@ -42,8 +42,9 @@ const REPO = (() => {
 //   Formspree or similar: action = the endpoint URL, fields = any names you like.
 // While `action` is empty, tips fall back to a GitHub issue.
 const TIPS_FORM = {
-  action: "",
-  fields: { work: "", why: "", link: "", email: "" },
+  // "The Rallyback: reader tips" Google Form. Tips land in its Responses tab, not on GitHub.
+  action: "https://docs.google.com/forms/d/e/1FAIpQLSehhvp1CIt7-yHlXQnbXQsH8uWOLBOq69jgRHVQHKd5xb2Tqg/formResponse",
+  fields: { work: "entry.1483552552", why: "entry.35323025", link: "entry.1249623889", email: "entry.134841440" },
 };
 
 const FILTERED = new Set(["seasonal", "automated?", "front page"]);
@@ -1249,7 +1250,8 @@ function openTip(r) {
     h("p", { class: "small muted" }, `The ${r.release_year} ${noun(r.kind)} is drawing ${mult(r)} its usual interest and we can't find the reason.`),
     h("label", {}, h("span", {}, "What's bringing it back?"), why),
     h("label", {}, h("span", {}, "A link, if you have one ", h("i", { class: "muted" }, "(optional)")), link),
-    h("label", {}, h("span", {}, "Your email, if we may follow up ", h("i", { class: "muted" }, "(optional)")), email),
+    h("label", {}, h("span", {}, "Your email, if we may follow up ", h("i", { class: "muted" }, "(optional)")), email,
+      h("small", { class: "muted" }, "We'll only use it to follow up on this tip.")),
     h("div", { class: "form-actions" }, send,
       h("button", { type: "button", class: "btn ghost", onclick: () => dlg.close() }, "Cancel")),
     status);
