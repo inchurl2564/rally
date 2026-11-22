@@ -930,6 +930,31 @@ def link_ok(url: str) -> bool:
     return ok
 
 
+def article_ok(url: str | None, start: dt.date | str | None, check: bool = True) -> bool:
+    """An outside article fit to show readers: dated (in its address) from 120 days before this
+    comeback started to today, and still loading as itself."""
+    if not url or "wikipedia.org" in url:
+        return bool(url)                              # Wikipedia's own pages are always fine
+    if isinstance(start, str):
+        start = dt.date.fromisoformat(start[:10])
+    published = url_date(url)
+    lo = (start or dt.date.today()) - dt.timedelta(days=120)
+    if published is None or not (lo <= published <= dt.date.today() + dt.timedelta(days=1)):
+        return False
+    return not check or link_ok(url)
+
+
+def clean_evidence(evidence: list[dict] | None, start, check: bool = True) -> list[dict]:
+    """Sources as shown on a story: what was found stays, but a link to an old, undated or
+    broken article is removed (the line shows as plain text)."""
+    out = []
+    for e in evidence or []:
+        if e.get("url") and not article_ok(e["url"], start, check):
+            e = {k: v for k, v in e.items() if k != "url"}
+        out.append(e)
+    return out
+
+
 def cause_link(cause: str | None, evidence: list[dict] | None, start: dt.date | str | None = None,
                check: bool = True) -> dict | None:
     """The article behind a likely cause: an outside article whose text matches that cause
@@ -972,6 +997,7 @@ def write_site_data(site: str, results, meta, clusters, threads, keep_runs: int,
             "edit_burst", "corroborated", "image", "image_of", "ripple", "editor_note", "front_page", "signals",
             "rally_score", "global", "chatter")}
         out["cause_link"] = cause_link(r.get("cause"), r.get("evidence"), r.get("spike_start"))
+        out["evidence"] = clean_evidence(r.get("evidence"), r.get("spike_start"))
         out.update(release=r["release"].isoformat(), release_year=r["release"].year,
                    spike_start=r["spike_start"].isoformat(), peak_day=r["peak_day"].isoformat(),
                    spark_start=(r["spark_start"] + dt.timedelta(days=len(r["spark"]) - 365)).isoformat(),
@@ -1022,7 +1048,7 @@ def write_site_data(site: str, results, meta, clusters, threads, keep_runs: int,
                              "qid": g["trigger"]["qid"], "text": g["trigger"]["text"],
                              "works": [w["qid"] for w in g["works"]]} for g in clusters],
         "common_threads": [{"qid": t["qid"], "name": t["name"], "around": t["around"].isoformat(),
-                            "title": t.get("title"), "cause": t.get("cause"), "evidence": t.get("evidence", []),
+                            "title": t.get("title"), "cause": t.get("cause"), "evidence": clean_evidence(t.get("evidence"), t.get("around")),
                             "cause_link": cause_link(t.get("cause"), t.get("evidence"), t.get("around")),
                             "image": images.get(t["qid"]), "person_jump": t.get("person_jump"),
                             "editor_note": t.get("editor_note"),
