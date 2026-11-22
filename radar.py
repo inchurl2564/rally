@@ -870,20 +870,95 @@ def solved_cases(rdir: str, data: dict, run_id: str, days: int = 7) -> list[dict
     return out
 
 
-def cause_link(cause: str | None, evidence: list[dict] | None) -> dict | None:
-    """The article behind a likely cause: the newest evidence item with a link whose text
-    matches that cause (e.g. a 4K restoration announcement for "re-release")."""
+_MONTHS = {m: i for i, m in enumerate(["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"], 1)}
+
+
+def url_date(url: str) -> dt.date | None:
+    """The publication date most news sites put in an article's address:
+    /2026/10/31/, /2026/oct/31/, /2026-10-31, _20261119_, /2026/10/ (taken as the 1st)."""
+    import re
+    path = urllib.parse.urlparse(url).path.lower()
+    pats = [(r"(?<!\d)(20\d\d|19\d\d)[/-](\d{1,2})[/-](\d{1,2})(?!\d)", lambda m: (m[1], m[2], m[3])),
+            (r"(?<!\d)(20\d\d|19\d\d)/([a-z]{3})/(\d{1,2})(?!\d)", lambda m: (m[1], _MONTHS.get(m[2]), m[3])),
+            (r"(?<!\d)(20\d\d|19\d\d)(\d\d)(\d\d)(?!\d)", lambda m: (m[1], m[2], m[3])),
+            (r"(?<!\d)(20\d\d|19\d\d)/(\d{1,2})/", lambda m: (m[1], m[2], 1))]
+    for rx, parts in pats:
+        for m in re.finditer(rx, path):
+            y, mo, d = parts(m)
+            try:
+                return dt.date(int(y), int(mo), int(d))
+            except (TypeError, ValueError):
+                continue
+    return None
+
+
+LINK_CHECKS = os.path.join(CACHE, "link_checks.json")
+_link_cache: dict | None = None
+
+
+def link_ok(url: str) -> bool:
+    """Does the article still load, as itself (not an error, not a bounce to the homepage)?
+    Remembered for 30 days. A site that blocks automated checks (401/403/405/429) gets the
+    benefit of the doubt, since the address and date already matched."""
+    global _link_cache
+    if _link_cache is None:
+        try:
+            with open(LINK_CHECKS) as f:
+                _link_cache = json.load(f)
+        except (OSError, json.JSONDecodeError):
+            _link_cache = {}
+    hit = _link_cache.get(url)
+    if hit and time.time() - hit[1] < 30 * 86400:
+        return hit[0]
+    ok = True
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (compatible; Rallyback link check)"})
+        with urllib.request.urlopen(req, timeout=10) as r:
+            final = urllib.parse.urlparse(r.geturl())
+            ok = final.path.strip("/") != "" or urllib.parse.urlparse(url).path.strip("/") == ""
+    except urllib.error.HTTPError as e:
+        ok = e.code in (401, 403, 405, 429)
+    except Exception:
+        ok = False
+    _link_cache[url] = [ok, time.time()]
+    try:
+        os.makedirs(CACHE, exist_ok=True)
+        with open(LINK_CHECKS, "w") as f:
+            json.dump(_link_cache, f)
+    except OSError:
+        pass
+    return ok
+
+
+def cause_link(cause: str | None, evidence: list[dict] | None, start: dt.date | str | None = None,
+               check: bool = True) -> dict | None:
+    """The article behind a likely cause: an outside article whose text matches that cause
+    (e.g. a 4K restoration announcement for "re-release"), published around this comeback.
+
+    Wikipedia pages cite articles of any age, so a citation added this month can be a 2008
+    story; only an article dated (in its address) from 120 days before the comeback started
+    to today counts, and only if it still loads. No such article: no link, the reason stands
+    as plain text."""
     if not cause or not evidence:
         return None
     import explain
     rx = dict(explain._CAUSE_RE).get(cause)
-    # Outside articles only: a Wikipedia edit isn't something to send readers to from a story.
-    hits = [e for e in evidence if e.get("url") and "wikipedia.org" not in e["url"]
-            and (rx is None or rx.search(e.get("text", "")))]
-    if not hits:
-        return None
-    e = max(hits, key=lambda e: e.get("date") or "")
-    return {"url": e["url"], "date": e.get("date")}
+    if isinstance(start, str):
+        start = dt.date.fromisoformat(start[:10])
+    lo = (start or dt.date.today()) - dt.timedelta(days=120)
+    hits = []
+    for e in evidence:
+        url = e.get("url")
+        if not url or "wikipedia.org" in url or (rx is not None and not rx.search(e.get("text", ""))):
+            continue
+        published = url_date(url)
+        if published is None or not (lo <= published <= dt.date.today() + dt.timedelta(days=1)):
+            continue
+        hits.append((published, url))
+    for published, url in sorted(hits, reverse=True):
+        if not check or link_ok(url):
+            return {"url": url, "date": published.isoformat()}
+    return None
 
 
 def write_site_data(site: str, results, meta, clusters, threads, keep_runs: int,
@@ -896,7 +971,7 @@ def write_site_data(site: str, results, meta, clusters, threads, keep_runs: int,
             "days_in_top", "best_rank", "lift3", "stage", "early", "early_ratio", "cause", "evidence",
             "edit_burst", "corroborated", "image", "image_of", "ripple", "editor_note", "front_page", "signals",
             "rally_score", "global", "chatter")}
-        out["cause_link"] = cause_link(r.get("cause"), r.get("evidence"))
+        out["cause_link"] = cause_link(r.get("cause"), r.get("evidence"), r.get("spike_start"))
         out.update(release=r["release"].isoformat(), release_year=r["release"].year,
                    spike_start=r["spike_start"].isoformat(), peak_day=r["peak_day"].isoformat(),
                    spark_start=(r["spark_start"] + dt.timedelta(days=len(r["spark"]) - 365)).isoformat(),
@@ -948,7 +1023,7 @@ def write_site_data(site: str, results, meta, clusters, threads, keep_runs: int,
                              "works": [w["qid"] for w in g["works"]]} for g in clusters],
         "common_threads": [{"qid": t["qid"], "name": t["name"], "around": t["around"].isoformat(),
                             "title": t.get("title"), "cause": t.get("cause"), "evidence": t.get("evidence", []),
-                            "cause_link": cause_link(t.get("cause"), t.get("evidence")),
+                            "cause_link": cause_link(t.get("cause"), t.get("evidence"), t.get("around")),
                             "image": images.get(t["qid"]), "person_jump": t.get("person_jump"),
                             "editor_note": t.get("editor_note"),
                             "edit_burst": t.get("edit_burst"),
