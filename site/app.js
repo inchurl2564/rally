@@ -372,6 +372,7 @@ async function loadRun(id) {
   applyPreset();
   render();
   syncURL();
+  if (state.view !== "work") setTitle();
   if (location.hash.startsWith("#w-")) setTimeout(() => focusCard(location.hash.slice(3)), 50);
 }
 
@@ -423,9 +424,15 @@ function renderTabs() {
     i ? " · " : "", h("a", { href: `?tab=${k}`, onclick: (e) => { e.preventDefault(); goto(k); } }, VIEWS[k].label)]));
 }
 
+// The browser tab names the page you're on.
+const SITE_TITLE = "The Rallyback: why old movies, shows, songs, games and books are trending again";
+function setTitle() {
+  const v = VIEWS[state.view];
+  document.title = !v || state.view === "today" ? SITE_TITLE : `${v.label || "Title"} · The Rallyback`;
+}
 function goto(view) {
   state.view = view;
-  applyPreset(); renderTabs(); render(); syncURL(); window.scrollTo({ top: 0 });
+  applyPreset(); renderTabs(); render(); syncURL(); setTitle(); window.scrollTo({ top: 0 });
 }
 
 function applyPreset() {
@@ -1708,6 +1715,7 @@ function workPage() {
   return [box];
 }
 function workView(w) {
+  document.title = `${plain(w.label)} (${w.year}) · The Rallyback`;
   const eps = [...w.episodes].reverse();
   const last = eps[0], r = state.byQid[w.qid];
   const times = w.episodes.length === 1 ? "once" : `${w.episodes.length} times`;

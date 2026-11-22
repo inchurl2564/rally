@@ -282,6 +282,14 @@ footer{margin-top:48px;padding:20px 0 40px;border-top:3px solid var(--ink);backg
 """
 
 
+def thin(doc: dict) -> bool:
+    """Too little to say yet for a search result: one short comeback (2 days or less on our list)
+    with no known reason. Kept out of Google until it has more; still on the site and shareable."""
+    eps = doc.get("episodes") or []
+    return (len(eps) == 1 and sum(x["days"] for x in eps) <= 2
+            and (not eps[-1]["causes"] or eps[-1]["verdict"] in UNEXPLAINED))
+
+
 def _page(site_url: str, doc: dict) -> str:
     e = html.escape
     base = site_url.rstrip("/")
@@ -294,16 +302,17 @@ def _page(site_url: str, doc: dict) -> str:
     app = f"{base}/?work={q}"
     if doc.get("on_today"):
         lead = f"{label}, the {year} {noun}, is back: {last['peak_lift']}× its usual interest since {_day(last['start'])}."
-        title = f"Why is {label} ({year}) back? | The Rallyback"
+        title = f"Why is {label} ({year}) trending again? | The Rallyback"
     else:
         lead = f"{label}, the {year} {noun}, last came back on {_day(last['start'])}, reaching {last['peak_lift']}× its usual interest."
-        title = f"{label} ({year}): its comebacks and why | The Rallyback"
+        title = f"Why {label} ({year}) was trending again | The Rallyback"
     if len(eps) > 1:
         lead += f" It has come back {_times(len(eps))} since we started tracking in November 2026."
     desc = lead + (f" Why: {_sentence(why[0])}" if why and last["verdict"] not in UNEXPLAINED else " The reason isn't known yet.")
     conf = CONFIDENCE.get(last["verdict"])
     img = (f"https://commons.wikimedia.org/wiki/Special:FilePath/{urllib.parse.quote(doc['image'])}?width=1200"
            if doc.get("image") else "")
+    share_img = img or f"{base}/og.png"            # the branded card when there's no picture
     wiki = f"https://en.wikipedia.org/wiki/{urllib.parse.quote(doc['title'])}" if doc.get("title") else ""
     canon = f"{base}/w/{q}"
     ld = {"@context": "https://schema.org", "@type": "WebPage", "name": title, "url": canon, "description": desc,
@@ -357,7 +366,8 @@ def _page(site_url: str, doc: dict) -> str:
 <link rel="canonical" href="{e(canon)}">
 <meta property="og:type" content="article"><meta property="og:site_name" content="The Rallyback"><meta property="og:url" content="{e(canon)}">
 <meta property="og:title" content="{e(title.replace(" | The Rallyback", ""))}"><meta property="og:description" content="{e(desc)}">
-{f'<meta property="og:image" content="{e(img)}"><meta name="twitter:card" content="summary_large_image">' if img else '<meta name="twitter:card" content="summary">'}
+<meta property="og:image" content="{e(share_img)}"><meta name="twitter:card" content="summary_large_image">
+{'<meta name="robots" content="noindex, follow">' if thin(doc) else ''}
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;700;800&family=Playfair+Display:wght@800;900&display=swap">
 <style>{PAGE_CSS}</style>
@@ -403,13 +413,14 @@ def pages(site: str, site_url: str, qids: list[str], hist: dict) -> None:
     if base:
         urls = [f"  <url><loc>{base}/</loc></url>"] + [
             f"  <url><loc>{base}/w/{q}</loc><lastmod>{d.get('updated') or d['episodes'][-1]['last_seen']}</lastmod></url>"
-            for q, d in sorted(docs.items(), key=lambda kv: kv[1].get("updated") or "", reverse=True)]
+            for q, d in sorted(docs.items(), key=lambda kv: kv[1].get("updated") or "", reverse=True) if not thin(d)]
         with open(os.path.join(site, "sitemap.xml"), "w") as f:
             f.write('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
                     + "\n".join(urls) + "\n</urlset>\n")
         with open(os.path.join(site, "robots.txt"), "w") as f:
             f.write(f"User-agent: *\nAllow: /\n\nSitemap: {base}/sitemap.xml\n")
-    log(f"      title pages: {len(docs)} ({len(free)} books with a free copy)")
+    log(f"      title pages: {len(docs)} ({sum(1 for d in docs.values() if thin(d))} kept out of search for now; "
+        f"{len(free)} books with a free copy)")
 
 
 HOME_START, HOME_END = "<!-- today:start -->", "<!-- today:end -->"
