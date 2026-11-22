@@ -397,7 +397,9 @@ function newsletterBox() {
   return h("aside", { class: "newsletter" },
     h("div", {}, h("h3", {}, "Comebacks in your inbox, every Friday"),
       h("p", {}, "The week's 5 biggest comebacks, the best unsolved mystery and what's coming next. Free, and one email a week.")),
-    newsletterForm());
+    newsletterForm(),
+    // On phones Beehiiv's form is too cramped, so phones get a plain button to the sign-up page instead.
+    h("a", { class: "btn newsletter-btn", href: NEWSLETTER, target: "_blank", rel: "noopener" }, "Subscribe free"));
 }
 // Beehiiv's embedded form: its loader script puts an iframe right after itself.
 const NEWSLETTER_FORM = "2bf7c4db-3cb3-4be0-8b2f-9a189b360e3a";

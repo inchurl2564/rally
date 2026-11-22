@@ -490,4 +490,5 @@ p, li, .dek, .about .mission { text-wrap: pretty; }
 .newsletter-form { width: 100%; max-width: 560px; }
 .newsletter-form iframe { background: transparent; }
 .newsletter-alt { display: inline-block; margin-top: 6px; color: var(--muted); }
-@media (max-width: 600px) { .newsletter { padding: 16px; } }
+.newsletter-btn { display: none; text-decoration: none; text-align: center; align-self: flex-start; }
+@media (max-width: 600px) { .newsletter { padding: 16px; } .newsletter-form { display: none; } .newsletter-btn { display: block; align-self: stretch; } }
