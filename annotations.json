@@ -1,218 +1,218 @@
 [
- {
-  "id": "wildwood-film-2026",
-  "status": "published",
-  "note": "Wildwood is now a stop-motion film, adapted and directed by Travis Knight.",
-  "works": [
-   "Wildwood: The Wildwood Chronicles",
-   "Wildwood",
-   "Kubo and the Two Strings"
-  ],
-  "entity_name": "Wildwood",
-  "from": "2026-08-01",
-  "to": "2026-11-15",
-  "keywords": [
-   "film",
-   "adaptation",
-   "stop-motion"
-  ],
-  "source": "https://www.npr.org/2026/11/01/nx-s1-5726764/travis-knight-discusses-his-stop-motion-adaptation-of-the-childrens-book-wildwood",
-  "source_kind": "NPR (supplied by an editor)",
-  "cause": "release",
-  "headline": "{n} titles are back with Travis Knight's Wildwood film"
- },
- {
-  "id": "russell-brand-verdict-2026",
-  "status": "published",
-  "note": "On Nov. 5, Russell Brand was convicted of one count of rape and three counts of sexual assault.",
-  "works": [
-   "Arthur",
-   "Get Him to the Greek",
-   "Forgetting Sarah Marshall"
-  ],
-  "entity_name": "Russell Brand",
-  "entity_title": "Russell_Brand",
-  "from": "2026-11-03",
-  "to": "2026-11-08",
-  "keywords": [
-   "convicted",
-   "guilty",
-   "verdict"
-  ],
-  "source": "https://news.sky.com/story/russell-brand-guilty-rape-sexual-assault-trial-live-latest-13592674?postid=12780330#liveblog-body",
-  "last_checked": "2026-11-20",
-  "source_text": "On 5 November 2026, Brand was convicted of one count of rape and three counts of sexual assault and remanded in custody. The jury deliberated for nine hours and 13 minutes, and the verdicts were as follows:",
-  "source_kind": "Wikipedia (cited)",
-  "corroborated": "2026-11-20",
-  "cause": "news",
-  "headline": "{n} Russell Brand films are back after his conviction"
- },
- {
-  "id": "pattinson-bond-2026",
-  "status": "published",
-  "note": "Robert Pattinson was announced as the next James Bond.",
-  "works": [
-   "Cosmopolis",
-   "Queen of the Desert"
-  ],
-  "entity_name": "Robert Pattinson",
-  "entity_title": "Robert_Pattinson",
-  "from": "2026-11-14",
-  "to": "2026-11-18",
-  "keywords": [
-   "james bond",
-   "007",
-   " bond"
-  ],
-  "source": "https://variety.com/2026/film/global/robert-pattinson-new-james-bond-007-1236946655/",
-  "last_checked": "2026-11-20",
-  "source_text": "English actor Robert Pattinson is cast as James Bond in the ongoing film series starring the character. (Variety)",
-  "source_kind": "Wikipedia Current events",
-  "corroborated": "2026-11-20",
-  "related": [
-   "James Bond",
-   "Albert R. Broccoli",
-   "Michael G. Wilson",
-   "Desmond Llewelyn",
-   "John Barry",
-   "Daniel Craig",
-   "Sean Connery"
-  ],
-  "cause": "news",
-  "headline": "Robert Pattinson's Bond casting brings back {n} titles"
- },
- {
-  "id": "godzilla-new-film-2026",
-  "status": "published",
-  "note": "Godzilla Minus Zero, the new Godzilla film, opened in Japan on Nov 3, 2026.",
-  "works": [
-   "Shin Godzilla",
-   "Godzilla",
-   "Godzilla: Tokyo S.O.S.",
-   "Godzilla: Final Wars",
-   "Godzilla vs. Megaguirus",
-   "Godzilla Against Mechagodzilla"
-  ],
-  "entity_name": "Godzilla",
-  "entity_title": "Godzilla_(franchise)",
-  "from": "2026-10-30",
-  "to": "2026-11-05",
-  "keywords": [
-   "release",
-   "premiere",
-   "box office",
-   "opened"
-  ],
-  "last_checked": "2026-11-20",
-  "source": "https://variety.com/2024/film/news/godzilla-sequel-new-movie-minus-one-director-1236197482/",
-  "source_text": "On November 1, 2024, Toho announced plans to move forward with a new Godzilla film with Yamazaki returning to direct, write, and handle visual effects. Later revealed as Godzilla Minus Zero, it is to be released on November 3, 2026 in Japan; select theaters in the United States provided early access",
-  "source_kind": "Wikipedia (cited)",
-  "corroborated": "2026-11-20",
-  "cause": "release",
-  "qids": [
-   "Q677987",
-   "Q431660",
-   "Q664983",
-   "Q660666"
-  ],
-  "related": [
-   "Tsutomu Kitagawa"
-  ],
-  "headline": "{n} Godzilla films are back with Godzilla Minus Zero"
- },
- {
-  "id": "cat-in-the-hat-film-2026",
-  "status": "draft",
-  "note": "A new animated film of The Cat in the Hat was released.",
-  "works": [
-   "The Cat in the Hat"
-  ],
-  "entity_name": "The Cat in the Hat",
-  "entity_title": "The_Cat_in_the_Hat",
-  "from": "2026-10-20",
-  "to": "2026-10-28",
-  "keywords": [
-   "film",
-   "animated",
-   "release"
-  ],
-  "source": null,
-  "last_checked": "2026-11-21",
-  "cause": "release"
- },
- {
-  "id": "friday-13th-new-film-2026",
-  "status": "draft",
-  "note": "A new Friday the 13th film was announced.",
-  "works": [
-   "Friday the 13th",
-   "Friday the 13th Part 2"
-  ],
-  "entity_name": "Friday the 13th",
-  "entity_title": "Friday_the_13th_(franchise)",
-  "from": "2026-09-25",
-  "to": "2026-10-05",
-  "keywords": [
-   "announce",
-   "new film",
-   "reboot",
-   "in development"
-  ],
-  "source": null,
-  "last_checked": "2026-11-21",
-  "cause": "release"
- },
- {
-  "id": "i-play-rocky-2026",
-  "status": "published",
-  "note": "I Play Rocky, a new Peter Farrelly film starring Anthony Ippolito, has just come out. Rocky also turns 50 on Nov 21.",
-  "works": [
-   "Rocky"
-  ],
-  "qids": [
-   "Q188652"
-  ],
-  "entity_name": "Rocky",
-  "from": "2026-10-15",
-  "to": "2026-11-30",
-  "keywords": [
-   "I Play Rocky",
-   "Peter Farrelly",
-   "Anthony Ippolito"
-  ],
-  "source": "https://variety.com/2026/film/reviews/i-play-rocky-review-anthony-ippolito-peter-farrelly-1236859563/",
-  "source_kind": "Variety review (supplied by an editor)",
-  "cause": "release"
- },
- {
-  "id": "hunger-games-sunrise-2026",
-  "status": "published",
-  "note": "A new Hunger Games film, The Hunger Games: Sunrise on the Reaping, is sending people back to Suzanne Collins's original novels.",
-  "works": [
-   "The Hunger Games",
-   "Catching Fire",
-   "Mockingjay"
-  ],
-  "qids": [
-   "Q11678",
-   "Q837140",
-   "Q40354"
-  ],
-  "entity_name": "The Hunger Games: Sunrise on the Reaping",
-  "related": [
-   "Suzanne Collins"
-  ],
-  "from": "2026-10-20",
-  "to": "2026-12-31",
-  "keywords": [
-   "Sunrise on the Reaping",
-   "Hunger Games",
-   "Suzanne Collins"
-  ],
-  "source": "https://variety.com/2026/film/reviews/the-hunger-games-sunrise-on-the-reaping-review-1236944341/",
-  "source_kind": "Variety review (supplied by an editor)",
-  "cause": "release",
-  "new_work": "Q126390739",
-  "headline": "The Hunger Games films and novels are back with Sunrise on the Reaping"
- }
+  {
+    "id": "wildwood-film-2026",
+    "status": "published",
+    "note": "Wildwood is now a stop-motion film, adapted and directed by Travis Knight.",
+    "works": [
+      "Wildwood: The Wildwood Chronicles",
+      "Wildwood",
+      "Kubo and the Two Strings"
+    ],
+    "entity_name": "Wildwood",
+    "from": "2026-08-01",
+    "to": "2026-11-15",
+    "keywords": [
+      "film",
+      "adaptation",
+      "stop-motion"
+    ],
+    "source": "https://www.npr.org/2026/11/01/nx-s1-5726764/travis-knight-discusses-his-stop-motion-adaptation-of-the-childrens-book-wildwood",
+    "source_kind": "NPR (supplied by an editor)",
+    "cause": "release",
+    "headline": "{n} titles are back with Travis Knight's Wildwood film"
+  },
+  {
+    "id": "russell-brand-verdict-2026",
+    "status": "published",
+    "note": "On Nov. 5, Russell Brand was convicted of one count of rape and three counts of sexual assault.",
+    "works": [
+      "Arthur",
+      "Get Him to the Greek",
+      "Forgetting Sarah Marshall"
+    ],
+    "entity_name": "Russell Brand",
+    "entity_title": "Russell_Brand",
+    "from": "2026-11-03",
+    "to": "2026-11-08",
+    "keywords": [
+      "convicted",
+      "guilty",
+      "verdict"
+    ],
+    "source": "https://news.sky.com/story/russell-brand-guilty-rape-sexual-assault-trial-live-latest-13592674?postid=12780330#liveblog-body",
+    "last_checked": "2026-11-20",
+    "source_text": "On 5 November 2026, Brand was convicted of one count of rape and three counts of sexual assault and remanded in custody. The jury deliberated for nine hours and 13 minutes, and the verdicts were as follows:",
+    "source_kind": "Wikipedia (cited)",
+    "corroborated": "2026-11-20",
+    "cause": "news",
+    "headline": "{n} Russell Brand films are back after his conviction"
+  },
+  {
+    "id": "pattinson-bond-2026",
+    "status": "published",
+    "note": "Robert Pattinson was announced as the next James Bond.",
+    "works": [
+      "Cosmopolis",
+      "Queen of the Desert"
+    ],
+    "entity_name": "Robert Pattinson",
+    "entity_title": "Robert_Pattinson",
+    "from": "2026-11-14",
+    "to": "2026-11-18",
+    "keywords": [
+      "james bond",
+      "007",
+      " bond"
+    ],
+    "source": "https://variety.com/2026/film/global/robert-pattinson-new-james-bond-007-1236946655/",
+    "last_checked": "2026-11-20",
+    "source_text": "English actor Robert Pattinson is cast as James Bond in the ongoing film series starring the character. (Variety)",
+    "source_kind": "Wikipedia Current events",
+    "corroborated": "2026-11-20",
+    "related": [
+      "James Bond",
+      "Albert R. Broccoli",
+      "Michael G. Wilson",
+      "Desmond Llewelyn",
+      "John Barry",
+      "Daniel Craig",
+      "Sean Connery"
+    ],
+    "cause": "news",
+    "headline": "Robert Pattinson's Bond casting brings back {n} titles"
+  },
+  {
+    "id": "godzilla-new-film-2026",
+    "status": "published",
+    "note": "Godzilla Minus Zero, the new Godzilla film, opened in Japan on Nov 3, 2026.",
+    "works": [
+      "Shin Godzilla",
+      "Godzilla",
+      "Godzilla: Tokyo S.O.S.",
+      "Godzilla: Final Wars",
+      "Godzilla vs. Megaguirus",
+      "Godzilla Against Mechagodzilla"
+    ],
+    "entity_name": "Godzilla",
+    "entity_title": "Godzilla_(franchise)",
+    "from": "2026-10-30",
+    "to": "2026-11-05",
+    "keywords": [
+      "release",
+      "premiere",
+      "box office",
+      "opened"
+    ],
+    "last_checked": "2026-11-20",
+    "source": "https://variety.com/2024/film/news/godzilla-sequel-new-movie-minus-one-director-1236197482/",
+    "source_text": "On November 1, 2024, Toho announced plans to move forward with a new Godzilla film with Yamazaki returning to direct, write, and handle visual effects. Later revealed as Godzilla Minus Zero, it is to be released on November 3, 2026 in Japan; select theaters in the United States provided early access",
+    "source_kind": "Wikipedia (cited)",
+    "corroborated": "2026-11-20",
+    "cause": "release",
+    "qids": [
+      "Q677987",
+      "Q431660",
+      "Q664983",
+      "Q660666"
+    ],
+    "related": [
+      "Tsutomu Kitagawa"
+    ],
+    "headline": "{n} Godzilla films are back with Godzilla Minus Zero"
+  },
+  {
+    "id": "cat-in-the-hat-film-2026",
+    "status": "draft",
+    "note": "A new animated film of The Cat in the Hat was released.",
+    "works": [
+      "The Cat in the Hat"
+    ],
+    "entity_name": "The Cat in the Hat",
+    "entity_title": "The_Cat_in_the_Hat",
+    "from": "2026-10-20",
+    "to": "2026-10-28",
+    "keywords": [
+      "film",
+      "animated",
+      "release"
+    ],
+    "source": null,
+    "last_checked": "2026-11-22",
+    "cause": "release"
+  },
+  {
+    "id": "friday-13th-new-film-2026",
+    "status": "draft",
+    "note": "A new Friday the 13th film was announced.",
+    "works": [
+      "Friday the 13th",
+      "Friday the 13th Part 2"
+    ],
+    "entity_name": "Friday the 13th",
+    "entity_title": "Friday_the_13th_(franchise)",
+    "from": "2026-09-25",
+    "to": "2026-10-05",
+    "keywords": [
+      "announce",
+      "new film",
+      "reboot",
+      "in development"
+    ],
+    "source": null,
+    "last_checked": "2026-11-22",
+    "cause": "release"
+  },
+  {
+    "id": "i-play-rocky-2026",
+    "status": "published",
+    "note": "I Play Rocky, a new Peter Farrelly film starring Anthony Ippolito, has just come out. Rocky also turns 50 on Nov 21.",
+    "works": [
+      "Rocky"
+    ],
+    "qids": [
+      "Q188652"
+    ],
+    "entity_name": "Rocky",
+    "from": "2026-10-15",
+    "to": "2026-11-30",
+    "keywords": [
+      "I Play Rocky",
+      "Peter Farrelly",
+      "Anthony Ippolito"
+    ],
+    "source": "https://variety.com/2026/film/reviews/i-play-rocky-review-anthony-ippolito-peter-farrelly-1236859563/",
+    "source_kind": "Variety review (supplied by an editor)",
+    "cause": "release"
+  },
+  {
+    "id": "hunger-games-sunrise-2026",
+    "status": "published",
+    "note": "A new Hunger Games film, The Hunger Games: Sunrise on the Reaping, is sending people back to Suzanne Collins's original novels.",
+    "works": [
+      "The Hunger Games",
+      "Catching Fire",
+      "Mockingjay"
+    ],
+    "qids": [
+      "Q11678",
+      "Q837140",
+      "Q40354"
+    ],
+    "entity_name": "The Hunger Games: Sunrise on the Reaping",
+    "related": [
+      "Suzanne Collins"
+    ],
+    "from": "2026-10-20",
+    "to": "2026-12-31",
+    "keywords": [
+      "Sunrise on the Reaping",
+      "Hunger Games",
+      "Suzanne Collins"
+    ],
+    "source": "https://variety.com/2026/film/reviews/the-hunger-games-sunrise-on-the-reaping-review-1236944341/",
+    "source_kind": "Variety review (supplied by an editor)",
+    "cause": "release",
+    "new_work": "Q126390739",
+    "headline": "The Hunger Games films and novels are back with Sunrise on the Reaping"
+  }
 ]
