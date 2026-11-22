@@ -1,7 +1,7 @@
 # Waiting list
 
 Things we've decided to do (or want to) that are on hold, grouped by what they're waiting for.
-Updated as items move. Last updated: 2026-11-21 (site moved to therallyback.com; Warming up live).
+Updated as items move. Last updated: 2026-11-22 (hello@therallyback.com live on About us and in the footer).
 
 ## Waiting on a decision or an account from you
 
@@ -9,7 +9,6 @@ Updated as items move. Last updated: 2026-11-21 (site moved to therallyback.com;
 | --- | --- | --- |
 | "Where to watch / listen / read / play" links (affiliate) | Joining Apple, Amazon, Bookshop.org and a game-store affiliate program | Buttons on every title and story card, plus the disclosure line |
 | Newsletter sign-up and the weekly issue | Picking a newsletter service (Beehiiv suggested, free to 2,500 subscribers) | Sign-up boxes on the site; the This week page becomes the Friday issue |
-| A contact address on About us | Choosing an address you're happy to publish | Add it to About us and the footer |
 | Email digest | Turning it back on (paused by choice: feeds only) | Add the `EMAIL_DIGEST = true` repository variable |
 | Leftover GitHub branches (`simplify`, `preview-template`, `predictions`) | Deleting them on GitHub (it won't let me) | Repo → Branches → delete |
 
@@ -53,3 +52,5 @@ including the nightly edition, publishes within a few minutes). Feeds, share lin
 the new domain. The old address, inchurl2564.github.io/rally/, forwards every page to the same page on
 therallyback.com and still serves the feeds, so existing subscriptions keep working.
 www.therallyback.com forwards to therallyback.com (Cloudflare redirect rule "www to therallyback.com").
+hello@therallyback.com forwards to the owner's inbox (Cloudflare Email Routing, one routing rule). It only receives;
+replies come from the personal inbox unless Gmail's "Send mail as" is set up.

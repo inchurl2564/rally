@@ -387,11 +387,17 @@ function syncURL() {
 function setStatus(msg, error) { $("view").replaceChildren(h("p", { class: `status${error ? " error" : ""}`, role: "status" }, msg)); }
 const fail = (msg) => setStatus(msg, true);
 
+// Contact address, put together in the browser so simple spam bots reading the page source don't find it.
+const CONTACT = ["hello", "therallyback.com"].join("@");
+const contactLink = () => h("a", { href: "mailto:" + CONTACT }, CONTACT);
+
 function renderTabs() {
   const tab = (key) => h("button", { type: "button", class: "tab", "aria-current": key === state.view ? "page" : null, onclick: () => goto(key) }, VIEWS[key].label);
   // The main menu is for everyone; the professional views are linked from the footer.
   $("tabs").replaceChildren(...Object.keys(VIEWS).filter((k) => !VIEWS[k].pro && !VIEWS[k].hidden).map(tab));
   updateFollowLink();
+  const contact = $("contact");
+  if (contact && !contact.firstChild) contact.replaceChildren("Contact: ", contactLink());
   const foot = $("pro-links");
   if (foot) foot.replaceChildren("For professionals: ", ...Object.keys(VIEWS).filter((k) => VIEWS[k].pro).flatMap((k, i) => [
     i ? " · " : "", h("a", { href: `?tab=${k}`, onclick: (e) => { e.preventDefault(); goto(k); } }, VIEWS[k].label)]));
@@ -1558,7 +1564,9 @@ function aboutPage() {
         h("li", {}, h("b", {}, "Open data only. "), "Wikipedia and Wikidata, public charts, Steam, Open Library, Project Gutenberg, news archives and public Bluesky posts. Every story links to its sources."),
         h("li", {}, h("b", {}, "Honest about what we don't know. "), "When we can't find the reason, a comeback goes on the ", go("mysteries", "Unexplained"), " page, and we say so."),
         h("li", {}, h("b", {}, "Keeping score in public. "), "We predict comebacks before they happen and check afterwards whether we were right. See the ", go("accuracy", "Track record"), "."),
-        h("li", {}, h("b", {}, "Readers help. "), "Know why something is back, or spotted a mistake? Use ", h("i", {}, "Know why? Tell us"), " on any story. Tips that check out become editor's notes."))),
+        h("li", {}, h("b", {}, "Readers help. "), "Know why something is back, or spotted a mistake? Use ", h("i", {}, "Know why? Tell us"), " on any story. Tips that check out become editor's notes.")),
+      h("h3", {}, "Contact us"),
+      h("p", { class: "mission" }, "Questions, ideas, press or partnerships: write to ", contactLink(), ". For a tip or a correction about a story, the links on the story itself are fastest.")),
     sectionHead("Embed the chart", "Put today's top comebacks on your own site. It updates itself every morning."),
     embedBox(base),
     sectionHead("Feeds", "Get new comebacks every morning. Copy a link into any feed reader: Feedly, Inoreader, NetNewsWire, Outlook, Slack and others."),
