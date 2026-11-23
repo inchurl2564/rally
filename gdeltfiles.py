@@ -6,8 +6,8 @@ worldwide, with its address, outlet and (in the last column) its headline.
 
   refresh()   once a night: download the 15-minute files since the last run (at most a day's
               worth, 96 files), keep only headlines that quote something (‘Title’, "Title"), the
-              way news writes the names of films, songs, games and books. Kept 30 days,
-              gzipped, in .cache/gdelt_headlines.json.gz (the workflow cache).
+              way news writes the names of films, songs, games and books. Kept 30 days in the
+              repository, one file per day: store/gdelt/<YYYY-MM-DD>.json.gz.
   search(q)   those headlines matching a work's title, same rules as newsfeeds.py.
 
 Run `python gdeltfiles.py --test [hours] ["Title" ...]` to time a download and search.
@@ -29,7 +29,8 @@ import zipfile
 import newsfeeds
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-STORE = os.path.join(HERE, ".cache", "gdelt_headlines.json.gz")
+LEGACY = os.path.join(HERE, ".cache", "gdelt_headlines.json.gz")   # before it moved into the repository
+STORE_NAME = "gdelt"                                                # store/gdelt/<day>.json.gz + state.json
 BASE = "http://data.gdeltproject.org/gdeltv2/{}.gkg.csv.zip"
 KEEP_DAYS = 30
 MAX_FILES = 96                    # one day of 15-minute files a night
@@ -49,23 +50,24 @@ def log(*a):
 def _load() -> dict:
     global _store
     if _store is None:
-        try:
-            with gzip.open(STORE, "rt") as f:
-                _store = json.load(f)
+        import daystore
+        _store = {"done": "", "items": {}}
+        try:                                       # carry over from the old cache file
+            with gzip.open(LEGACY, "rt") as f:
+                old = json.load(f)
+            _store["done"], _store["items"] = old.get("done", ""), old.get("items", {})
         except (OSError, json.JSONDecodeError, EOFError):
-            _store = {}
-        _store.setdefault("done", "")             # last 15-minute slot read
-        _store.setdefault("items", {})            # url → [date, outlet, headline]
+            pass
+        _store["items"].update(daystore.load(STORE_NAME, KEEP_DAYS))       # url → [date, outlet, headline]
+        _store["done"] = max(_store["done"], daystore.read_state(STORE_NAME).get("done", ""))   # last 15-minute slot read
     return _store
 
 
 def _save() -> None:
+    import daystore
     s = _load()
-    cutoff = (dt.date.today() - dt.timedelta(days=KEEP_DAYS)).isoformat()
-    s["items"] = {u: v for u, v in s["items"].items() if v[0] >= cutoff}
-    os.makedirs(os.path.dirname(STORE), exist_ok=True)
-    with gzip.open(STORE, "wt") as f:
-        json.dump(s, f, separators=(",", ":"))
+    daystore.save(STORE_NAME, s["items"], KEEP_DAYS)
+    daystore.write_state(STORE_NAME, {"done": s["done"]})
 
 
 def _slots(since: str, now: dt.datetime, limit: int) -> list[str]:

@@ -5,7 +5,7 @@ Replaces GDELT, which refuses requests from shared cloud addresses (GitHub's inc
 
   refresh()        once a night: read each outlet's newest feed pages until reaching articles
                    already in the library (WordPress sites page back with ?paged=N); keep 75 days.
-                   Stored in .cache/news_index.json (kept between runs by the workflow's cache).
+                   Saved in the repository, one file per day: store/news/<YYYY-MM-DD>.json.gz.
   news(q, around)  articles mentioning q, published from 14 days before the comeback started to
                    7 days after: the library first, then GDELT's raw files (gdeltfiles.py), then
                    Google News (at most GOOGLE_MAX a night).
@@ -32,7 +32,8 @@ import urllib.request
 import xml.etree.ElementTree as ET
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-INDEX = os.path.join(HERE, ".cache", "news_index.json")
+LEGACY = os.path.join(HERE, ".cache", "news_index.json")      # before the library moved into the repository
+STORE_NAME = "news"                                            # store/news/<day>.json.gz (daystore.py)
 KEEP_DAYS = 75
 UA = {"User-Agent": "Mozilla/5.0 (compatible; Rallyback news reader; +https://therallyback.com/?tab=about)"}
 
@@ -128,22 +129,20 @@ def parse(raw: bytes) -> list[dict]:
 def _load() -> dict:
     global _index
     if _index is None:
-        try:
-            with open(INDEX) as f:
-                _index = json.load(f)
+        import daystore
+        _index = {}
+        try:                                    # carry over a library from the old cache file
+            with open(LEGACY) as f:
+                _index.update(json.load(f))
         except (OSError, json.JSONDecodeError):
-            _index = {}
+            pass
+        _index.update(daystore.load(STORE_NAME, KEEP_DAYS))
     return _index
 
 
 def _save() -> None:
-    idx = _load()
-    cutoff = (dt.date.today() - dt.timedelta(days=KEEP_DAYS)).isoformat()
-    for u in [u for u, v in idx.items() if v[0] < cutoff]:
-        del idx[u]
-    os.makedirs(os.path.dirname(INDEX), exist_ok=True)
-    with open(INDEX, "w") as f:
-        json.dump(idx, f, separators=(",", ":"))
+    import daystore
+    daystore.save(STORE_NAME, _load(), KEEP_DAYS)
 
 
 def refresh(budget: float = REFRESH_BUDGET) -> dict:
