@@ -108,6 +108,21 @@ jobs:
         run: |
           if git log -1 --format=%s | grep -q "^data: run for"; then sleep 240; python tools/indexnow.py; else echo "No new edition."; fi
 
+      # The day's story on Bluesky. BLUESKY_POST stays "off" (samples printed in the log) until the
+      # owner approves; then "on". What was posted is recorded in site/data/social.json.
+      - name: Post to Bluesky
+        if: github.event_name != 'push'
+        continue-on-error: true
+        env:
+          BLUESKY_POST: "off"
+          BLUESKY_HANDLE: therallyback.bsky.social
+          BLUESKY_APP_PASSWORD: ${{ secrets.BLUEVIOLET }}
+        run: |
+          python bluesky_post.py
+          if ! git diff --quiet -- site/data/social.json 2>/dev/null || [ -n "$(git status --porcelain site/data/social.json)" ]; then
+            git add site/data/social.json && git commit -m "social: Bluesky post $(date -u +%F)" && git pull --rebase origin main && git push
+          fi
+
       # Health check: opens (or adds to) one "needs attention" issue, which emails the repo owner,
       # only when something needs a person. Quiet nights send nothing.
       - name: Health check
