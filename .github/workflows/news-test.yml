@@ -8,4 +8,4 @@ jobs:
       - name: APITube
         run: |
           curl -sL https://apitube.io/ | grep -oiE "(href|to)=.[^ >]*(term|legal|polic|licen|condition)[^ >]*" | sort -u || true; curl -sL https://help.apitube.io/ | grep -oiE "href=.[^ >]*" | sort -u | head -40 || true
-          for p in terms-and-conditions terms-of-use legal privacy-policy acceptable-use-policy; do echo "== /$p $(curl -sL -o /dev/null -w '%{http_code}' https://apitube.io/$p)"; curl -sL "https://apitube.io/$p" | python3 -c "import sys,re,html;t=sys.stdin.read();t=re.sub(r'(?s)<(script|style).*?</\1>','',t);t=html.unescape(re.sub(r'<[^>]+>',' ',t));print(re.sub(r'\s+',' ',t)[:14000])" || true; done
+          for p in terms/terms-of-service; do echo "== /$p $(curl -sL -o /dev/null -w '%{http_code}' https://apitube.io/$p)"; curl -sL "https://apitube.io/$p" | python3 -c "import sys,re,html;t=sys.stdin.read();t=re.sub(r'(?s)<(script|style).*?</\1>','',t);t=html.unescape(re.sub(r'<[^>]+>',' ',t));print(re.sub(r'\s+',' ',t)[:40000])" || true; done
