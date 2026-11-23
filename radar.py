@@ -1282,7 +1282,7 @@ def main():
         e = explain.explain(args.project, title, name, r["spike_start"], with_news=not args.no_news,
                             person=bool(rip and rip.get("relation") not in
                                         ("franchise", "series", "character", "source material", "sequel or adaptation")),
-                            kind=None if rip else r.get("kind"))
+                            kind=None if rip else r.get("kind"), video=not rip)
         r.update(evidence=e["evidence"], cause=e["cause"], edit_burst=e["edit_burst"])
         if e["cause"] and r["verdict"] == "unexplained":
             r["verdict"] = "coverage"
@@ -1290,6 +1290,11 @@ def main():
         if t.get("title"):
             e = explain.explain(args.project, t["title"], t["name"], t["around"], with_news=not args.no_news, person=True)
             t.update(evidence=e["evidence"], cause=e["cause"], edit_burst=e["edit_burst"])
+    try:
+        import youtube
+        log(youtube.summary())
+    except Exception:
+        pass
     # Spot-check explained spikes against independent evidence (feeds the Accuracy tab).
     explained = [r for r in results if r["verdict"] in ("death", "derivative", "same-creator", "anniversary")]
     for r in explained[:15]:

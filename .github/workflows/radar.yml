@@ -79,6 +79,8 @@ jobs:
 
       - name: Run the radar
         if: github.event_name != 'push'
+        env:
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}     # optional: YouTube lookups for unexplained comebacks
         run: python radar.py --site site
 
       - name: Commit results

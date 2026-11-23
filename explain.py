@@ -145,21 +145,34 @@ def news(query: str, around: dt.date, n: int = 6, person: bool = False, kind: st
 
 
 def likely_cause(evidence: list[dict]) -> str | None:
+    import youtube
     scores: dict[str, int] = {}
     for e in evidence:
+        hit = False
         for name, rx in _CAUSE_RE:
             if rx.search(f'{e["text"]} {e.get("detail", "")}'):
                 scores[name] = scores.get(name, 0) + 1
+                hit = True
+        # A huge video naming the title, with no other reason in its own words, is the internet at work.
+        if not hit and e.get("video") and (e.get("views") or 0) >= youtube.VIRAL_VIEWS:
+            scores["viral"] = scores.get("viral", 0) + 1
     return max(scores, key=scores.get) if scores else None
 
 
 def explain(project: str, title: str, query: str, around: dt.date, with_news: bool = True,
-            person: bool = False, kind: str | None = None) -> dict:
+            person: bool = False, kind: str | None = None, video: bool = False) -> dict:
     """Evidence for one spike. `query` is what to search news for (a work's or person's name)."""
     import annotations   # local import: annotations imports this module
     burst = edit_burst(project, title, around)
     # News articles first: they're dated and say why; Wikipedia edits fill in behind them.
     ev = news(query, around, person=person, kind=kind) if with_news else []
+    if video and with_news and not person and likely_cause(ev) is None:
+        # No reason in the news: a trailer, viral clip or video essay on YouTube often is one.
+        try:
+            import youtube
+            ev = youtube.search(query, around, kind) + ev
+        except Exception as e:
+            print(f"      YouTube lookup failed for {query}: {e}", file=sys.stderr)
     if person and with_news:
         # Wikipedia's daily Current events page lists deaths, verdicts and other big news about people.
         ev += annotations.current_events(query, around, days=3)

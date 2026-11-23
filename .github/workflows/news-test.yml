@@ -1,0 +1,17 @@
+name: YouTube test (one-off)
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - env:
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+        run: python youtube.py --test "Minority Report|film|2026-08-15" "A Beautiful Mind|film|2026-08-21" "Lost in Translation|film|2026-09-14" "4.50 from Paddington|book|2026-09-24" "The Nightingale|book|2026-11-16" "ATM|film|2026-11-01" "Cassiopeia|film|2026-11-19" "Paradiso|book|2026-08-11" "Something About Amelia|film|2026-11-21" "Jolene|film|2026-11-05"
