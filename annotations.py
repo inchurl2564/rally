@@ -101,14 +101,21 @@ def added_text(title: str, around: dt.date) -> list[dict]:
     return added
 
 
+_CE_PAGES: dict[str, str] = {}      # one fetch per day's page per run, however many names are looked up
+
+
 def current_events(name: str, around: dt.date, days: int = 4) -> list[dict]:
     """Lines mentioning `name` on Wikipedia's Portal:Current_events daily pages."""
     out = []
     for i in range(-1, days):
         d = around + dt.timedelta(days=i)
+        if d > dt.date.today():
+            continue
         page = f"Portal:Current events/{d.year} {d.strftime('%B')} {d.day}"
-        r = _mw({"action": "parse", "page": page, "prop": "wikitext"})
-        text = (r or {}).get("parse", {}).get("wikitext", "")
+        if page not in _CE_PAGES:
+            r = _mw({"action": "parse", "page": page, "prop": "wikitext"})
+            _CE_PAGES[page] = (r or {}).get("parse", {}).get("wikitext", "")
+        text = _CE_PAGES[page]
         for line in text.splitlines():
             if name.lower() in line.lower():
                 url = _BARE_URL.search(line)

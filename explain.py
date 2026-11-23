@@ -160,6 +160,9 @@ def explain(project: str, title: str, query: str, around: dt.date, with_news: bo
     burst = edit_burst(project, title, around)
     # News articles first: they're dated and say why; Wikipedia edits fill in behind them.
     ev = news(query, around, person=person, kind=kind) if with_news else []
+    if person and with_news:
+        # Wikipedia's daily Current events page lists deaths, verdicts and other big news about people.
+        ev += annotations.current_events(query, around, days=3)
     ev += annotations.added_text(title, around)       # sentences added, with the news source cited
     ev += edit_summaries(title, around)
     return {"edit_burst": burst, "evidence": ev[:10], "cause": likely_cause(ev)}

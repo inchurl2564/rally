@@ -8,7 +8,7 @@ Open sources that need no API key, matched to works through Wikidata IDs:
   iTunes charts      top songs, albums and movies, US (itunes.apple.com RSS)      P10110 / P2281 / P6398
   Deezer charts      top tracks and albums, worldwide (api.deezer.com)            P2724 / P2723
   Open Library       daily trending books (openlibrary.org)                         P648
-  Project Gutenberg  top 100 ebooks yesterday (gutenberg.org)                       P2034
+  Project Gutenberg  most-downloaded ebooks, via Gutendex (gutendex.com)              P2034
 
 Chart positions, player counts and review totals are snapshots that can't be fetched after the
 fact, so every run records one and keeps it forever: site/data/signals/YYYY-MM.json, one file per
@@ -45,7 +45,9 @@ CHARTS = {                 # key: (label, url, Wikidata property for the chart's
     "deezer-tracks": ("Deezer top tracks", "https://api.deezer.com/chart/0/tracks?limit=100", "P2724", {"song"}),
     "deezer-albums": ("Deezer top albums", "https://api.deezer.com/chart/0/albums?limit=100", "P2723", {"album"}),
     "openlibrary": ("Open Library trending", "https://openlibrary.org/trending/daily.json?limit=1000", "P648", {"book", "manga/comic"}),
-    "gutenberg": ("Project Gutenberg top 100", "https://www.gutenberg.org/browse/scores/top", "P2034", {"book"}),
+    # Gutenberg's own top-100 page turns away automated requests; Gutendex is a public service
+    # built on Gutenberg's catalog for exactly this, ranking books by downloads.
+    "gutenberg": ("Project Gutenberg most downloaded", "https://gutendex.com/books/?sort=popular", "P2034", {"book"}),
 }
 STEAM_PLAYERS = "https://api.steampowered.com/ISteamUserStats/GetNumberOfCurrentPlayers/v1/?appid={}"
 STEAM_REVIEWS = "https://store.steampowered.com/appreviews/{}?json=1&num_per_page=0&language=all&purchase_type=all"
@@ -128,12 +130,17 @@ def _openlibrary(url):
 
 
 def _gutenberg(url):
-    page = _get(url, raw=True) or ""
-    m = re.search(r'id="books-last1".*?</ol>', page, re.S)
-    rows = []
-    for i, (eid, name) in enumerate(re.findall(r'<a href="/ebooks/(\d+)">([^<]+)</a>', m.group(0) if m else ""), 1):
-        title = re.sub(r"\s+by\s+.*$", "", name)
-        rows.append({"rank": i, "id": eid, "name": title.split(" (")[0].strip(), "artist": "", "year": ""})
+    """The 128 most-downloaded Project Gutenberg books, from Gutendex (4 pages of 32)."""
+    rows, nxt = [], url
+    for _ in range(4):
+        d = _get(nxt) if nxt else None
+        for b in (d or {}).get("results") or []:
+            rows.append({"rank": len(rows) + 1, "id": str(b["id"]), "name": (b.get("title") or "").split(";")[0].strip(),
+                         "artist": ", ".join(a.get("name", "") for a in b.get("authors") or [])[:80], "year": ""})
+        nxt = (d or {}).get("next")
+        if not nxt:
+            break
+        time.sleep(1)
     return rows
 
 
