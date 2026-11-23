@@ -7,5 +7,4 @@ jobs:
     steps:
       - name: Currents
         run: |
-          for p in en en/terms en/terms-of-service en/tos en/pricing en/legal; do echo "== $p $(curl -sL -o /dev/null -w '%{http_code}' https://currentsapi.services/$p)"; curl -sL "https://currentsapi.services/$p" | python3 -c "import sys,re,html;t=sys.stdin.read();t=re.sub(r'(?s)<(script|style).*?</\1>','',t);t=html.unescape(re.sub(r'<[^>]+>',' ',t));print(re.sub(r'\s+',' ',t)[:7000])" || true; done
-          curl -sL https://currentsapi.services/en | grep -o 'href="[^"]*"' | sort -u | head -60 || true
+          for p in terms en/sources en/faq; do echo "== $p $(curl -sL -o /dev/null -w '%{http_code}' https://currentsapi.services/$p)"; curl -sL "https://currentsapi.services/$p" | python3 -c "import sys,re,html;t=sys.stdin.read();t=re.sub(r'(?s)<(script|style).*?</\1>','',t);t=html.unescape(re.sub(r'<[^>]+>',' ',t));print(re.sub(r'\s+',' ',t)[:16000])" || true; done
