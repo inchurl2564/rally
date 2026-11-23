@@ -78,23 +78,26 @@ def _name(title: str) -> str:
     return re.sub(r"\s*\([^)]*\)\s*$", "", title).strip()
 
 
+_CONTEXT = re.compile(r"\b(movie|film|trailer|teaser|scene|scenes|clip|official|soundtrack|ost|album|song|music video|"
+                      r"lyrics|game|gameplay|remaster|book|novel|audiobook|drama|adaptation|review|explained|ending|"
+                      r"cast|behind the scenes|full episode|series|season)\b", re.I)
+
+
 def _matches(name: str, video_title: str, kind: str | None) -> bool:
-    """The title must be in the video's title as a whole phrase. One short word ("Heist") also
-    needs the kind of work or a typical video word beside it, or it matches anything."""
+    """The title must be in the video's title as a whole phrase, and the video title must also
+    say what it is (a trailer, a film, a song...), so "lost in translation" as a phrase or a
+    different film's clips with a generic name don't count."""
     if not re.search(r"(?<!\w)" + re.escape(name).replace(r"\ ", r"\s+") + r"(?!\w)", video_title, re.I):
         return False
-    if len(name.split()) == 1 and len(name) < 9:
-        return bool(re.search(r"\b(movie|film|trailer|scene|soundtrack|album|song|official|game|gameplay|book|novel|review|explained|ending)\b",
-                              video_title, re.I))
-    return True
+    return bool(_CONTEXT.search(video_title))
 
 
 def search(title: str, around: dt.date, kind: str | None = None, n: int = 3) -> list[dict]:
     if not _key() or _off or STATS["searches"] >= MAX_SEARCHES:
         return []
     name = _name(title)
-    if len(name) < 3:
-        return []
+    if len(name) < 5:
+        return []                       # "ATM", "Up", "Her": far too ambiguous on YouTube
     lo, hi = around - dt.timedelta(days=14), min(around + dt.timedelta(days=7), dt.date.today() + dt.timedelta(days=1))
     noun = KIND_NOUN.get(kind or "", "")
     STATS["searches"] += 1
