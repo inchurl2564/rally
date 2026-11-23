@@ -919,6 +919,40 @@ def fetch_images(qids: set[str], batch: int = 150) -> dict[str, str]:
     return out
 
 
+def fetch_series_images(qids: set[str], batch: int = 120) -> dict[str, tuple[str, str]]:
+    """For works with no free image of their own: the logo (or image) of the series or franchise they
+    belong to, from Commons via Wikidata. Better than a photo of the studio's office or a crew member:
+    Grand Theft Auto (1998) gets the Grand Theft Auto series logo. {work qid: (file, series name)}."""
+    out: dict[str, tuple[str, str]] = {}
+    qids = [q for q in qids if q]
+    rank = {"P154": 0, "P18": 1, "P3383": 2}
+    for i in range(0, len(qids), batch):
+        values = " ".join(f"wd:{q}" for q in qids[i:i + batch])
+        q = f"""SELECT ?item ?rel ?s ?sLabel ?p ?img WHERE {{
+          VALUES ?item {{ {values} }}
+          VALUES ?rel {{ wdt:P179 wdt:P8345 }}
+          VALUES ?p {{ wdt:P154 wdt:P18 wdt:P3383 }}
+          ?item ?rel ?s . ?s ?p ?img .
+          SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en,mul". }}
+        }}"""
+        try:
+            rows = sparql(q)
+        except Exception as e:
+            print(f"      series-image lookup failed for a batch: {e}", file=sys.stderr)
+            continue
+        best: dict[str, tuple] = {}
+        for row in rows:
+            item, prop, rel = qid(v(row, "item")), qid(v(row, "p")), qid(v(row, "rel"))
+            name = urllib.parse.unquote(v(row, "img").rsplit("/", 1)[-1])
+            if not name.lower().endswith((".svg", ".jpg", ".jpeg", ".png", ".webp")):
+                continue
+            key = (0 if rel == "P179" else 1, rank[prop])           # the series before the wider franchise
+            if item not in best or key < best[item][0]:
+                best[item] = (key, name, v(row, "sLabel"))
+        out.update({k: (f, who) for k, (_, f, who) in best.items()})
+    return out
+
+
 PEOPLE_IMAGE_PROPS = ["P175", "P50", "P57", "P170", "P178", "P86", "P162", "P58"]  # performer, author, director, creator, developer, composer, producer, writer
 
 
@@ -1167,6 +1201,10 @@ def write_site_data(site: str, results, meta, clusters, threads, keep_runs: int,
         rp = r.get("ripple") or {}
         if not r["image"] and images.get(rp.get("qid")):
             r["image"], r["image_of"] = images[rp["qid"]], rp.get("name")
+    series = fetch_series_images({r["qid"] for r in results if not r["image"]})
+    for r in results:
+        if not r["image"] and r["qid"] in series:
+            r["image"], r["image_of"] = series[r["qid"]]
     people = fetch_people_images({r["qid"] for r in results if not r["image"]} |
                                  {c["old"] for c in (coming_up or {}).get("derivatives", []) if not images.get(c["old"])} |
                                  {a["qid"] for a in (coming_up or {}).get("anniversaries", []) if not images.get(a["qid"])} |
