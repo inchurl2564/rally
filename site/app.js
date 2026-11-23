@@ -450,6 +450,8 @@ function subscribePage() {
         h("li", {}, h("b", {}, "The best unsolved mystery. "), "A big comeback nobody can explain yet. Readers often know why."),
         h("li", {}, h("b", {}, "What's coming next. "), "Sequels, remakes and anniversaries due soon, and how our past predictions did.")),
       h("p", {}, "Free. One email a week. Unsubscribe any time with one click."),
+      // Until the first issue is sent (it waits on the newsletter's mailing address). Remove after the first issue.
+      h("p", {}, h("b", {}, "The first issue goes out soon. "), "Sign up now and you'll get it."),
       newsletterForm(),
       h("p", { class: "small" }, "See what an issue looks like: ", h("a", { href: new URL("week/", location.href).href }, "the latest weekly roundup"), "."),
       h("p", { class: "small muted" }, "We send the newsletter with Beehiiv. Your email address is used only for the newsletter, and never sold or shared.")),
