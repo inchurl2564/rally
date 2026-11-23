@@ -42,12 +42,9 @@ UA = {"User-Agent": "Mozilla/5.0 (compatible; Rallyback news reader; +https://th
 # fills in further night by night, so first reads stay short enough for every feed to fit)
 # Paged feeds are WordPress sites (?paged=N); the others are read once (they hold more items).
 FEEDS = [
-    ("Variety", "https://variety.com/feed/", 12, 15),
-    ("Deadline", "https://deadline.com/feed/", 12, 15),
-    ("The Hollywood Reporter", "https://www.hollywoodreporter.com/feed/", 10, 15),
-    ("IndieWire", "https://www.indiewire.com/feed/", 6, 15),
-    ("Billboard", "https://www.billboard.com/feed/", 10, 15),
-    ("Rolling Stone", "https://www.rollingstone.com/feed/", 8, 15),
+    # Penske Media (Variety, Deadline, The Hollywood Reporter, IndieWire, Billboard, Rolling Stone) was
+    # removed on 2026-11-23: its terms forbid automated tools that monitor or aggregate its content,
+    # and commercial use of its RSS content beyond linking to the full article.
     ("NME", "https://www.nme.com/feed", 8, 15),
     ("Pitchfork", "https://pitchfork.com/feed/feed-news/rss", 1, 1),
     ("Polygon", "https://www.polygon.com/rss/index.xml", 1, 1),
@@ -55,12 +52,8 @@ FEEDS = [
     ("Eurogamer", "https://www.eurogamer.net/feed", 1, 1),
     ("GameSpot", "https://www.gamespot.com/feeds/mashup/", 1, 1),
     ("Book Riot", "https://bookriot.com/feed/", 4, 15),
-    ("The Guardian", "https://www.theguardian.com/culture/rss", 1, 1),
-    ("The Guardian", "https://www.theguardian.com/film/rss", 1, 1),
-    ("The Guardian", "https://www.theguardian.com/music/rss", 1, 1),
-    ("The Guardian", "https://www.theguardian.com/books/rss", 1, 1),
-    ("The Guardian", "https://www.theguardian.com/games/rss", 1, 1),
-    ("The Guardian", "https://www.theguardian.com/tv-and-radio/rss", 1, 1),
+    # The Guardian was removed on 2026-11-23: its terms allow personal, non-commercial use only and forbid
+    # automated tools, text and data aggregation, and building a database of its content.
     # BBC News was removed on 2026-11-23: its terms require a licence for any business use of its RSS
     # feeds or metadata, and forbid automated collection or computer analysis of its content.
 ]
@@ -68,6 +61,11 @@ REFRESH_BUDGET = 8 * 60          # seconds for the whole nightly refresh
 GOOGLE = "https://news.google.com/rss/search"
 GOOGLE_MAX = 40                  # Google News searches a night, for what the library can't explain
 GOOGLE_GAP = 2.0                 # seconds between them
+
+# Headlines from publishers whose terms rule out our use are deleted from the library on load,
+# including any saved before they were removed.
+DROPPED = re.compile(r"^https?://([a-z0-9-]+\.)*(bbc\.co\.uk|bbc\.com|theguardian\.com|variety\.com|deadline\.com|"
+                     r"hollywoodreporter\.com|indiewire\.com|billboard\.com|rollingstone\.com)/", re.I)
 
 _index: dict | None = None
 _refreshed = False
@@ -139,6 +137,8 @@ def _load() -> dict:
         except (OSError, json.JSONDecodeError):
             pass
         _index.update(daystore.load(STORE_NAME, KEEP_DAYS))
+        for url in [u for u in _index if DROPPED.match(u)]:
+            del _index[url]
     return _index
 
 

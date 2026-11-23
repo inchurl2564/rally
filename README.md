@@ -190,13 +190,15 @@ replace it once there's a logo). Each week also gets a permanent roundup page at
 
 ## News behind the reasons
 
-`newsfeeds.py` keeps a rolling 75-day library of headlines from about 20 entertainment and culture
-news feeds (Variety, Deadline, The Hollywood Reporter, IndieWire, Billboard, Rolling Stone, NME,
-Pitchfork, Polygon, Kotaku, Eurogamer, GameSpot, Book Riot, the Guardian's culture sections), read once a night and saved in the repository as one gzipped file per day
+`newsfeeds.py` keeps a rolling 75-day library of headlines from entertainment and culture
+news feeds (NME, Pitchfork, Polygon, Kotaku, Eurogamer, GameSpot, Book Riot; their terms still to be
+checked), read once a night and saved in the repository as one gzipped file per day
 (`store/news/`, kept 75 days; GDELT headlines in `store/gdelt/`, kept 30 days; see `daystore.py`). Each comeback is searched by its
 title in quotes in a headline (people by full name); comparisons ("'X' meets 'Y'") don't count.
 What the library can't explain is looked up in GDELT's raw 15-minute data files (`gdeltfiles.py`: a
-day of files, about 220 MB, read in under a minute; headlines that quote a title kept 30 days). Google News was dropped on 2026-11-23:
+day of files, about 220 MB, read in under a minute; headlines that quote a title kept 30 days). The BBC, the Guardian and Penske Media
+(Variety, Deadline, The Hollywood Reporter, IndieWire, Billboard, Rolling Stone) were dropped on 2026-11-23: their terms forbid
+automated collection or commercial use of their feeds, and headlines saved from them are deleted on load. Google News was dropped on 2026-11-23:
 its robots.txt disallows automated access to its search feed, which Google's terms forbid. GDELT's search service refuses requests from
 shared cloud addresses, so its raw files are read instead. To test the feeds from GitHub's servers, run `python newsfeeds.py --test "Title|film" "@Person Name"`.
 
