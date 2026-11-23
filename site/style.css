@@ -538,3 +538,10 @@ p, li, .dek, .about .mission { text-wrap: pretty; }
   .narrow-only table tr.card-row, .narrow-only table tr.card-row > td { display: block; }
 }
 @media (max-width: 600px) { .narrow-only table tr:not(.card-row) > td.tipcol { display: none; } }
+
+/* About us on wide screens: mission + why it matters | how we work */
+@media (min-width: 900px) {
+  .about-cols { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 48px; align-items: start; }
+  .about-how { border-left: 1px solid var(--hair); padding-left: 32px; }
+}
+@media (max-width: 899px) { .about-how h3.about-first { margin-top: 28px; } }
