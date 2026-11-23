@@ -81,6 +81,7 @@ jobs:
         if: github.event_name != 'push'
         env:
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}     # optional: YouTube lookups for unexplained comebacks
+          CURRENTS_API_KEY: ${{ secrets.CURRENTS_API_KEY }}   # optional: Currents News API (free plan)
           BLUESKY_HANDLE: therallyback.bsky.social                # Bluesky search signs in as this account
           BLUESKY_APP_PASSWORD: ${{ secrets.BLUEVIOLET }}      # the app password, saved as BLUEVIOLET
         run: python radar.py --site site

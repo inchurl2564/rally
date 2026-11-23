@@ -1119,15 +1119,16 @@ def cause_link(cause: str | None, evidence: list[dict] | None, start: dt.date | 
     hits = []
     for e in evidence:
         url = e.get("url")
-        if not url or "wikipedia.org" in url or (rx is not None and not rx.search(e.get("text", ""))):
+        if not url or "wikipedia.org" in url or (rx is not None and not rx.search(e.get("text", ""))
+                                                    and e.get("cause") != cause):
             continue
         published = dt.date.fromisoformat(e["published"][:10]) if e.get("published") else url_date(url)
         if published is None or not (lo <= published <= dt.date.today() + dt.timedelta(days=1)):
             continue
-        hits.append((published, url))
-    for published, url in sorted(hits, reverse=True):
+        hits.append((published, url, e.get("credit")))
+    for published, url, credit in sorted(hits, key=lambda h: h[:2], reverse=True):
         if not check or "news.google.com" in url or link_ok(url):
-            return {"url": url, "date": published.isoformat()}
+            return {"url": url, "date": published.isoformat(), **({"credit": credit} if credit else {})}
     return None
 
 
@@ -1429,6 +1430,8 @@ def main():
         log(tvmaze.summary())
         log(musicbrainz.summary())
         log(bluesky.summary())
+        import currents
+        log(currents.summary())
     except Exception:
         pass
     # Spot-check explained spikes against independent evidence (feeds the Accuracy tab).

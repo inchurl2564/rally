@@ -293,6 +293,12 @@ def news(query: str, around: dt.date, n: int = 6, person: bool = False, kind: st
             found = gdeltfiles.search(query, around, n=n)
         except Exception as e:
             log(f"      GDELT files search failed: {e}")
+    if not found:                                # Currents News API (free plan, 250 a day), when the key is set
+        try:
+            import currents
+            found = currents.search(query, around, person=person, kind=kind, n=n)
+        except Exception as e:
+            log(f"      Currents search failed: {e}")
     # Google News was dropped on 2026-11-23: its robots.txt disallows automated access to /rss/search,
     # and Google's terms forbid automated access against robots.txt. google_search() is kept unused.
     return found

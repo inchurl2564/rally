@@ -71,8 +71,11 @@ function dekWithLink(text, cause, link, note) {
     ? [note.text, note.source] : [cause ? causeSentence(cause) : null, link && link.url];
   if (!url || !phrase || !text.includes(phrase)) return text;
   const i = text.indexOf(phrase);
-  return [text.slice(0, i), ext(url, phrase), text.slice(i + phrase.length)];
+  // A source that asks for credit beside its data (Currents News API) gets it right after the link.
+  const credit = url === (link && link.url) && link.credit ? [" ", creditNote(link.credit)] : [];
+  return [text.slice(0, i), ext(url, phrase), ...credit, text.slice(i + phrase.length)];
 }
+const creditNote = (c) => h("span", { class: "credit" }, "(", ext(c.url, c.text), ")");
 const REL = { "adaptation/based on it": "a new adaptation", sequel: "the sequel", "derivative work": "a spin-off",
   "remake/new version": "the remake", "new entry in same series": "the new entry in the series" };
 
@@ -1402,7 +1405,8 @@ function contactForm() {
 function evidenceList(ev, limit = 4) {
   if (!ev || !ev.length) return null;
   return h("ul", { class: "evidence" }, ev.slice(0, limit).map((e) =>
-    h("li", {}, h("span", { class: "src" }, e.source), e.url ? ext(e.url, e.text) : e.text, h("span", { class: "d" }, short(e.date)))));
+    h("li", {}, h("span", { class: "src" }, e.source), e.url ? ext(e.url, e.text) : e.text,
+      e.credit ? [" ", creditNote(e.credit)] : null, h("span", { class: "d" }, short(e.date)))));
 }
 
 function card(r, open, inGroup) {

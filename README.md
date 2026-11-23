@@ -202,6 +202,13 @@ a precaution. Headlines saved from the first group are deleted on load. `newsfee
 library code in case a licensed feed is added later. Google News was dropped the same day: its robots.txt
 disallows automated access to its search feed. GDELT's search service refuses shared cloud addresses, hence the raw files.
 
+When GDELT finds nothing, `currents.py` searches the Currents News API (free plan: 250 requests a day, 30 days
+back, commercial use allowed with attribution; `CURRENTS_API_KEY` repository secret, skipped without it). We
+use Currents as a middleman: it reads the publishers, so their website terms don't bind us, and we only link
+to articles. Its own terms forbid permanent copies of its data and publishing statistics about it, so evidence
+keeps only the link, the site, the date and our own reason word (the headline is read in memory, never saved),
+and the site shows "Powered by Currents News API" beside every link that came from it.
+
 Wikipedia does most of the explaining (`annotations.py`, `explain.py`, all CC BY-SA):
 - sentences added to the article from 2 days before the start to 5 after, with the reference cited. Infobox and
   template lines are skipped; sentences giving only old dates are dropped; an edit adding more than three

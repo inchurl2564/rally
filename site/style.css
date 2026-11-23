@@ -545,3 +545,7 @@ p, li, .dek, .about .mission { text-wrap: pretty; }
   .about-how { border-left: 1px solid var(--hair); padding-left: 32px; }
 }
 @media (max-width: 899px) { .about-how h3.about-first { margin-top: 28px; } }
+
+/* Credit a source asks for beside its data (Currents News API) */
+.credit { font-size: .82em; color: var(--muted, #6e6a64); white-space: nowrap; }
+.credit a { color: inherit; }
