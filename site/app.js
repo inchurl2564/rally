@@ -1671,7 +1671,7 @@ function aboutPage() {
       h("h3", { class: "about-first" }, "How we work"),
       h("ul", { class: "about-list" },
         h("li", {}, h("b", {}, "Every morning. "), "A new edition is built automatically each night from what millions of people read, play, stream and buy."),
-        h("li", {}, h("b", {}, "Open data only. "), "Wikipedia and Wikidata, public charts, Steam, Open Library, Project Gutenberg, news archives and public Bluesky posts. Every story links to its sources."),
+        h("li", {}, h("b", {}, "Public data only. "), "Wikipedia and Wikidata, public charts, Steam, Open Library, Project Gutenberg, news data (GDELT and Currents News API), YouTube, TVmaze, MusicBrainz, ListenBrainz and public Bluesky posts. Every story links to its sources."),
         h("li", {}, h("b", {}, "Honest about what we don't know. "), "When we can't find the reason, a comeback goes on the ", go("mysteries", "Unexplained"), " page, and we say so."),
         h("li", {}, h("b", {}, "Keeping score in public. "), "We predict comebacks before they happen and check afterwards whether we were right. See the ", go("accuracy", "Track record"), "."),
         h("li", {}, h("b", {}, "Readers help. "), "Know why something is back, or spotted a mistake? Use ", h("i", {}, "Know why? Tell us"), " on any story. Tips that check out become editor's notes.")))),
