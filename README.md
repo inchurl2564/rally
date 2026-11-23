@@ -201,3 +201,9 @@ What the library can't explain is looked up in GDELT's raw 15-minute data files 
 day of files, about 220 MB, read in under a minute; headlines that quote a title kept 30 days), then Google News (up to 40 searches a night, two-or-more-word
 titles only, with the kind of work added to the search). GDELT's search service refuses requests from
 shared cloud addresses, so its raw files are read instead. To test the feeds from GitHub's servers, run `python newsfeeds.py --test "Title|film" "@Person Name"`.
+
+When the news finds no reason for a work's comeback, `youtube.py` searches YouTube (official Data API v3,
+`YOUTUBE_API_KEY` repository secret; up to 60 searches a night). A video counts only if its title names the
+work and says what it is (trailer, film, scene, song...), has 100,000+ views and was posted from 14 days
+before the comeback to 7 days after. One with 1M+ views and no other reason in its title makes the cause
+"viral". Nothing from YouTube is stored between runs (YouTube's terms limit keeping raw API data).
