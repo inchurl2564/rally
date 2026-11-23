@@ -233,7 +233,7 @@ Three more open sources, added 2026-11-23:
 - **ListenBrainz** (`signals.py`, CC0): the sitewide most-listened songs and albums of the week, matched by
   MusicBrainz IDs (Wikidata P4404 / P436), recorded daily with the other charts as a "confirm elsewhere"
   signal. Its listeners are a small, music-keen crowd, so it backs up a comeback rather than deciding one.
-  MetaBrainz asks businesses that use its data to support it; see the business plan.
+  MetaBrainz asks businesses that use its data to support it financially (worth doing once there is revenue).
 - **MusicBrainz** (`musicbrainz.py`, core data CC0): editions of an album, or of the album a song is on, released
   from 21 days before the start to 5 after (found through Wikidata's release group ID, P436). Verdict cause
   "re-release". One request a second, as MusicBrainz asks; tags and ratings (non-commercial) are never read.
