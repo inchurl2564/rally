@@ -230,14 +230,20 @@ Three more open sources, added 2026-11-23:
   memory only. A video naming the title counts as evidence; an old song on the Music chart counts as "viral".
   Every match (trending and search) must have the title as a whole part of the video title, or in quotes
   ("Shutter" in "Shutter Island explained" and "Kiss Me" in "Kiss Me Quick" don't count); hashtags are ignored.
+- **ListenBrainz** (`signals.py`, CC0): the sitewide most-listened songs and albums of the week, matched by
+  MusicBrainz IDs (Wikidata P4404 / P436), recorded daily with the other charts as a "confirm elsewhere"
+  signal. Its listeners are a small, music-keen crowd, so it backs up a comeback rather than deciding one.
+  MetaBrainz asks businesses that use its data to support it; see the business plan.
 - **MusicBrainz** (`musicbrainz.py`, core data CC0): editions of an album, or of the album a song is on, released
   from 21 days before the start to 5 after (found through Wikidata's release group ID, P436). Verdict cause
   "re-release". One request a second, as MusicBrainz asks; tags and ratings (non-commercial) are never read.
 - **Bluesky** (`bluesky.py`): for comebacks still unexplained, counts posts naming the title in quotes from 3 days
   before the start to 7 after; links to the same search on Bluesky. No post text is shown or stored (posts belong
   to their writers); the most-liked posts' words are only read in memory to see whether several agree on a
-  reason. Needs the `BLUESKY_HANDLE` and `BLUESKY_APP_PASSWORD` repository secrets (an app password), since
-  search without an account is refused; without them it is skipped. Developer guidelines:
+  reason. Signs in as therallyback.bsky.social with an app password (repository secret `BLUEVIOLET`, passed as
+  `BLUESKY_APP_PASSWORD`), since search without an account is refused. The weekly "chatter" count in
+  `enrich.py` uses the same sign-in and saves only the most-liked post's link and like count, never its text
+  or the writer's handle (text and handles saved before 2026-11-23 were removed). Developer guidelines:
   https://bsky.network/docs/developer-guidelines
 
 When the news finds no reason for a work's comeback, `youtube.py` searches YouTube (official Data API v3,

@@ -1,9 +1,10 @@
 """
 Bluesky, for comebacks people are talking about. Bluesky's search (app.bsky.feed.searchPosts) finds
 posts naming a title in quotes from 3 days before the comeback started to 7 days after. Search without
-an account is refused after a couple of requests, so this signs in with an app password from the
+an account started being refused in November 2026, so this signs in with an app password from the
 BLUESKY_HANDLE and BLUESKY_APP_PASSWORD repository secrets (Bluesky: Settings > Privacy and security >
-App passwords). Without them, everything here quietly does nothing.
+App passwords). Without them it tries the public endpoint, and switches off for the run if refused.
+search() is shared with enrich.py's weekly "chatter" count.
 
 What we keep is our own summary: how many posts we found, and a link to the same search on Bluesky.
 Posts belong to the people who wrote them, so no post text is shown or stored; the most-liked posts'
@@ -29,6 +30,7 @@ import urllib.request
 
 PDS = "https://bsky.social/xrpc"
 API = f"{PDS}/app.bsky.feed.searchPosts"
+PUBLIC_API = "https://api.bsky.app/xrpc/app.bsky.feed.searchPosts"
 UA = {"User-Agent": "Rallyback/1.0 (+https://therallyback.com/?tab=about)", "Accept": "application/json"}
 MAX_SEARCHES = 120
 MIN_POSTS = 15                 # fewer than this in ten days is ordinary chatter
@@ -44,7 +46,6 @@ def _login() -> str | None:
         return _token
     handle, password = os.environ.get("BLUESKY_HANDLE"), os.environ.get("BLUESKY_APP_PASSWORD")
     if not handle or not password:
-        _off = True
         return None
     body = json.dumps({"identifier": handle, "password": password}).encode()
     try:
@@ -58,17 +59,19 @@ def _login() -> str | None:
     return _token
 
 
-def _get(params: dict) -> dict | None:
+def search(params: dict, gap: float = 0.5) -> dict | None:
+    """One searchPosts call: signed in when the secrets are set, otherwise the public endpoint."""
     global _last, _off
-    if not _login():
+    if _off:
         return None
-    wait = 1.0 - (time.time() - _last)
+    token = _login()
+    wait = gap - (time.time() - _last)
     if wait > 0:
         time.sleep(wait)
     _last = time.time()
+    url, headers = (API, {**UA, "Authorization": f"Bearer {token}"}) if token else (PUBLIC_API, UA)
     try:
-        with urllib.request.urlopen(urllib.request.Request(f"{API}?{urllib.parse.urlencode(params)}",
-                                                           headers={**UA, "Authorization": f"Bearer {_token}"}),
+        with urllib.request.urlopen(urllib.request.Request(f"{url}?{urllib.parse.urlencode(params)}", headers=headers),
                                     timeout=25) as r:
             return json.load(r)
     except urllib.error.HTTPError as e:
@@ -103,7 +106,7 @@ def talk(title: str, around: dt.date, kind: str | None = None) -> list[dict]:
             "lang": "en", "limit": 100}
     posts, cursor = [], None
     for _ in range(3):                                   # up to 300 posts is plenty to tell
-        d = _get({**base, "sort": "latest", **({"cursor": cursor} if cursor else {})})
+        d = search({**base, "sort": "latest", **({"cursor": cursor} if cursor else {})}, gap=1.0)
         if not d:
             break
         posts += d.get("posts") or []
@@ -137,9 +140,8 @@ def talk(title: str, around: dt.date, kind: str | None = None) -> list[dict]:
 
 
 def summary() -> str:
-    if not os.environ.get("BLUESKY_HANDLE"):
-        return "      Bluesky: no account set (BLUESKY_HANDLE, BLUESKY_APP_PASSWORD), skipped"
-    return f"      Bluesky: {STATS['searches']} searches, talk found for {STATS['found']}" + \
+    how = "signed in" if _token else "public search (no BLUESKY_HANDLE/BLUESKY_APP_PASSWORD set)"
+    return f"      Bluesky ({how}): {STATS['searches']} searches, talk found for {STATS['found']}" + \
         (f", {STATS['failed']} failed" if STATS["failed"] else "")
 
 

@@ -8,6 +8,7 @@ Open sources that need no API key, matched to works through Wikidata IDs:
   iTunes charts      top songs, albums and movies, US (itunes.apple.com RSS)      P10110 / P2281 / P6398
   Open Library       daily trending books (openlibrary.org)                         P648
   Project Gutenberg  most-downloaded ebooks, via Gutendex (gutendex.com)              P2034
+  ListenBrainz       most-listened songs and albums this week, all users (CC0)      P4404 / P436
 
 Chart positions, player counts and review totals are snapshots that can't be fetched after the
 fact, so every run records one and keeps it forever: site/data/signals/YYYY-MM.json, one file per
@@ -47,6 +48,12 @@ CHARTS = {                 # key: (label, url, Wikidata property for the chart's
     # Gutenberg's own top-100 page turns away automated requests; Gutendex is a public service
     # built on Gutenberg's catalog for exactly this, ranking books by downloads.
     "gutenberg": ("Project Gutenberg most downloaded", "https://gutendex.com/books/?sort=popular", "P2034", {"book"}),
+    # ListenBrainz (MetaBrainz): listening data is CC0. Its listeners are a small, music-keen crowd,
+    # so these back up a music comeback rather than decide one. Matched by MusicBrainz IDs.
+    "listenbrainz-songs": ("ListenBrainz most listened songs",
+                           "https://api.listenbrainz.org/1/stats/sitewide/recordings?range=week&count=500", "P4404", {"song"}),
+    "listenbrainz-albums": ("ListenBrainz most listened albums",
+                            "https://api.listenbrainz.org/1/stats/sitewide/release-groups?range=week&count=500", "P436", {"album"}),
 }
 STEAM_PLAYERS = "https://api.steampowered.com/ISteamUserStats/GetNumberOfCurrentPlayers/v1/?appid={}"
 STEAM_REVIEWS = "https://store.steampowered.com/appreviews/{}?json=1&num_per_page=0&language=all&purchase_type=all"
@@ -136,11 +143,25 @@ def _gutenberg(url):
     return rows
 
 
+def _listenbrainz(url):
+    """Sitewide weekly stats: songs (recording MBIDs) or albums (release group MBIDs)."""
+    d = _get(url)
+    payload = (d or {}).get("payload") or {}
+    rows = payload.get("recordings") or payload.get("release_groups") or []
+    out = []
+    for i, x in enumerate(rows, 1):
+        mbid = x.get("recording_mbid") or x.get("release_group_mbid")
+        if mbid:
+            out.append({"rank": i, "id": mbid, "name": x.get("track_name") or x.get("release_group_name") or "",
+                        "artist": (x.get("artist_name") or "")[:80], "year": ""})
+    return out
+
+
 def _charts() -> dict:
     out = {}
     for key, (label, url, _, _) in CHARTS.items():
         try:
-            rows = (_itunes if "itunes" in key
+            rows = (_itunes if "itunes" in key else _listenbrainz if "listenbrainz" in key
                     else _openlibrary if key == "openlibrary" else _gutenberg)(url)
         except Exception as e:
             log(f"      {label}: {e}")

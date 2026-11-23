@@ -112,12 +112,8 @@ def global_reach(results: list[dict], end: dt.date) -> None:
 # ---------- Bluesky ----------
 
 def _bsky(params: dict) -> dict | None:
-    url = f"{BSKY}?{urllib.parse.urlencode(params)}"
-    try:
-        with urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=30) as r:
-            return json.loads(r.read())
-    except Exception:
-        return None
+    import bluesky          # signs in with the app password when it's set (search without one is refused)
+    return bluesky.search(params, gap=0.3)
 
 
 def _rate(q: str, since: dt.datetime, until: dt.datetime) -> tuple[float, int] | None:
@@ -126,7 +122,6 @@ def _rate(q: str, since: dt.datetime, until: dt.datetime) -> tuple[float, int] |
     those 100 posts span rather than from a count (which would hit the cap)."""
     d = _bsky({"q": q, "limit": 100, "sort": "latest", "since": since.strftime("%Y-%m-%dT%H:%M:%SZ"),
                "until": until.strftime("%Y-%m-%dT%H:%M:%SZ")})
-    time.sleep(0.3)
     if d is None:
         return None
     posts = d.get("posts", [])
@@ -175,9 +170,10 @@ def chatter(results: list[dict], end: dt.date) -> None:
             post = ((d or {}).get("posts") or [None])[0]
             if post:
                 rkey = post["uri"].rsplit("/", 1)[-1]
-                best = {"url": f"https://bsky.app/profile/{post['author']['handle']}/post/{rkey}",
-                        "text": (post.get("record") or {}).get("text", "")[:240],
-                        "likes": post.get("likeCount", 0), "handle": post["author"]["handle"]}
+                # Link and like count only: posts belong to their writers and can be deleted, so
+                # their text and handles are never saved (Bluesky developer guideline 3).
+                best = {"url": f"https://bsky.app/profile/{post['author']['did']}/post/{rkey}",
+                        "likes": post.get("likeCount", 0)}
         r["chatter"] = {"week": week, "usual": round(usual * 7, 1),
                         "ratio": round(per_day / max(usual, 1 / 7), 1) if week else 0, "top": best}
     n = sum(1 for r in top if (r.get("chatter") or {}).get("ratio", 0) >= 2 and r["chatter"]["week"] >= 10)
