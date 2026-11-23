@@ -19,7 +19,7 @@ ENDPOINT = "https://api.indexnow.org/indexnow"
 
 
 def changed_urls(rng: str) -> list[str]:
-    files = subprocess.run(["git", "diff", "--name-only", rng, "--", "site/w", "site/week", "site/index.html"],
+    files = subprocess.run(["git", "diff", "--name-only", rng, "--", "site/w", "site/week", "site/report", "site/index.html"],
                            capture_output=True, text=True).stdout.split()
     urls = set()
     for f in files:
@@ -30,6 +30,9 @@ def changed_urls(rng: str) -> list[str]:
         elif f.startswith("site/week/") and f.endswith(".html"):
             name = f[10:-5]
             urls.add(f"https://{HOST}/week/" if name == "index" else f"https://{HOST}/week/{name}")
+        elif f.startswith("site/report/") and f.endswith(".html"):
+            name = f[12:-5]
+            urls.add(f"https://{HOST}/report/" if name == "index" else f"https://{HOST}/report/{name}")
     return sorted(urls)
 
 

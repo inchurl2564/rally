@@ -293,6 +293,8 @@ ul{padding-left:20px}li{margin:4px 0}
 svg.mini{width:100%;max-width:320px;height:36px;display:block;background:var(--paper-2)}
 svg.mini .area{fill:var(--tint)}svg.mini .line{fill:none;stroke:var(--red);stroke-width:2;vector-effect:non-scaling-stroke}
 svg.mini .base{stroke:var(--muted);stroke-dasharray:3 3;stroke-width:1;vector-effect:non-scaling-stroke}
+.bars{list-style:none;padding:0}.bars li{display:flex;align-items:center;gap:10px;margin:0 0 8px;flex-wrap:wrap}
+.bar-label{flex:0 0 120px}.bar{display:inline-block;height:14px;background:var(--red);border-radius:0 4px 4px 0;min-width:4px}
 .btn{display:inline-block;background:var(--red);color:var(--red-ink);font:700 13px/1 "Libre Franklin",sans-serif;text-transform:uppercase;letter-spacing:.06em;padding:13px 18px;text-decoration:none;margin:24px 0 8px}
 footer{margin-top:48px;padding:20px 0 40px;border-top:3px solid var(--ink);background:var(--paper-2);font-size:14px;color:var(--muted)}
 """
@@ -431,6 +433,164 @@ def _span(a: str, b: str) -> str:
     return f"{d1:%b %-d} – {d2:%b %-d, %Y}" if d1.year == d2.year else f"{d1:%b %-d, %Y} – {d2:%b %-d, %Y}"
 
 
+MONTH_CAUSE = {"death": "a death in the news", "legal": "legal headlines", "streaming": "a streaming debut",
+               "broadcast": "a TV or radio airing", "viral": "a viral moment online", "sync placement": "a placement in a show, ad or trailer",
+               "award": "awards buzz", "re-release": "a re-release or restoration", "remake/sequel news": "remake or sequel news",
+               "new season": "a new season or special", "anniversary": "an anniversary", "auction/sale": "a big auction or sale",
+               "sports/event": "a big live event", "politics": "politics"}
+MONTH_REASON = {"ripple": "In the news", "editor": "In the news", "coverage": "In the news", "honor": "In the news",
+                "derivative": "New release", "same-creator": "New release", "editor-release": "New release",
+                "death": "In memoriam", "editor-death": "In memoriam",
+                "anniversary": "Anniversary", "public domain": "Anniversary"}
+
+
+def month_pages(site: str, site_url: str, titles: set[str], hist: dict) -> list[tuple[str, str]]:
+    """The monthly Comeback Report (site/report/<2026-11>.html) and a list of every month: the month's
+    biggest comebacks, why things came back, by kind, and the biggest mysteries. Written for readers and
+    for journalists, who are free to cite it with a link. Returns (address, last updated) for the sitemap."""
+    e = html.escape
+    base = site_url.rstrip("/")
+    out_dir = os.path.join(site, "report")
+    os.makedirs(out_dir, exist_ok=True)
+    days, works, names = hist.get("days") or {}, hist.get("works") or {}, hist.get("names") or {}
+    runs = sorted(days)
+    if not runs:
+        return []
+    notes = {n.get("id"): n.get("note") or n.get("text") for n in _load(os.path.join(site, "..", "annotations.json"), [])} \
+        if os.path.exists(os.path.join(site, "..", "annotations.json")) else {}
+    months = sorted({r[:7] for r in runs})
+    link = lambda q, text: f'<a href="{e(base)}/w/{e(q)}">{e(text)}</a>' if q in titles else e(text)
+    # Groups of titles sharing a person, with the reason found for the group (as the site shows them).
+    group_why: dict[tuple[str, str], str] = {}
+    for r in runs:
+        run = _load(os.path.join(site, "data", "runs", f"{r}.json"), {}) or {}
+        for t in run.get("common_threads") or []:
+            if t.get("editor_note"):
+                why = t["editor_note"]["text"]
+            elif t.get("cause"):
+                why = f"{t['name']} is in the news ({MONTH_CAUSE.get(t['cause'], t['cause'])})"
+            elif t.get("person_jump"):
+                why = f"Interest in {t['name']} jumped {t['person_jump']['ratio']}× at the same time"
+            else:
+                continue
+            for w in t.get("works") or []:
+                group_why[(r, w.get("qid"))] = why
+
+    def reason_of(q, ep, rows_runs):
+        """(category, why) for an episode, counting a group's reason for its titles."""
+        if ep["verdict"] == "common thread":
+            why = next((group_why[(r, q)] for r in reversed(rows_runs) if (r, q) in group_why), None)
+            return ("In the news", why) if why else ("Unexplained", None)
+        why = None
+        for c in ep.get("causes") or []:
+            if c[0] == "coverage" and c[2]:
+                why = f"It looks like {MONTH_CAUSE.get(c[2], c[2])}"
+            elif c[0] in ("derivative", "same-creator") and names.get(c[1]) == works[q][0]:
+                when = f" ({dt.date.fromisoformat(c[3]):%b %-d, %Y})" if c[3] else ""
+                why = f"A new version with the same name{when}"      # a remake that reuses the title
+            elif c[0] != "common thread":
+                why = _cause_text(c, names, notes)
+            if why:
+                break
+        return MONTH_REASON.get(ep["verdict"], "Unexplained"), why
+
+    done = []
+    for i, month in enumerate(months):
+        mruns = [r for r in runs if r[:7] == month]
+        qids = {q for r in mruns for q in days[r]}
+        eps = []
+        for q in qids:
+            for ep in episodes_of(q, days, runs):
+                if ep["first_seen"][:7] == month or (ep["last_seen"][:7] == month and ep["first_seen"] < month):
+                    eps.append((q, ep))
+        eps = [(q, ep) for q, ep in eps if ep["verdict"] not in SET_ASIDE and q in works]
+        span_runs = lambda ep: [r for r in runs if ep["first_seen"] <= r <= ep["last_seen"]]
+        why_of = {q: reason_of(q, ep, span_runs(ep)) for q, ep in eps}
+        if not eps:
+            continue
+        label = lambda q: works[q][0]
+        year = lambda q: works[q][2]
+        kind = lambda q: works[q][1]
+        # Biggest: one line per reason, so one sequel lifting a whole series counts once ("and 9 more").
+        groups: dict[str, list] = {}
+        for q, ep in sorted(eps, key=lambda x: (-(x[1].get("score") or 0), -x[1]["peak_lift"])):
+            c = (ep.get("causes") or [[None, None]])[0]
+            key = f"{c[0]}:{c[1]}" if c[0] in ("derivative", "same-creator", "death", "honor", "common thread") and c[1] else q
+            groups.setdefault(key, []).append((q, ep))
+        top = sorted(groups.values(), key=lambda g: -(g[0][1].get("score") or 0))[:10]
+        items = []
+        for g in top:
+            q, ep = g[0]
+            why = why_of[q][1]
+            more = f" and {len(g) - 1} more title{'s' if len(g) > 2 else ''}" if len(g) > 1 else ""
+            doc = _load(os.path.join(site, "data", "works", f"{q}.json"), {}) or {}
+            items.append(f'<li><h3>{link(q, f"{label(q)} ({year(q)})")}{e(more)}</h3>'
+                         f'<p>The {e(str(year(q)))} {e(NOUN.get(kind(q), kind(q)))} reached {ep["peak_lift"]}× its usual interest'
+                         f' from {_day(ep["start"])}. {e("Why: " + _sentence(why)) if why else "Why: we don’t know yet."}</p>'
+                         f'{_spark((doc.get("spark") or [])[-45:], doc.get("baseline"))}</li>')
+        # Why things came back
+        tally: dict[str, int] = {}
+        for q, ep in eps:
+            tally[why_of[q][0]] = tally.get(why_of[q][0], 0) + 1
+        total = sum(tally.values())
+        order = ["New release", "In the news", "In memoriam", "Anniversary", "Unexplained"]
+        bars = "".join(f'<li><span class="bar-label">{e(k)}</span><span class="bar" style="width:{max(2, round(60 * tally[k] / total))}%"></span>'
+                       f' <span class="small">{tally[k]:,} ({round(100 * tally[k] / total)}%)</span></li>'
+                       for k in order if tally.get(k))
+        by_kind: dict[str, int] = {}
+        for q, ep in eps:
+            by_kind[kind(q)] = by_kind.get(kind(q), 0) + 1
+        plural = lambda w, n: w if n == 1 or w.endswith("series") else w + "s"
+        kinds = ", ".join(f"{n:,} {plural(NOUN.get(k, k), n)}" for k, n in sorted(by_kind.items(), key=lambda x: -x[1]))
+        myst = sorted([(q, ep) for q, ep in eps if why_of[q][0] == "Unexplained"], key=lambda x: -x[1]["peak_lift"])[:5]
+        first, last = dt.date.fromisoformat(month + "-01"), dt.date.fromisoformat(mruns[-1])
+        mname = f"{first:%B %Y}"
+        open_month = (last + dt.timedelta(days=1)).month == last.month
+        canon = f"{base}/report/{month}"
+        title = f"{mname} in comebacks: the Comeback Report | The Rallyback"
+        lead = ", ".join(label(g[0][0]) for g in top[:3])
+        desc = f"The old movies, shows, songs, games and books people went back to in {mname}, and why. Led by {lead}."
+        parts = ['<p class="kicker">The Comeback Report</p>', f"<h1>{e(mname)} in comebacks</h1>",
+                 f'<p class="dek">{total:,} older titles drew unusual interest {"so far this month" if open_month else "this month"}: '
+                 f'{e(kinds)}. Here’s what came back, and why.</p>']
+        if open_month:
+            parts.append(f'<p class="small">This month isn’t over: updated {_day(mruns[-1])}, every morning until the end of {first:%B}.</p>')
+        parts.append("<h2>The 10 biggest comebacks</h2><ol class='ranked'>" + "".join(items) + "</ol>")
+        parts.append("<h2>Why things came back</h2><ul class='bars'>" + bars + "</ul>"
+                     "<p class='small'>New release: a sequel, remake, adaptation or new work by the same people. In the news: a news story, "
+                     "award or event. Unexplained: nothing on record explains it yet.</p>")
+        if myst:
+            parts.append("<h2>The biggest mysteries</h2><ul>" + "".join(
+                f"<li>{link(q, f'{label(q)} ({year(q)})')}: {ep['peak_lift']}× its usual interest from {_day(ep['start'])}</li>" for q, ep in myst)
+                + f'</ul><p><a href="{e(base)}/?tab=mysteries">Know why? Tell us</a>.</p>')
+        parts.append('<h2>About these numbers</h2><p class="small">Interest is measured from daily Wikipedia page views against each '
+                     'title’s usual level; reasons come from Wikidata, Wikipedia, news data and charts (see the sources on each title’s page). '
+                     'Journalists and writers are welcome to quote this report with a link to The Rallyback.</p>')
+        nav = []
+        if i > 0:
+            nav.append(f'<a href="{e(base)}/report/{months[i - 1]}">← {dt.date.fromisoformat(months[i - 1] + "-01"):%B %Y}</a>')
+        nav.append(f'<a href="{e(base)}/report/">Every month</a>')
+        if i < len(months) - 1:
+            nav.append(f'<a href="{e(base)}/report/{months[i + 1]}">{dt.date.fromisoformat(months[i + 1] + "-01"):%B %Y} →</a>')
+        parts.append(f'<a class="btn" href="https://therallyback.beehiiv.com/subscribe" rel="noopener">Get the comebacks every Friday, free</a>'
+                     f'<p class="small">{" · ".join(nav)}</p>')
+        ld = {"@context": "https://schema.org", "@type": "Article", "headline": title.replace(" | The Rallyback", ""),
+              "url": canon, "description": desc, "datePublished": month + "-01", "dateModified": mruns[-1], "inLanguage": "en",
+              "image": f"{base}/og.png", "author": {"@type": "Organization", "name": "The Rallyback", "url": base + "/"},
+              "publisher": {"@type": "Organization", "name": "The Rallyback", "url": base + "/"}}
+        _write_if_changed(os.path.join(out_dir, f"{month}.html"), _shell(base, title, desc, canon, f"{base}/og.png", ld, parts))
+        done.append((canon, mruns[-1], mname, total, lead))
+    rows = "".join(f'<li><a href="{e(c)}">{e(n)}</a> <span class="small">· {t:,} titles: {e(l)}</span></li>' for c, _, n, t, l in reversed(done))
+    ld = {"@context": "https://schema.org", "@type": "CollectionPage", "name": "The Comeback Report, every month", "url": f"{base}/report/"}
+    _write_if_changed(os.path.join(out_dir, "index.html"), _shell(
+        base, "The Comeback Report, every month | The Rallyback",
+        "Each month's biggest comebacks of older movies, shows, songs, games and books, and why they came back.",
+        f"{base}/report/", f"{base}/og.png", ld,
+        ['<p class="kicker">The Comeback Report</p>', "<h1>Every month in comebacks</h1>",
+         '<p class="dek">The biggest comebacks each month, and why, newest first.</p>', f"<ul>{rows}</ul>"], og_type="website"))
+    return [(f"{base}/report/", done[-1][1] if done else "")] + [(c, d) for c, d, *_ in reversed(done)]
+
+
 def week_pages(site: str, site_url: str, titles: set[str]) -> list[tuple[str, str]]:
     """A permanent, readable page per week (site/week/<2026-W47>.html) and a list of every week.
     Returns (address, last updated) pairs for the sitemap."""
@@ -558,7 +718,7 @@ def pages(site: str, site_url: str, qids: list[str], hist: dict) -> None:
             f.write(page)
     base = site_url.rstrip("/")
     if base:
-        weeks = week_pages(site, site_url, set(docs))
+        weeks = week_pages(site, site_url, set(docs)) + month_pages(site, site_url, set(docs), hist)
         urls = [f"  <url><loc>{base}/</loc></url>"] + [
             f"  <url><loc>{u}</loc>{f'<lastmod>{d}</lastmod>' if d else ''}</url>" for u, d in weeks] + [
             f"  <url><loc>{base}/w/{q}</loc><lastmod>{d.get('updated') or d['episodes'][-1]['last_seen']}</lastmod></url>"
