@@ -109,6 +109,9 @@ def added_text(title: str, around: dt.date) -> list[dict]:
 
     # A sentence that only gives old dates ("released on August 5, 1994") is old news re-added.
     added = [e for e in added if recent(e) or not _dates_in(e["text"])]
+    # Without a reference, a sentence counts only if it dates itself near the comeback: plot
+    # summaries and themes ("since Abel died") are rewritten all the time and say nothing about now.
+    added = [e for e in added if e["source"] == "Wikipedia (cited)" or recent(e)]
     if len(added) > 3:
         added = [e for e in added if recent(e)]
     return added

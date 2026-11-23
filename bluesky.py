@@ -133,7 +133,7 @@ def talk(title: str, around: dt.date, kind: str | None = None) -> list[dict]:
          "url": "https://bsky.app/search?" + urllib.parse.urlencode({"q": f'"{name}"'}), "posts": len(posts)}
     if votes:
         cause, n = votes.most_common(1)[0]
-        if n >= 3:                                       # several popular posts agree on why
+        if n >= 5:                                       # several popular posts agree on why
             e["cause"] = cause
     STATS["found"] += 1
     return [e]

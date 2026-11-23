@@ -1119,7 +1119,7 @@ def cause_link(cause: str | None, evidence: list[dict] | None, start: dt.date | 
     hits = []
     for e in evidence:
         url = e.get("url")
-        if not url or "wikipedia.org" in url or (rx is not None and not rx.search(e.get("text", ""))
+        if not url or "wikipedia.org" in url or "bsky.app" in url or (rx is not None and not rx.search(e.get("text", ""))
                                                     and e.get("cause") != cause):
             continue
         published = dt.date.fromisoformat(e["published"][:10]) if e.get("published") else url_date(url)
@@ -1262,7 +1262,7 @@ def main():
     ap.add_argument("--bulk-new-days", type=int, default=28,
                     help="max bulk pageview files to download in one run (~1 min each; later runs need 1)")
     ap.add_argument("--no-news", action="store_true", help="skip news lookups (news sites' feeds, Google News)")
-    ap.add_argument("--explain-max", type=int, default=30, help="max unexplained spikes to research per run")
+    ap.add_argument("--explain-max", type=int, default=100, help="max unexplained spikes to research per run")
     ap.add_argument("--site-url", default="https://therallyback.com/",
                     help="the site's official address, used in feeds, share links and title pages")
     args = ap.parse_args()
