@@ -102,6 +102,10 @@ def _cause_text(c: list, names: dict, notes: dict) -> str | None:
         return f"{(detail or 'New release')[0].upper()}{(detail or 'new release')[1:]}: {who}{when}"
     if kind == "anniversary":
         return f"{(detail or 'Anniversary')[0].upper()}{(detail or 'anniversary')[1:]}{when}"
+    if kind == "public domain":
+        return f"Entered the public domain{when}"
+    if kind == "honor" and detail:
+        return f"{detail[0].upper()}{detail[1:]}" + (f" ({date[:4]})" if date else "")
     if kind == "ripple" and who:
         return f"News about {who}{f' ({detail})' if detail else ''}{when}"
     if kind == "common thread" and who:            # a shared person, not a known reason
@@ -115,7 +119,7 @@ def _cause_text(c: list, names: dict, notes: dict) -> str | None:
 
 def _causes(eps_causes: list, names: dict, notes: dict) -> list[str]:
     seen, out = set(), []
-    order = {"note": 0, "death": 1, "derivative": 2, "same-creator": 3, "ripple": 4, "coverage": 5, "anniversary": 6, "common thread": 7}
+    order = {"note": 0, "death": 1, "derivative": 2, "same-creator": 3, "ripple": 4, "coverage": 5, "anniversary": 6, "public domain": 6, "honor": 4, "common thread": 7}
     for c in sorted(eps_causes, key=lambda c: order.get(c[0], 9)):
         t = _cause_text(c, names, notes)
         if t and t not in seen:
@@ -217,10 +221,10 @@ def build(site: str, site_url: str = "") -> None:
 
 REASON = {**{v: "In the news" for v in ("ripple", "editor", "coverage")},
           **{v: "New release" for v in ("derivative", "same-creator", "editor-release")},
-          **{v: "In memoriam" for v in ("death", "editor-death")}, "anniversary": "Anniversary",
+          **{v: "In memoriam" for v in ("death", "editor-death")}, "anniversary": "Anniversary", "public domain": "Anniversary", "honor": "In the news",
           **{v: "Unexplained" for v in UNEXPLAINED}, **{v: "Set aside" for v in SET_ASIDE}}
 CONFIDENCE = {**{v: ("Confirmed", "an editor checked the reason against a published source") for v in ("editor", "editor-release", "editor-death")},
-              **{v: ("Likely", "a matching event is on record at the right time") for v in ("death", "derivative", "same-creator", "anniversary")},
+              **{v: ("Likely", "a matching event is on record at the right time") for v in ("death", "derivative", "same-creator", "anniversary", "public domain", "honor")},
               **{v: ("Possible", "inferred from news headlines, Wikipedia edits or a related page jumping") for v in ("ripple", "coverage")}}
 NOUN = {"manga/comic": "comic"}
 SCHEMA_TYPE = {"film": "Movie", "TV series": "TVSeries", "song": "MusicRecording", "album": "MusicAlbum",
@@ -730,7 +734,8 @@ def weekly(site: str, hist: dict, runs: list[str], latest: dict) -> None:
     reason = {"ripple": "news", "editor": "news", "coverage": "news", "derivative": "release", "same-creator": "release",
               "editor-release": "release", "editor-death": "memoriam",
               "unexplained": "unexplained", "weak link": "unexplained", "lookup failed": "unexplained",
-              "common thread": "unexplained", "death": "memoriam", "anniversary": "anniversary"}
+              "common thread": "unexplained", "death": "memoriam", "anniversary": "anniversary",
+              "public domain": "anniversary", "honor": "news"}
     per_day = []
     for i in range(7):
         day = (monday + dt.timedelta(days=i)).isoformat()

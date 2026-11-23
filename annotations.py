@@ -317,7 +317,7 @@ def apply(results: list[dict], threads: list[dict]) -> None:
             rip = (r.get("ripple") or {}).get("name", "").lower()
             if r.get("label", "").lower() in works or r["qid"] in n.get("qids", []) or (rip and rip in names):
                 r["editor_note"] = note
-                if r["verdict"] not in ("death", "derivative", "same-creator", "anniversary"):
+                if r["verdict"] not in ("death", "derivative", "same-creator", "anniversary", "public domain", "honor"):
                     r["verdict"] = EDITOR_VERDICT.get(note["cause"], "editor")
         for t in threads:
             if t["name"].lower() in names and lo <= t["around"] <= hi:

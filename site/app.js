@@ -124,6 +124,22 @@ function storyText(r) {
       return { kicker: "Happy Birthday", hed: `${w} turns ${yrs}`,
         dek: `The ${n} came out on ${fmtDate(r.release)}, and people are marking the occasion: ${x} its usual interest.` };
     }
+    case "public domain": {
+      const life = t.text.match(/: (.+?) \(([^)]+)\) died in (\d{4})/);
+      return { kicker: "Public Domain Day", hed: `${w} is now free for anyone to use`,
+        dek: life
+          ? `${life[1]}, its ${life[2]}, died in ${life[3]}, so on January 1 the ${n} entered the public domain in the UK, the EU and many other countries. Interest is at ${x} its usual level.`
+          : `On January 1 the ${yr} ${n} entered the US public domain, so anyone can now publish, adapt or perform it. Interest is at ${x} its usual level.` };
+    }
+    case "honor": {
+      const when = t.approx ? `in ${t.date.slice(0, 4)}` : `on ${fmtDate(t.date)}`;
+      const person = t.text.match(/^(.+?) \(([^)]+)\): (.+)$/);
+      if (person) return { kicker: "Hall of Fame", hed: `${w} is back as ${person[1]} is honored`,
+        dek: `${person[1]}, its ${person[2]}, received the ${person[3]} ${when}. The ${yr} ${n} is drawing ${x} its usual interest.` };
+      const added = t.text.startsWith("added to the "), what = t.text.replace(/^(added to|received) the /, "");
+      return { kicker: "Hall of Fame", hed: added ? `${w} joins the ${what}` : `${w} receives the ${what}`,
+        dek: `The ${yr} ${n} was ${added ? "added to" : "awarded"} the ${what} ${when}, and interest is at ${x} its usual level.` };
+    }
     case "common thread": {
       const who = t.text.split(" (")[0], k = (t.text.match(/credited on (\d+)/) || [])[1];
       // If its group is explained (an editor's note, the person's own spike, a likely cause), say so.
@@ -502,11 +518,11 @@ function link(r, ...kids) { return h("a", { href: `#w-${r.qid}`, onclick: (e) =>
 // The five reasons an old favorite comes back. One vocabulary for the chart, story labels, top 10 and filters.
 // Colors: fixed validated palette slots, in this order (never re-assigned by rank).
 const STREAM_TYPES = [
-  { key: "news", label: "In the news", color: "var(--s1)", verdicts: ["ripple", "editor", "coverage"] },
+  { key: "news", label: "In the news", color: "var(--s1)", verdicts: ["ripple", "editor", "coverage", "honor"] },
   { key: "release", label: "New release", color: "var(--s2)", verdicts: ["derivative", "same-creator", "editor-release"] },
   { key: "unexplained", label: "Unexplained", color: "var(--s3)", verdicts: ["unexplained", "weak link", "lookup failed", "common thread"] },
   { key: "memoriam", label: "In memoriam", color: "var(--s4)", verdicts: ["death", "editor-death"] },
-  { key: "anniversary", label: "Anniversary", color: "var(--s5)", verdicts: ["anniversary"] },
+  { key: "anniversary", label: "Anniversary", color: "var(--s5)", verdicts: ["anniversary", "public domain"] },
 ];
 const SET_ASIDE = { seasonal: "Seasonal", "automated?": "Likely bots", "front page": "Wikipedia feature" };
 const OTHER = { key: "other", label: "Set aside", color: "var(--s-other)" };
@@ -803,7 +819,7 @@ function todayPage() {
   // Lead with a story people will recognise: a real everyday audience, ideally a picture.
   const known = L.slice(0, 25).filter((r) => r.baseline >= 100);
   // Prefer a story we can actually tell (a named cause) over a mystery.
-  const told = (r) => ["editor", "editor-release", "editor-death", "death", "derivative", "ripple", "same-creator", "anniversary"].includes(r.verdict);
+  const told = (r) => ["editor", "editor-release", "editor-death", "death", "derivative", "ripple", "same-creator", "anniversary", "public domain", "honor"].includes(r.verdict);
   const lead = known.find((r) => told(r) && r.image) || known.find((r) => r.image) || known[0] ||
     L.find((r) => r.image) || L[0];
   const rest = L.filter((r) => r !== lead);
@@ -1705,7 +1721,7 @@ function confidenceOf(r) {
   if (r.editor_note) return "Confirmed";
   const k = reasonOf(r).key;
   if (k === "unexplained" || FILTERED.has(r.verdict)) return null;
-  return ["death", "derivative", "same-creator", "anniversary"].includes(r.verdict) ? "Likely" : "Possible";
+  return ["death", "derivative", "same-creator", "anniversary", "public domain", "honor"].includes(r.verdict) ? "Likely" : "Possible";
 }
 const confidenceTag = (r) => { const c = confidenceOf(r); return c ? h("span", { class: `conf conf-${c.toLowerCase()}`, title: CONFIDENCE[c] }, c) : null; };
 

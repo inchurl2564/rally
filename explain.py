@@ -186,6 +186,12 @@ def explain(project: str, title: str, query: str, around: dt.date, with_news: bo
     wiki += edit_summaries(title, around)
     if likely_cause(ev + wiki) is None:                  # one more page read, only when still unexplained
         wiki += annotations.dated_sentences(title, around)  # "premiered on 14 November 2026", whenever added
+    if video and with_news and not person:
+        try:                                          # today's trending chart: free, read once a night
+            import youtube
+            ev = youtube.trending_match(query, kind) + ev
+        except Exception as e:
+            print(f"      YouTube trending check failed for {query}: {e}", file=sys.stderr)
     if video and with_news and not person and likely_cause(ev + wiki) is None:
         # No reason in the news or on Wikipedia: a trailer, viral clip or video essay often is one.
         try:
@@ -205,7 +211,7 @@ def corroborates(trigger: dict, evidence: list[dict]) -> bool | None:
     name = trigger["text"].split(":")[-1].split(" (")[0].replace(" died", "").strip().lower()
     if name and len(name) > 3 and name in text:
         return True
-    want = {"death": "death", "anniversary": "anniversary", "derivative": "remake/sequel news",
+    want = {"death": "death", "anniversary": "anniversary", "honor": "award", "derivative": "remake/sequel news",
             "same-creator": "remake/sequel news"}.get(trigger["type"])
     return bool(want and likely_cause(evidence) == want)
 

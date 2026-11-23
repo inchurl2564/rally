@@ -24,7 +24,7 @@ import archive
 
 NEED = {"staying": 20, "lead": 30, "star": 25, "calibration": 100}
 CAUSE = {"death": "A death", "derivative": "A new release", "same-creator": "A new release",
-         "anniversary": "An anniversary", "editor": "News", "editor-release": "A new release", "editor-death": "A death", "coverage": "News", "ripple": "News",
+         "anniversary": "An anniversary", "public domain": "Public Domain Day", "honor": "An honor", "editor": "News", "editor-release": "A new release", "editor-death": "A death", "coverage": "News", "ripple": "News",
          "common thread": "Unexplained", "unexplained": "Unexplained", "weak link": "Unexplained", "lookup failed": "Unexplained"}
 PERSON_CAUSES = ("death", "ripple", "common thread", "same-creator")
 

@@ -32,7 +32,7 @@ MIN_VIEWS = 100_000          # smaller videos rarely move a title's Wikipedia tr
 VIRAL_VIEWS = 1_000_000      # a video this big with no other reason in its title counts as "viral"
 KIND_NOUN = {"film": "movie", "TV series": "series", "song": "song", "album": "album", "musical": "musical",
              "video game": "game", "book": "book", "manga/comic": "manga"}
-STATS = {"searches": 0, "found": 0, "failed": 0}
+STATS = {"searches": 0, "found": 0, "failed": 0, "trending": 0, "trending_found": 0}
 _off = False
 
 
@@ -127,6 +127,76 @@ def search(title: str, around: dt.date, kind: str | None = None, n: int = 3) -> 
     return out
 
 
+TRENDING_REGIONS = ("US", "GB", "CA", "AU")
+TRENDING_CATEGORIES = {"10": "Music", "1": "Film & Animation", "24": "Entertainment", "20": "Gaming"}
+_trending: list[dict] | None = None
+
+
+def trending() -> list[dict]:
+    """YouTube's most-popular chart, once a run: 4 countries x 4 categories, 50 videos each
+    (1 quota unit per call, 16 in all). Kept in memory only, like everything else here."""
+    global _trending
+    if _trending is not None:
+        return _trending
+    _trending = []
+    key = _key()
+    if not key:
+        return _trending
+    seen: dict[str, dict] = {}
+    for region in TRENDING_REGIONS:
+        for cat in TRENDING_CATEGORIES:
+            url = f"{API}/videos?" + urllib.parse.urlencode({"part": "snippet,statistics", "chart": "mostPopular",
+                                                             "regionCode": region, "videoCategoryId": cat,
+                                                             "maxResults": 50, "key": key})
+            try:
+                with urllib.request.urlopen(url, timeout=30) as r:
+                    items = json.load(r).get("items") or []
+            except Exception:
+                continue                 # some category/country charts don't exist; that's fine
+            for it in items:
+                v = seen.setdefault(it["id"], {"id": it["id"], "title": _unescape(it["snippet"].get("title", "")),
+                                               "channel": _unescape(it["snippet"].get("channelTitle", "")),
+                                               "published": it["snippet"].get("publishedAt", "")[:10],
+                                               "views": int(it.get("statistics", {}).get("viewCount", 0) or 0),
+                                               "category": cat, "regions": []})
+                if region not in v["regions"]:
+                    v["regions"].append(region)
+    _trending = list(seen.values())
+    STATS["trending"] = len(_trending)
+    return _trending
+
+
+def _segment_match(name: str, video_title: str) -> bool:
+    """A one-word title must be a whole part of the video title ("Looker (1981)"), or in quotes:
+    "Arthur" inside "James Arthur - Impossible" is someone's name, not the film."""
+    if " " in name:
+        return True
+    parts = re.split(r"\s+[-–—|x×]\s+|[|()\[\]:,]", video_title)
+    if any(p.strip().lower() == name.lower() for p in parts):
+        return True
+    return bool(re.search(r"[\"'‘“]" + re.escape(name) + r"[\"'’”]", video_title, re.I))
+
+
+def trending_match(title: str, kind: str | None = None) -> list[dict]:
+    """Videos on today's trending chart that name this title (same rules as search(), and a
+    one-word title must stand on its own in the video title)."""
+    name = _name(title)
+    if len(name) < 5:
+        return []
+    out = []
+    for v in trending():
+        if not _matches(name, v["title"], kind) or not _segment_match(name, v["title"]):
+            continue
+        e = {"source": f"YouTube trending · {v['channel']}", "date": dt.date.today().isoformat(), "published": v["published"],
+             "text": f"On YouTube's trending list ({', '.join(v['regions'])}): {v['title']} ({v['views']:,} views)"[:200],
+             "url": f"https://www.youtube.com/watch?v={v['id']}", "views": v["views"], "video": True}
+        if v["category"] == "10" and kind in ("song", "album"):
+            e["cause"] = "viral"            # an old song's video on the music chart: the internet at work
+        out.append(e)
+    STATS["trending_found"] += bool(out)
+    return out[:2]
+
+
 def _unescape(s: str) -> str:
     import html
     return html.unescape(s or "")
@@ -135,7 +205,8 @@ def _unescape(s: str) -> str:
 def summary() -> str:
     if not _key():
         return "      YouTube: no key set (YOUTUBE_API_KEY), skipped"
-    return f"      YouTube: {STATS['searches']} searches, videos found for {STATS['found']}" + \
+    return f"      YouTube: {STATS['trending']} trending videos read, matched for {STATS['trending_found']}; " \
+        f"{STATS['searches']} searches, videos found for {STATS['found']}" + \
         (f", {STATS['failed']} failed" if STATS["failed"] else "")
 
 

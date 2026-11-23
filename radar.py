@@ -35,6 +35,7 @@ import hashlib
 import html
 import json
 import math
+import re
 import os
 import statistics
 import sys
@@ -367,7 +368,8 @@ def find_triggers(works: list[dict], since: dt.date, batch: int = 12) -> None:
         w["triggers"] = []
     for i in range(0, len(works), batch):
         chunk = works[i:i + batch]
-        for name, fn in (("deaths", _deaths), ("derivatives", _derivatives), ("same-creator", _same_creator)):
+        for name, fn in (("deaths", _deaths), ("derivatives", _derivatives), ("same-creator", _same_creator),
+                         ("honors", _honors), ("public domain", _public_domain_people)):
             try:
                 fn(chunk, since)
             except Exception as e:  # Wikidata's 60s query limit; don't let one batch sink the run
@@ -465,6 +467,124 @@ def _same_creator(works, since):
         })
 
 
+# Registries and halls of fame Wikidata records as "part of" with a start date, not as an award.
+REGISTRIES = {"Q823422": "National Film Registry", "Q253299": "National Recording Registry"}
+# Honors to a credited person that send people back to their work (a career award, an induction).
+# Everyday awards (a film festival prize for a new film) are left out.
+PERSON_HONOR = re.compile(r"hall of fame|kennedy center honors|lifetime achievement|honorary|presidential medal|"
+                          r"nobel prize|national medal of arts|polar music prize|afi life|bafta fellowship|"
+                          r"cecil b\. demille|irving g\. thalberg|gershwin prize|pulitzer prize", re.I)
+HONOR_PEOPLE = ["P175", "P50", "P57", "P170", "P86", "P676"]
+# Honors Wikidata often dates only to the year, with the month they're always announced in.
+HONOR_MONTH = [(re.compile(r"^Nobel Prize", re.I), 10), (re.compile(r"Kennedy Center Honors", re.I), 12),
+               (re.compile(r"^Pulitzer Prize", re.I), 5), (re.compile(r"Rock and Roll Hall of Fame", re.I), 4)]
+
+
+def _honor_date(date: str, prec: int, label: str) -> tuple[str, bool]:
+    """(date, approximate?) for an honor: a year-only date moves to the honor's usual month."""
+    if prec >= 10:
+        return date[:10], False
+    for rx, month in HONOR_MONTH:
+        if rx.search(label):
+            return f"{date[:4]}-{month:02d}-01", True
+    return date[:10], True
+
+
+def _honors(works, since):
+    """Awards and designations dated near the comeback: the work joining the National Film
+    Registry or the Grammy Hall of Fame, or someone behind it getting a career honor. Many are
+    dated only to the year (Wikidata stores 1 January), so those are marked approximate."""
+    values, by_q, _ = _prep(works, since)
+    lit = f'"{(since - dt.timedelta(days=400)).isoformat()}T00:00:00Z"^^xsd:dateTime'
+    regs = " ".join(f"wd:{q}" for q in REGISTRIES)
+    q = f"""
+    SELECT DISTINCT ?item ?h ?hLabel ?date ?prec ?how WHERE {{
+      VALUES ?item {{ {values} }}
+      {{ ?item p:P166 ?st . ?st ps:P166 ?h . ?st pqv:P585 [ wikibase:timeValue ?date; wikibase:timePrecision ?prec ] . BIND("received" AS ?how) }}
+      UNION {{ ?item p:P1435 ?st . ?st ps:P1435 ?h . ?st pqv:P580 [ wikibase:timeValue ?date; wikibase:timePrecision ?prec ] . BIND("added" AS ?how) }}
+      UNION {{ VALUES ?h {{ {regs} }} ?item p:P361 ?st . ?st ps:P361 ?h . ?st pqv:P580 [ wikibase:timeValue ?date; wikibase:timePrecision ?prec ] . BIND("added" AS ?how) }}
+      FILTER(?date >= {lit})
+      SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en,mul". }}
+    }}"""
+    for row in sparql(q):
+        w = by_q[qid(v(row, "item"))]
+        label = v(row, "hLabel")
+        if not label or re.fullmatch(r"Q\d+", label):
+            continue
+        how = v(row, "how")
+        if how == "received" and re.search(r"hall of fame", label, re.I):
+            how = "added"
+        day, approx = _honor_date(v(row, "date"), int(v(row, "prec") or 11), label)
+        w["triggers"].append({
+            "type": "honor", "date": day, "weight": 2,
+            "text": f"{'added to the' if how == 'added' else 'received the'} {label}",
+            "qid": qid(v(row, "h")), "approx": approx,
+        })
+    props = " ".join(f"wdt:{p}" for p in HONOR_PEOPLE)
+    q = f"""
+    SELECT DISTINCT ?item ?prop ?p ?pLabel ?h ?hLabel ?date ?prec WHERE {{
+      VALUES ?item {{ {values} }}
+      VALUES ?prop {{ {props} }}
+      ?item ?prop ?p .
+      ?p p:P166 ?st . ?st ps:P166 ?h . ?st pqv:P585 [ wikibase:timeValue ?date; wikibase:timePrecision ?prec ] .
+      FILTER(?date >= {lit})
+      SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en,mul". }}
+    }} LIMIT 2000"""
+    for row in sparql(q):
+        label = v(row, "hLabel") or ""
+        if not PERSON_HONOR.search(label):
+            continue
+        w = by_q[qid(v(row, "item"))]
+        role, _ = CREDIT_PROPS[qid(v(row, "prop"))]
+        day, approx = _honor_date(v(row, "date"), int(v(row, "prec") or 11), label)
+        w["triggers"].append({
+            "type": "honor", "date": day, "weight": 2,
+            "text": f"{v(row, 'pLabel')} ({role}): {label}",
+            "qid": qid(v(row, "p")), "approx": approx,
+        })
+
+
+def _public_domain_people(works, since, year: int | None = None):
+    """Public Domain Day, life + 70 rule (UK, EU and many other countries): on 1 January, the
+    work of authors and composers who died 70 years earlier becomes free to use. Only looked up
+    in December to mid-February, when such a comeback could start."""
+    today = dt.date.today()
+    if year is None:
+        if today.month not in (12, 1, 2):
+            return
+        year = today.year + (1 if today.month == 12 else 0)    # the 1 January in question
+    values, by_q, _ = _prep(works, since)
+    q = f"""
+    SELECT DISTINCT ?item ?prop ?p ?pLabel ?died WHERE {{
+      VALUES ?item {{ {values} }}
+      VALUES ?prop {{ wdt:P50 wdt:P86 wdt:P676 }}
+      ?item ?prop ?p .
+      ?p wdt:P570 ?died .
+      FILTER(YEAR(?died) = {year - 71})
+      SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en,mul". }}
+    }}"""
+    for row in sparql(q):
+        w = by_q[qid(v(row, "item"))]
+        role, _ = CREDIT_PROPS[qid(v(row, "prop"))]
+        w["triggers"].append({
+            "type": "public domain", "date": f"{year}-01-01", "weight": 3,
+            "text": f"entered the public domain in the UK, EU and elsewhere: {v(row, 'pLabel')} ({role}) died in {year - 71}",
+            "qid": qid(v(row, "p")),
+        })
+
+
+def _public_domain_us(w: dict) -> dict | None:
+    """US rule: published works enter the public domain on 1 January, 95 years after the year of
+    publication (sound recordings: 100 years)."""
+    r = w.get("release")
+    if not r or (w.get("release_prec") or 0) < 9:
+        return None
+    years = 100 if w.get("kind") in ("song", "album") else 95
+    day = dt.date(r.year + years + 1, 1, 1)
+    return {"type": "public domain", "date": day.isoformat(), "weight": 3, "qid": None,
+            "text": f"entered the US public domain ({'recorded' if years == 100 else 'published'} in {r.year}, {years} years ago)"}
+
+
 def annotate(w: dict) -> None:
     """Keep triggers that land near the spike start; add anniversaries; pick a verdict."""
     s = w["spike_start"]
@@ -475,7 +595,9 @@ def annotate(w: dict) -> None:
         except ValueError:
             continue
         lead = (s - d).days          # trigger N days before spike start
-        if -3 <= lead <= 45:
+        # A date known only to the year is stored as 1 January: the event could be weeks earlier
+        # (the National Film Registry is announced in mid-December), so allow more lead-in.
+        if -3 <= lead <= 45 or (t.get("approx") and -45 <= lead < -3):
             t["lead_days"] = lead
             near.append(t)
         elif t["type"] in ("derivative", "same-creator") and -45 <= lead < -3:
@@ -483,6 +605,12 @@ def annotate(w: dict) -> None:
             t["lead_days"] = lead
             t["text"] += " (upcoming)" if d > w["window_end"] else " (attention rose before release)"
             near.append(t)
+    # Public Domain Day (US rule), from the release year
+    pd = _public_domain_us(w)
+    if pd:
+        lead = (s - dt.date.fromisoformat(pd["date"])).days
+        if -10 <= lead <= 45:
+            near.append({**pd, "lead_days": lead})
     # anniversaries (only if we know the release day, precision 11 = day)
     r = w["release"]
     if w["release_prec"] >= 11:
@@ -596,6 +724,8 @@ VERDICT_LABEL = {
     "derivative": "New sequel/adaptation",
     "same-creator": "New work by same creator",
     "anniversary": "Anniversary",
+    "public domain": "Entered the public domain",
+    "honor": "An award, registry or hall of fame",
     "weak link": "Weak link only",
     "lookup failed": "Trigger lookup failed",
     "seasonal": "Seasonal (also up last year)",
@@ -618,7 +748,7 @@ SECTIONS = [
     ("Unexplained revivals", "Big jumps with no trigger in Wikidata. These are the leads worth chasing: "
      "memes, TV or ad placements, viral clips, or events Wikidata doesn't record.", {"unexplained", "lookup failed"}),
     ("Explained revivals", "A likely trigger was found near the start of the spike.",
-     {"death", "derivative", "same-creator", "anniversary", "weak link", "common thread"}),
+     {"death", "derivative", "same-creator", "anniversary", "public domain", "honor", "weak link", "common thread"}),
     ("Filtered out", "Seasonal items that were also up this time last year, and spikes that are almost all "
      "desktop traffic (real surges are mostly mobile), and one-day surges from a feature on Wikipedia's front page.",
      {"seasonal", "automated?", "front page"}),
@@ -1017,7 +1147,7 @@ def write_site_data(site: str, results, meta, clusters, threads, keep_runs: int,
                    spike_start=r["spike_start"].isoformat(), peak_day=r["peak_day"].isoformat(),
                    spark_start=(r["spark_start"] + dt.timedelta(days=len(r["spark"]) - 365)).isoformat(),
                    spark=r["spark"][-365:],
-                   triggers=[{k: t.get(k) for k in ("type", "date", "text", "qid", "lead_days", "weight", "shared")}
+                   triggers=[{k: t.get(k) for k in ("type", "date", "text", "qid", "lead_days", "weight", "shared", "approx")}
                              for t in r["triggers"]])
         return out
 
@@ -1298,7 +1428,7 @@ def main():
     except Exception:
         pass
     # Spot-check explained spikes against independent evidence (feeds the Accuracy tab).
-    explained = [r for r in results if r["verdict"] in ("death", "derivative", "same-creator", "anniversary")]
+    explained = [r for r in results if r["verdict"] in ("death", "derivative", "same-creator", "anniversary", "honor")]
     for r in explained[:15]:
         e = explain.explain(args.project, r["title"], r["label"] or r["title"].replace("_", " "),
                             r["spike_start"], with_news=not args.no_news, kind=r.get("kind"), qid=r.get("qid"))

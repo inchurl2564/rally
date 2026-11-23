@@ -216,6 +216,20 @@ Wikipedia does most of the explaining (`annotations.py`, `explain.py`, all CC BY
 start to 3 after: a new season, revival or special. TVmaze's data is CC BY-SA (commercial use allowed with credit);
 the site must credit TVmaze where its data is used.
 
+Three more open sources, added 2026-11-23:
+- **Public Domain Day** (`radar.py`: `_public_domain_us`, `_public_domain_people`): a work enters the US public
+  domain on 1 January, 95 years after publication (sound recordings 100); in the UK, EU and elsewhere 70 years
+  after its author, composer or lyricist died (looked up December to February). A comeback starting from 10 days
+  before to 45 days after that 1 January gets the verdict "public domain" (shown under Anniversary).
+- **Honors** (`_honors`, Wikidata, CC0): the work joining the National Film Registry (Wikidata: "part of", start
+  date) or the National Recording Registry, a Hall of Fame or other award with a date, or someone credited getting
+  a career honor (halls of fame, Kennedy Center Honors, lifetime achievement, Nobel, Pulitzer and similar).
+  Year-only dates move to the honor's usual month where known (Nobel: October), otherwise count as approximate
+  with up to 45 days' lead-in. Verdict "honor" (shown under In the news).
+- **YouTube's trending chart** (`youtube.trending`): 4 countries x 4 categories, 16 quota units a night, kept in
+  memory only. A video naming the title counts as evidence; an old song on the Music chart counts as "viral".
+  One-word titles must stand alone in the video title ("Arthur" in "James Arthur - Impossible" doesn't count).
+
 When the news finds no reason for a work's comeback, `youtube.py` searches YouTube (official Data API v3,
 `YOUTUBE_API_KEY` repository secret; up to 60 searches a night). A video counts only if its title names the
 work and says what it is (trailer, film, scene, song...), has 100,000+ views and was posted from 14 days

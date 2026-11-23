@@ -226,7 +226,10 @@ def causes_of(r: dict) -> list[list]:
     "whose news moves catalogs most" (star power) or "how big is a sequel bump"."""
     out = []
     for t in r.get("triggers") or []:
-        detail = t.get("text") if t.get("type") == "anniversary" else _role(t.get("text"))
+        detail = t.get("text") if t.get("type") in ("anniversary", "public domain") else _role(t.get("text"))
+        if t.get("type") == "honor":
+            detail = (t.get("text") or "").split("): ")[-1]        # the honor's name
+            detail = re.sub(r"^(added to|received) the ", "", detail)
         if t.get("type") in ("derivative", "same-creator"):
             detail = (t.get("text") or "").split(":")[0]       # "new entry in same series", "new work by X"
         out.append([t.get("type"), t.get("qid"), detail, str(t.get("date") or "")[:10]])
@@ -296,10 +299,12 @@ def record(site: str, results: list[dict], run: str) -> None:
         if len(w) < 4 and r["qid"] in fr["looked"]:
             w.append(fr["of"].get(r["qid"], []))
         for t in r.get("triggers") or []:
-            if t.get("qid") and t.get("type") != "anniversary":
+            if t.get("qid") and t.get("type") not in ("anniversary", "public domain"):
                 text = t.get("text") or ""
                 if t.get("type") in ("derivative", "same-creator") and ": " in text:
                     name = re.sub(r" \((upcoming|attention rose before release)\)$", "", text.split(": ", 1)[1])
+                elif t.get("type") == "honor" and "): " not in text:
+                    name = re.sub(r"^(added to|received) the ", "", text)
                 else:
                     name = text.split(" (")[0]
                 names.setdefault(t["qid"], name[:120])
