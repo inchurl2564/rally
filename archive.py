@@ -275,7 +275,8 @@ PAGE_CSS = """
 @media (prefers-color-scheme:dark){:root{--paper:#141317;--paper-2:#1d1c21;--ink:#efece6;--muted:#a29d96;--hair:#2e2c32;--red:#ff7a52;--red-ink:#141317;--tint:rgba(255,122,82,.12)}}
 *{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.55 "Libre Franklin",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 .wrap{max-width:820px;margin:0 auto;padding:0 16px}a{color:inherit;text-underline-offset:3px}
-.mast{border-bottom:3px solid var(--ink);padding:18px 0 12px}.brand{font:900 30px/1 "Playfair Display",Georgia,serif;letter-spacing:-.02em;text-decoration:none}
+.mast{border-bottom:3px solid var(--ink);padding:18px 0 12px}.brand{display:inline-block;text-decoration:none}.brand img{display:block;height:30px;width:auto}
+@media (prefers-color-scheme:dark){.brand img{filter:invert(1) brightness(.95)}}
 .tag{margin:4px 0 0;color:var(--muted);font-size:14px}
 .kicker{font:800 12px/1.2 "Libre Franklin",sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--red);margin:28px 0 6px}
 h1{font:900 clamp(30px,6vw,46px)/1.05 "Playfair Display",Georgia,serif;letter-spacing:-.02em;margin:0 0 10px}
@@ -387,6 +388,7 @@ def _shell(base: str, title: str, desc: str, canon: str, img: str, ld: dict, par
 <title>{e(title)}</title><meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="{e(desc)}">
 <link rel="canonical" href="{e(canon)}">
+<link rel="icon" type="image/png" sizes="32x32" href="{e(base)}/logo/favicon-32.png"><link rel="apple-touch-icon" href="{e(base)}/logo/apple-touch-icon.png">
 <meta property="og:type" content="{og_type}"><meta property="og:site_name" content="The Rallyback"><meta property="og:url" content="{e(canon)}">
 <meta property="og:title" content="{e(title.replace(" | The Rallyback", ""))}"><meta property="og:description" content="{e(desc)}">
 <meta property="og:image" content="{e(img)}"><meta name="twitter:card" content="summary_large_image">
@@ -396,7 +398,7 @@ def _shell(base: str, title: str, desc: str, canon: str, img: str, ld: dict, par
 <style>{PAGE_CSS}</style>
 <script type="application/ld+json">{ld_json}</script>
 </head><body>
-<header class="mast"><div class="wrap"><a class="brand" href="{e(base)}/">The Rallyback</a>
+<header class="mast"><div class="wrap"><a class="brand" href="{e(base)}/"><img src="{e(base)}/logo/wordmark.webp" alt="The Rallyback" width="2000" height="287"></a>
 <p class="tag">Old movies, shows, songs, games and books people are suddenly into again, and why.</p></div></header>
 <main class="wrap">
 {chr(10).join(p for p in parts if p)}

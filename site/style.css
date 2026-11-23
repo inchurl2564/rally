@@ -54,6 +54,10 @@ img { display: block; max-width: 100%; }
 .mast-title h1 { font: 900 clamp(44px, 13vw, 124px)/.9 var(--serif); letter-spacing: -.035em; margin: 0;
   padding-bottom: .2em; /* room for the y descender above the tagline */ }
 .mast-title h1 a:hover { text-decoration: none; }
+.wordmark { display: block; width: clamp(260px, 70vw, 760px); height: auto; margin: 0 auto; }
+.mast-title h1:has(.wordmark) { padding-bottom: 10px; line-height: 1; }
+:root[data-theme="dark"] .wordmark { filter: invert(1) brightness(.95); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .wordmark { filter: invert(1) brightness(.95); } }
 .tag { font: italic 700 clamp(15px, 2.2vw, 19px)/1.3 var(--serif); margin: 4px 0 0; color: var(--muted); }
 .nav { border-top: 1px solid var(--rule); }
 .tabs { display: flex; justify-content: center; gap: 4px; overflow-x: auto; scrollbar-width: none; }
