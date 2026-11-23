@@ -27,7 +27,10 @@ const daysBetween = (a, b) => Math.round((Date.parse(b + "T00:00:00Z") - Date.pa
 const addDays = (iso, n) => new Date(Date.parse(iso + "T00:00:00Z") + n * 864e5).toISOString().slice(0, 10);
 const wikidata = (q) => `https://www.wikidata.org/wiki/${encodeURIComponent(q)}`;
 const wikipedia = (t) => `https://en.wikipedia.org/wiki/${encodeURIComponent(t)}`;
-const ext = (href, ...kids) => h("a", { href, target: "_blank", rel: "noopener" }, ...kids);
+// Outside links come from data (Wikipedia references, news, readers' notes): only web and mail
+// addresses become links, so a "javascript:" address can never run on the page.
+const safeUrl = (u) => (/^(https?:|mailto:)/i.test(String(u || "").trim()) ? u : null);
+const ext = (href, ...kids) => (safeUrl(href) ? h("a", { href, target: "_blank", rel: "noopener" }, ...kids) : h("span", {}, ...kids));
 const hash = (str) => [...String(str)].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7);
 
 const REPO = (() => {

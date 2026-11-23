@@ -1,3 +1,11 @@
+# Security headers for every page (Cloudflare reads this file; GitHub Pages ignores it).
+# No X-Frame-Options: embed.html is meant to be shown inside other sites.
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
+  Strict-Transport-Security: max-age=31536000
+
 # Cloudflare: browsers check for a newer copy every time (a quick "not modified" when nothing changed),
 # so a new page is never paired with an old script. GitHub Pages ignores this file.
 /
