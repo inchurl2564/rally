@@ -133,7 +133,7 @@ def _gutenberg(url):
     """The 128 most-downloaded Project Gutenberg books, from Gutendex (4 pages of 32)."""
     rows, nxt = [], url
     for _ in range(4):
-        d = _get(nxt) if nxt else None
+        d = (_get(nxt) or _get(nxt)) if nxt else None          # Gutendex is sometimes slow: one retry
         for b in (d or {}).get("results") or []:
             rows.append({"rank": len(rows) + 1, "id": str(b["id"]), "name": (b.get("title") or "").split(";")[0].strip(),
                          "artist": ", ".join(a.get("name", "") for a in b.get("authors") or [])[:80], "year": ""})
