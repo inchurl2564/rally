@@ -6,24 +6,25 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - name: Docs
-        run: |
-          curl -sL https://currentsapi.services/en/docs/search | python3 -c "import sys,re,html;t=sys.stdin.read();t=re.sub(r'(?s)<(script|style).*?</\1>','',t);t=html.unescape(re.sub(r'<[^>]+>',' ',t));print(re.sub(r'\s+',' ',t)[:9000])"
-      - name: Try variants
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: Currents on unexplained comebacks
         env:
           CURRENTS_API_KEY: ${{ secrets.CURRENTS_API_KEY }}
         run: |
           python3 - <<'PY'
-          import json, os, urllib.request, urllib.parse
-          K = os.environ["CURRENTS_API_KEY"]
-          base = {"language": "en", "page_size": 20, "start_date": "2026-11-11T00:00:00+00:00", "end_date": "2026-11-17T23:59:59+00:00"}
-          for extra in [{"keywords": "The Nightingale"}, {"keywords": "Nightingale trailer"}, {"keywords": '"The Nightingale" Fanning'},
-                        {"keywords": "Nightingale", "category": "entertainment"}, {"keywords": "Nightingale Fanning"}]:
-              q = urllib.parse.urlencode({**base, **extra})
-              try:
-                  d = json.load(urllib.request.urlopen(urllib.request.Request(f"https://api.currentsapi.services/v1/search?{q}", headers={"Authorization": K, "User-Agent": "Rallyback/1.0"}), timeout=30))
-                  ts = [a.get("title", "")[:70] for a in d.get("news", [])]
-                  print(extra, len(ts), sum("ightingale" in t for t in ts)); [print("    ", t) for t in ts[:6]]
-              except urllib.error.HTTPError as e:
-                  print(extra, "HTTP", e.code, e.read()[:200])
+          import json, glob, datetime as dt
+          import currents
+          f = sorted(glob.glob('site/data/runs/*.json'))[-1]
+          today = dt.date.today()
+          rs = [r for r in json.load(open(f))['results'] if r['verdict'] in ('unexplained', 'weak link')
+                and dt.date.fromisoformat(r['spike_start']) >= today - dt.timedelta(days=24)]
+          rs.sort(key=lambda r: -(r.get('score_hint') or 0))
+          tests = [("The Nightingale", "2026-11-16", False, "book")] + [(r.get('label') or r['title'], r['spike_start'], False, r.get('kind')) for r in rs[:24]]
+          for t, day, person, kind in tests:
+              hits = currents.search(t, dt.date.fromisoformat(day), person=person, kind=kind)
+              if hits:
+                  print(f"== {t} ({kind}, {day}): {len(hits)}")
+                  for e in hits: print("    ", e["published"], e["source"], "|", e.get("cause"), "|", e["url"][:110])
+          print(currents.summary())
           PY

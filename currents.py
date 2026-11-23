@@ -96,7 +96,8 @@ def search(title: str, around: dt.date, person: bool = False, kind: str | None =
     if lo > hi:
         return []                                   # older than the free plan reaches
     STATS["searches"] += 1
-    d = _get({"keywords": f'"{name}"', "language": "en", "page_size": 20,
+    # `query` is the exact-phrase search; `keywords` matches loosely (word forms, anywhere in the text).
+    d = _get({"query": f'"{name}"', "language": "en", "page_size": 20,
               "start_date": f"{lo.isoformat()}T00:00:00+00:00", "end_date": f"{hi.isoformat()}T23:59:59+00:00"})
     out, seen = [], set()
     for a in (d or {}).get("news") or []:
