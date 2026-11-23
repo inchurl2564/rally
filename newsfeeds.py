@@ -229,8 +229,12 @@ def library_search(query: str, around: dt.date, before: int = 14, after: int = 7
     return [_evidence(src, d, t, u, s) for d, src, t, u, s in hits[:n]]
 
 
+KIND_NOUN = {"film": "film", "TV series": "series", "song": "song", "album": "album", "musical": "musical",
+             "video game": "game", "book": "book", "manga/comic": "manga"}
+
+
 def google_search(query: str, around: dt.date, before: int = 14, after: int = 7, n: int = 6,
-                  person: bool = False) -> list[dict]:
+                  person: bool = False, kind: str | None = None) -> list[dict]:
     """Google News, for when the library has nothing. Capped per night; switches itself off
     after repeated failures (it may start refusing automated requests)."""
     global _google_used, _google_off, _google_last
@@ -241,7 +245,10 @@ def google_search(query: str, around: dt.date, before: int = 14, after: int = 7,
         return []
     q = re.sub(r"\s*\([^)]*\)\s*$", "", query).strip()
     lo, hi = around - dt.timedelta(days=before), around + dt.timedelta(days=after)
-    params = {"q": f'"{q}" after:{lo.isoformat()} before:{(hi + dt.timedelta(days=1)).isoformat()}',
+    # Google searches the whole web: naming the kind of work ("Heist" film) keeps it to coverage
+    # of the work, not a stage play or a figure of speech.
+    noun = "" if person else KIND_NOUN.get(kind or "", "")
+    params = {"q": f'"{q}" {noun + " " if noun else ""}after:{lo.isoformat()} before:{(hi + dt.timedelta(days=1)).isoformat()}',
               "hl": "en-US", "gl": "US", "ceid": "US:en"}
     wait = GOOGLE_GAP - (time.time() - _google_last)
     if wait > 0:
@@ -277,8 +284,9 @@ def google_search(query: str, around: dt.date, before: int = 14, after: int = 7,
     return out
 
 
-def news(query: str, around: dt.date, n: int = 6, person: bool = False) -> list[dict]:
-    return library_search(query, around, n=n, person=person) or google_search(query, around, n=n, person=person)
+def news(query: str, around: dt.date, n: int = 6, person: bool = False, kind: str | None = None) -> list[dict]:
+    return (library_search(query, around, n=n, person=person)
+            or google_search(query, around, n=n, person=person, kind=kind))
 
 
 if __name__ == "__main__":
@@ -296,8 +304,9 @@ if __name__ == "__main__":
     for q in args:
         person = q.startswith("@")
         q = q.lstrip("@")
-        hits = library_search(q, today - dt.timedelta(days=5), person=person) or []
-        g = google_search(q, today - dt.timedelta(days=5), person=person) if not hits else []
+        hits = library_search(q.partition("|")[0], today - dt.timedelta(days=5), person=person) or []
+        q, _, kind = q.partition("|")
+        g = google_search(q, today - dt.timedelta(days=5), person=person, kind=kind or None) if not hits else []
         print(f"\n== {q}: {len(hits)} from the library, {len(g)} from Google News")
         for e in (hits or g)[:4]:
             print(f"   {e['published']}  {e['source']}: {e['text'][:90]}\n      {e['url'][:110]}")

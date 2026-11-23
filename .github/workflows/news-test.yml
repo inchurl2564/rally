@@ -13,4 +13,4 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: python newsfeeds.py --test "Minority Report" "Lost in Translation" "A Beautiful Mind" "The Nightingale" "Hunger Games" "Heist" "East of Eden" "Something About Amelia" "Rocky" "@Russell Brand" "@Marina Sirtis" "@Randa Haines"
+      - run: python newsfeeds.py --test "Minority Report|film" "Lost in Translation|film" "Heist|film" "4.50 from Paddington|book" "Something About Amelia|film" "Say You, Say Me|song" "@Marina Sirtis"

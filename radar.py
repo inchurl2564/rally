@@ -1281,7 +1281,8 @@ def main():
         # A ripple searches the connected person or franchise; otherwise the work's own title.
         e = explain.explain(args.project, title, name, r["spike_start"], with_news=not args.no_news,
                             person=bool(rip and rip.get("relation") not in
-                                        ("franchise", "series", "character", "source material", "sequel or adaptation")))
+                                        ("franchise", "series", "character", "source material", "sequel or adaptation")),
+                            kind=None if rip else r.get("kind"))
         r.update(evidence=e["evidence"], cause=e["cause"], edit_burst=e["edit_burst"])
         if e["cause"] and r["verdict"] == "unexplained":
             r["verdict"] = "coverage"
@@ -1293,7 +1294,7 @@ def main():
     explained = [r for r in results if r["verdict"] in ("death", "derivative", "same-creator", "anniversary")]
     for r in explained[:15]:
         e = explain.explain(args.project, r["title"], r["label"] or r["title"].replace("_", " "),
-                            r["spike_start"], with_news=not args.no_news)
+                            r["spike_start"], with_news=not args.no_news, kind=r.get("kind"))
         r.update(evidence=e["evidence"], edit_burst=e["edit_burst"])
         r["corroborated"] = explain.corroborates(r["triggers"][0], e["evidence"])
 
