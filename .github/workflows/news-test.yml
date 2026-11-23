@@ -3,28 +3,21 @@ on: workflow_dispatch
 jobs:
   probe:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with: { python-version: "3.12" }
-      - name: Currents on unexplained comebacks
+      - name: Raw
         env:
           CURRENTS_API_KEY: ${{ secrets.CURRENTS_API_KEY }}
         run: |
           python3 - <<'PY'
-          import json, glob, datetime as dt
-          import currents
-          f = sorted(glob.glob('site/data/runs/*.json'))[-1]
-          today = dt.date.today()
-          rs = [r for r in json.load(open(f))['results'] if r['verdict'] in ('unexplained', 'weak link')
-                and dt.date.fromisoformat(r['spike_start']) >= today - dt.timedelta(days=24)]
-          rs.sort(key=lambda r: -(r.get('score_hint') or 0))
-          tests = [("The Nightingale", "2026-11-16", False, "book")] + [(r.get('label') or r['title'], r['spike_start'], False, r.get('kind')) for r in rs[:24]]
-          for t, day, person, kind in tests:
-              hits = currents.search(t, dt.date.fromisoformat(day), person=person, kind=kind)
-              if hits:
-                  print(f"== {t} ({kind}, {day}): {len(hits)}")
-                  for e in hits: print("    ", e["published"], e["source"], "|", e.get("cause"), "|", e["url"][:110])
-          print(currents.summary())
+          import json, os, urllib.request, urllib.parse
+          K = os.environ["CURRENTS_API_KEY"]
+          for qq, a, b in [('"Russell Brand"', "2026-11-06", "2026-11-12"), ('"The Nightingale"', "2026-11-11", "2026-11-17")]:
+              q = urllib.parse.urlencode({"query": qq, "language": "en", "page_size": 20, "start_date": f"{a}T00:00:00+00:00", "end_date": f"{b}T23:59:59+00:00"})
+              try:
+                  d = json.load(urllib.request.urlopen(urllib.request.Request(f"https://api.currentsapi.services/v1/search?{q}", headers={"Authorization": K, "User-Agent": "Rallyback/1.0"}), timeout=30))
+                  ts = d.get("news", [])
+                  print(qq, d.get("status"), len(ts)); [print("    ", x.get("published", "")[:10], x.get("url", "")[:60], "|", x.get("title", "")[:80]) for x in ts[:8]]
+              except urllib.error.HTTPError as e:
+                  print(qq, "HTTP", e.code, e.read()[:300])
           PY
