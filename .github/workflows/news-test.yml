@@ -3,17 +3,9 @@ on: workflow_dispatch
 jobs:
   probe:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 10
     steps:
-      - name: Probe
+      - name: Currents
         run: |
-          B="https://discogs-data-dumps.s3.us-west-2.amazonaws.com"
-          curl -s -i "$B/?prefix=data/2026/" | head -c 3000; echo
-          for d in 20261101 20261001; do curl -sI "$B/data/2026/discogs_${d}_releases.xml.gz" | head -4; done
-          U="$B/data/2026/discogs_20261101_releases.xml.gz"
-          curl -s "$U" | head -c 30000000 | gzip -dc 2>/dev/null | head -c 4000; echo
-          echo "-----lines"; curl -s "$U" | head -c 30000000 | gzip -dc 2>/dev/null | awk '{print length($0)}' | head -8
-          echo "-----reissue"; curl -s "$U" | head -c 60000000 | gzip -dc 2>/dev/null | grep -m2 -o "<release id.\{0,2500\}Reissue.\{0,300\}"
-          echo "-----speed"; time (curl -s "$U" | head -c 1000000000 | gzip -dc 2>/dev/null | wc -lc)
-          echo "-----currents"
-          for p in en en/terms en/terms-of-service en/pricing en/tos; do echo "== $p"; curl -sL "https://currentsapi.services/$p" | python3 -c "import sys,re,html;t=sys.stdin.read();t=re.sub(r'(?s)<(script|style).*?</\1>','',t);t=html.unescape(re.sub(r'<[^>]+>',' ',t));print(re.sub(r'\s+',' ',t)[:6000])"; done
+          for p in en en/terms en/terms-of-service en/tos en/pricing en/legal; do echo "== $p $(curl -sL -o /dev/null -w '%{http_code}' https://currentsapi.services/$p)"; curl -sL "https://currentsapi.services/$p" | python3 -c "import sys,re,html;t=sys.stdin.read();t=re.sub(r'(?s)<(script|style).*?</\1>','',t);t=html.unescape(re.sub(r'<[^>]+>',' ',t));print(re.sub(r'\s+',' ',t)[:7000])" || true; done
+          curl -sL https://currentsapi.services/en | grep -o 'href="[^"]*"' | sort -u | head -60 || true
