@@ -236,6 +236,9 @@ code { font-size: 13px; background: var(--paper-2); padding: 1px 5px; }
 /* ---------- footer ---------- */
 .foot { border-top: 3px solid var(--rule); margin-top: 64px; padding: 24px 0 48px; background: var(--paper-2); }
 .foot-brand { font: 900 28px var(--serif); letter-spacing: -.02em; }
+.foot-wordmark { display: block; height: 30px; width: auto; margin: 4px 0 8px; }
+:root[data-theme="dark"] .foot-wordmark { filter: invert(1) brightness(.95); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .foot-wordmark { filter: invert(1) brightness(.95); } }
 .foot p { max-width: 75ch; color: var(--muted); font-size: 14px; }
 .foot a { text-decoration: underline; text-underline-offset: 3px; }
 .foot .foot-about { color: var(--ink); font-size: 15px; line-height: 1.5; margin-top: 6px; }
