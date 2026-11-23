@@ -328,6 +328,7 @@ const VIEWS = {
   coming: { label: "Coming up", page: "coming" },
   accuracy: { label: "Track record", page: "accuracy" },
   about: { label: "About us", page: "about" },
+  subscribe: { label: "Subscribe", page: "subscribe", cta: true },
   // reached from links, not the menu
   work: { hidden: true, label: "Title", page: "work" },
   search: { hidden: true, label: "Search", page: "search" },
@@ -438,8 +439,25 @@ function newsletterForm() {
   return slot;
 }
 
+// The Subscribe page: what the Friday email holds, a sample, and the form.
+function subscribePage() {
+  return [
+    sectionHead("The comebacks, every Friday", "One short email a week about the old movies, shows, songs, games and books people suddenly went back to, and why."),
+    h("div", { class: "about subscribe" },
+      h("h3", { class: "about-first" }, "What you get"),
+      h("ul", { class: "about-list" },
+        h("li", {}, h("b", {}, "The week's 5 biggest comebacks. "), "What came back, how big the jump was, and the reason we found."),
+        h("li", {}, h("b", {}, "The best unsolved mystery. "), "A big comeback nobody can explain yet. Readers often know why."),
+        h("li", {}, h("b", {}, "What's coming next. "), "Sequels, remakes and anniversaries due soon, and how our past predictions did.")),
+      h("p", {}, "Free. One email a week. Unsubscribe any time with one click."),
+      newsletterForm(),
+      h("p", { class: "small" }, "See what an issue looks like: ", h("a", { href: new URL("week/", location.href).href }, "the latest weekly roundup"), "."),
+      h("p", { class: "small muted" }, "We send the newsletter with Beehiiv. Your email address is used only for the newsletter, and never sold or shared.")),
+  ];
+}
+
 function renderTabs() {
-  const tab = (key) => h("button", { type: "button", class: "tab", "aria-current": key === state.view ? "page" : null, onclick: () => goto(key) }, VIEWS[key].label);
+  const tab = (key) => h("button", { type: "button", class: VIEWS[key].cta ? "tab cta" : "tab", "aria-current": key === state.view ? "page" : null, onclick: () => goto(key) }, VIEWS[key].label);
   // The main menu is for everyone; the professional views are linked from the footer.
   $("tabs").replaceChildren(...Object.keys(VIEWS).filter((k) => !VIEWS[k].pro && !VIEWS[k].hidden).map(tab));
   updateFollowLink();
@@ -476,7 +494,7 @@ function render() {
   if (!state.data) return;
   const v = VIEWS[state.view];
   const page = { today: todayPage, mysteries: mysteriesPage, coming: comingPage, accuracy: accuracyPage, about: aboutPage,
-    week: weekPage, work: workPage, search: searchPage, following: followingPage }[v.page];
+    week: weekPage, work: workPage, search: searchPage, following: followingPage, subscribe: subscribePage }[v.page];
   $("view").replaceChildren(...(page ? page() : proPage(v)).filter((x) => x != null && x !== false));   // never print an empty slot as "null"
   if (SMALL.matches && NEWSLETTER_PAGES.has(v.page)) $("view").append(newsletterBox());
   if ($("cards")) renderList();

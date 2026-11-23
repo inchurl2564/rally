@@ -66,6 +66,12 @@ img { display: block; max-width: 100%; }
 .tab[aria-current="page"] { color: var(--red); border-bottom-color: var(--red); }
 .tab.toggle[aria-expanded="true"] { color: var(--red); }
 .tabs.pro .tab { font-weight: 700; font-size: 12px; padding: 10px 10px 8px; }
+/* Subscribe: a red button at the end of the menu (pinned to the right edge while the menu scrolls on phones) */
+.tab.cta { color: #fff; background: var(--red); border: 0; border-radius: 999px; padding: 8px 16px; margin: 6px 0 6px 10px; align-self: center; }
+.tab.cta:hover { color: #fff; filter: brightness(.92); }
+.tab.cta[aria-current="page"] { color: #fff; box-shadow: 0 0 0 2px var(--paper), 0 0 0 4px var(--red); }
+.subscribe { max-width: 640px; }
+.subscribe .newsletter-form { margin: 18px 0 10px; }
 
 /* ---------- type ---------- */
 .kicker { display: inline-block; font: 800 11.5px var(--sans); text-transform: uppercase; letter-spacing: .1em; color: var(--red); margin-bottom: 6px; }
@@ -256,6 +262,7 @@ code { font-size: 13px; background: var(--paper-2); padding: 1px 5px; }
   .section-head { flex-direction: column; align-items: flex-start; margin-top: 48px; padding: 14px 16px 15px; border-left-width: 8px; }
   .section-head h2 { font-size: 28px; }
   .tabs { justify-content: flex-start; }
+  .tab.cta { position: sticky; right: 0; margin-left: 8px; box-shadow: -14px 0 12px -2px var(--paper); }
   .bigstat b { font-size: 38px; }
 }
 
@@ -549,3 +556,4 @@ p, li, .dek, .about .mission { text-wrap: pretty; }
 /* Credit a source asks for beside its data (Currents News API) */
 .credit { font-size: .82em; color: var(--muted, #6e6a64); white-space: nowrap; }
 .credit a { color: inherit; }
+.subscribe a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
