@@ -1282,7 +1282,7 @@ def main():
         e = explain.explain(args.project, title, name, r["spike_start"], with_news=not args.no_news,
                             person=bool(rip and rip.get("relation") not in
                                         ("franchise", "series", "character", "source material", "sequel or adaptation")),
-                            kind=None if rip else r.get("kind"), video=not rip)
+                            kind=None if rip else r.get("kind"), video=not rip, qid=None if rip else r.get("qid"))
         r.update(evidence=e["evidence"], cause=e["cause"], edit_burst=e["edit_burst"])
         if e["cause"] and r["verdict"] == "unexplained":
             r["verdict"] = "coverage"
@@ -1292,14 +1292,16 @@ def main():
             t.update(evidence=e["evidence"], cause=e["cause"], edit_burst=e["edit_burst"])
     try:
         import youtube
+        import tvmaze
         log(youtube.summary())
+        log(tvmaze.summary())
     except Exception:
         pass
     # Spot-check explained spikes against independent evidence (feeds the Accuracy tab).
     explained = [r for r in results if r["verdict"] in ("death", "derivative", "same-creator", "anniversary")]
     for r in explained[:15]:
         e = explain.explain(args.project, r["title"], r["label"] or r["title"].replace("_", " "),
-                            r["spike_start"], with_news=not args.no_news, kind=r.get("kind"))
+                            r["spike_start"], with_news=not args.no_news, kind=r.get("kind"), qid=r.get("qid"))
         r.update(evidence=e["evidence"], edit_burst=e["edit_burst"])
         r["corroborated"] = explain.corroborates(r["triggers"][0], e["evidence"])
 

@@ -58,6 +58,7 @@ const CAUSE = {
   streaming: ["A streaming debut", "looks like the reason"], broadcast: ["A TV airing", "looks like the reason"],
   viral: ["The internet", "is to blame: it's going viral"], "sync placement": ["A placement in a show, ad or trailer", "looks like the reason"],
   award: ["Awards buzz", "looks like the reason"], "re-release": ["A re-release or restoration", "looks like the reason"],
+  "new season": ["A new season or special", "looks like the reason"],
   "remake/sequel news": ["Remake or sequel news", "looks like the reason"], anniversary: ["An anniversary", "looks like the reason"],
   "auction/sale": ["A big auction or sale", "looks like the reason"], "sports/event": ["A big live event", "looks like the reason"],
   politics: ["Politics", "pulled it back into view"],

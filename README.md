@@ -190,17 +190,31 @@ replace it once there's a logo). Each week also gets a permanent roundup page at
 
 ## News behind the reasons
 
-`newsfeeds.py` keeps a rolling 75-day library of headlines from entertainment and culture
-news feeds (NME, Pitchfork, Polygon, Kotaku, Eurogamer, GameSpot, Book Riot; their terms still to be
-checked), read once a night and saved in the repository as one gzipped file per day
-(`store/news/`, kept 75 days; GDELT headlines in `store/gdelt/`, kept 30 days; see `daystore.py`). Each comeback is searched by its
-title in quotes in a headline (people by full name); comparisons ("'X' meets 'Y'") don't count.
-What the library can't explain is looked up in GDELT's raw 15-minute data files (`gdeltfiles.py`: a
-day of files, about 220 MB, read in under a minute; headlines that quote a title kept 30 days). The BBC, the Guardian and Penske Media
-(Variety, Deadline, The Hollywood Reporter, IndieWire, Billboard, Rolling Stone) were dropped on 2026-11-23: their terms forbid
-automated collection or commercial use of their feeds, and headlines saved from them are deleted on load. Google News was dropped on 2026-11-23:
-its robots.txt disallows automated access to its search feed, which Google's terms forbid. GDELT's search service refuses requests from
-shared cloud addresses, so its raw files are read instead. To test the feeds from GitHub's servers, run `python newsfeeds.py --test "Title|film" "@Person Name"`.
+News comes from GDELT's raw 15-minute data files (`gdeltfiles.py`: a day of files, about 220 MB, read in
+under a minute; headlines that quote a title kept 30 days in `store/gdelt/`, see `daystore.py`). Each comeback is
+searched by its title in quotes in a headline; comparisons ("'X' meets 'Y'") don't count. We keep only the
+headline and link to the article.
+
+Every publisher feed was removed on 2026-11-23. The BBC, the Guardian and Penske Media (Variety, Deadline,
+The Hollywood Reporter, IndieWire, Billboard, Rolling Stone) have terms that forbid automated collection or
+commercial use of their feeds; NME, Pitchfork, Polygon, Kotaku, Eurogamer, GameSpot and Book Riot were removed as
+a precaution. Headlines saved from the first group are deleted on load. `newsfeeds.py` keeps the (unused) feed
+library code in case a licensed feed is added later. Google News was dropped the same day: its robots.txt
+disallows automated access to its search feed. GDELT's search service refuses shared cloud addresses, hence the raw files.
+
+Wikipedia does most of the explaining (`annotations.py`, `explain.py`, all CC BY-SA):
+- sentences added to the article from 2 days before the start to 5 after, with the reference cited. Infobox and
+  template lines are skipped; sentences giving only old dates are dropped; an edit adding more than three
+  sentences (a rewrite or page move) counts only for sentences dated near the start
+- edit summaries from 7 days before the start
+- Current events: people by name, works only where the line links to their article
+- the weekly Top 25 Report, whose editors write why each of the most-read articles was popular
+- for comebacks still unexplained, sentences anywhere in the article that give a date from 21 days before the
+  start to 5 after ("released by Lionsgate on November 20, 2026"), whenever they were added
+
+`tvmaze.py` checks TV series (found by IMDb number from Wikidata) for episodes that aired from 14 days before the
+start to 3 after: a new season, revival or special. TVmaze's data is CC BY-SA (commercial use allowed with credit);
+the site must credit TVmaze where its data is used.
 
 When the news finds no reason for a work's comeback, `youtube.py` searches YouTube (official Data API v3,
 `YOUTUBE_API_KEY` repository secret; up to 60 searches a night). A video counts only if its title names the

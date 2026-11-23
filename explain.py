@@ -6,8 +6,8 @@ Explain spikes that Wikidata can't, using open signals from the days the spike b
                  at the spike start means a real-world event, even if we can't name it.
   edit summaries the text editors wrote for those edits (MediaWiki API). Often names
                  the event: "died 3 November", "added to Netflix", "verdict".
-  news           headlines from entertainment news sites' RSS feeds, then Google News
-                 (newsfeeds.py; GDELT refused requests from shared cloud addresses).
+  news           headlines that quote the title, from GDELT's open data files (gdeltfiles.py
+                 via newsfeeds.py; publisher feeds were removed over their terms).
 
 All three are best-effort. Shared IPs (like CI runners) are sometimes rate-limited,
 so each source backs off and switches itself off for the run after repeated 429s.
@@ -39,6 +39,7 @@ CAUSES = [
     ("sync placement", r"\b(featured in|used in|appears in|soundtrack|commercial|advert|ad campaign|trailer for|super bowl ad)"),
     ("award", r"\b(award|oscar|academy award|grammy|emmy|golden globe|bafta|hall of fame|inducted|nominat)"),
     ("re-release", r"\b(re-?release|remaster|reissue|restoration|restored|4k|anniversary edition|box set|re-?issue)"),
+    ("new season", r"\b(season \d+ premiered|new episodes of season|new season|returns for (a|its) |revival|reunion special)"),
     ("remake/sequel news", r"\b(remake|reboot|sequel|prequel|adaptation|announced|casting|cast as|greenlit|in development|"
                            r"trailer|teaser|first look|season \d+|series order|limited series|box office|opening weekend)"),
     ("anniversary", r"\b(anniversary|years since|years ago)\b"),
@@ -117,9 +118,9 @@ def edit_burst(project: str, title: str, around: dt.date) -> dict | None:
             "burst": window >= 3 and window >= 4 * max(before * 5, 0.5)}
 
 
-def edit_summaries(title: str, around: dt.date, limit: int = 30) -> list[dict]:
+def edit_summaries(title: str, around: dt.date, limit: int = 50) -> list[dict]:
     start = (around + dt.timedelta(days=4)).isoformat() + "T00:00:00Z"
-    end = (around - dt.timedelta(days=2)).isoformat() + "T00:00:00Z"
+    end = (around - dt.timedelta(days=7)).isoformat() + "T00:00:00Z"
     q = urllib.parse.urlencode({"action": "query", "prop": "revisions", "titles": title.replace("_", " "),
                                 "rvprop": "timestamp|comment|size", "rvstart": start, "rvend": end,
                                 "rvlimit": limit, "format": "json", "formatversion": 2, "maxlag": 5})
@@ -148,6 +149,9 @@ def likely_cause(evidence: list[dict]) -> str | None:
     import youtube
     scores: dict[str, int] = {}
     for e in evidence:
+        if e.get("cause"):                     # a source that knows what it found (TVmaze: a new season)
+            scores[e["cause"]] = scores.get(e["cause"], 0) + 2
+            continue
         hit = False
         for name, rx in _CAUSE_RE:
             if rx.search(f'{e["text"]} {e.get("detail", "")}'):
@@ -160,24 +164,36 @@ def likely_cause(evidence: list[dict]) -> str | None:
 
 
 def explain(project: str, title: str, query: str, around: dt.date, with_news: bool = True,
-            person: bool = False, kind: str | None = None, video: bool = False) -> dict:
+            person: bool = False, kind: str | None = None, video: bool = False, qid: str | None = None) -> dict:
     """Evidence for one spike. `query` is what to search news for (a work's or person's name)."""
     import annotations   # local import: annotations imports this module
     burst = edit_burst(project, title, around)
     # News articles first: they're dated and say why; Wikipedia edits fill in behind them.
     ev = news(query, around, person=person, kind=kind) if with_news else []
-    if video and with_news and not person and likely_cause(ev) is None:
-        # No reason in the news: a trailer, viral clip or video essay on YouTube often is one.
+    if kind == "TV series" and qid and with_news:
+        try:                                          # a new season, revival or special (TVmaze, CC BY-SA)
+            import tvmaze
+            ev = tvmaze.episodes(qid, around) + ev
+        except Exception as e:
+            print(f"      TVmaze lookup failed for {query}: {e}", file=sys.stderr)
+    # Wikipedia next: Current events (people by name, works by a link to their article), sentences
+    # added around the start, dated sentences anywhere in the article, then edit summaries.
+    wiki = []
+    if with_news:
+        wiki += annotations.current_events(query, around, days=3, link=None if person else title)
+        wiki += annotations.top25(title, around)       # editors' weekly note on why it was read
+    wiki += annotations.added_text(title, around)       # sentences added, with the news source cited
+    wiki += edit_summaries(title, around)
+    if likely_cause(ev + wiki) is None:                  # one more page read, only when still unexplained
+        wiki += annotations.dated_sentences(title, around)  # "premiered on 14 November 2026", whenever added
+    if video and with_news and not person and likely_cause(ev + wiki) is None:
+        # No reason in the news or on Wikipedia: a trailer, viral clip or video essay often is one.
         try:
             import youtube
             ev = youtube.search(query, around, kind) + ev
         except Exception as e:
             print(f"      YouTube lookup failed for {query}: {e}", file=sys.stderr)
-    if person and with_news:
-        # Wikipedia's daily Current events page lists deaths, verdicts and other big news about people.
-        ev += annotations.current_events(query, around, days=3)
-    ev += annotations.added_text(title, around)       # sentences added, with the news source cited
-    ev += edit_summaries(title, around)
+    ev += wiki
     return {"edit_burst": burst, "evidence": ev[:10], "cause": likely_cause(ev)}
 
 

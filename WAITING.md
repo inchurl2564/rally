@@ -18,7 +18,7 @@ Updated as items move. Last updated: 2026-11-23 (news sources rebuilt: RSS feeds
 | Item | Plan phase | Notes |
 | --- | --- | --- |
 | LLC, tax ID, business bank account, trademark, logo | Step 0, Dec 2026 – Jan 2027 | About $1,500 one-time |
-| Legal review of data-source licences, then pro terms | Before the first newsletter sponsorship (moved earlier; see "What's free and what's paid" in the plan) | Apple chart feeds (affiliate-program terms look compatible; check the RSS generator's own note when joining). Deezer, Google News, BBC, Guardian and Penske Media feeds dropped Nov 23: their terms rule out our use. Still to check: NME, Pitchfork, Polygon, Kotaku, Eurogamer, GameSpot, Book Riot |
+| Legal review of data-source licences, then pro terms | Before the first newsletter sponsorship (moved earlier; see "What's free and what's paid" in the plan) | Apple chart feeds (affiliate-program terms look compatible; check the RSS generator's own note when joining). Deezer, Google News and every publisher feed dropped Nov 23 (BBC, Guardian and Penske terms rule out our use; the rest as a precaution). New: TVmaze and Wikipedia's Top 25 Report, both CC BY-SA: credit needed on the site |
 | Pro waitlist page and paid pilots | Phase A, Apr – Sep 2027 | Following is the free early signal for demand |
 | Pro accounts, catalog upload, alerts, dashboard, API | Phase B, Oct 2027, only after the go/no-go gate | 10+ organizations waiting and 3 paying pilots |
 | Licensed weekly "Rallyback 50" chart | Stream 4, free chart Q1 2028, sales Sep 2028 | The embeddable chart is the first step |

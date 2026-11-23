@@ -1,7 +1,8 @@
 """
-News for "why is it back?": a rolling library of headlines from entertainment and culture news
-sites' own RSS feeds, plus a Google News search for comebacks the library can't explain.
-Replaces GDELT, which refuses requests from shared cloud addresses (GitHub's included).
+News for "why is it back?". Since 2026-11-23 news() searches GDELT's open data files only
+(gdeltfiles.py): every publisher feed was removed because publishers' terms forbid automated
+collection or commercial use (see FEEDS). The feed library below is kept, unused, in case a
+licensed feed is added later.
 
   refresh()        once a night: read each outlet's newest feed pages until reaching articles
                    already in the library (WordPress sites page back with ?paged=N); keep 75 days.
@@ -41,22 +42,12 @@ UA = {"User-Agent": "Mozilla/5.0 (compatible; Rallyback news reader; +https://th
 # (outlet, feed address, pages back on a normal night, pages back the first time; the library
 # fills in further night by night, so first reads stay short enough for every feed to fit)
 # Paged feeds are WordPress sites (?paged=N); the others are read once (they hold more items).
-FEEDS = [
-    # Penske Media (Variety, Deadline, The Hollywood Reporter, IndieWire, Billboard, Rolling Stone) was
-    # removed on 2026-11-23: its terms forbid automated tools that monitor or aggregate its content,
-    # and commercial use of its RSS content beyond linking to the full article.
-    ("NME", "https://www.nme.com/feed", 8, 15),
-    ("Pitchfork", "https://pitchfork.com/feed/feed-news/rss", 1, 1),
-    ("Polygon", "https://www.polygon.com/rss/index.xml", 1, 1),
-    ("Kotaku", "https://kotaku.com/feed", 6, 15),
-    ("Eurogamer", "https://www.eurogamer.net/feed", 1, 1),
-    ("GameSpot", "https://www.gamespot.com/feeds/mashup/", 1, 1),
-    ("Book Riot", "https://bookriot.com/feed/", 4, 15),
-    # The Guardian was removed on 2026-11-23: its terms allow personal, non-commercial use only and forbid
-    # automated tools, text and data aggregation, and building a database of its content.
-    # BBC News was removed on 2026-11-23: its terms require a licence for any business use of its RSS
-    # feeds or metadata, and forbid automated collection or computer analysis of its content.
-]
+FEEDS: list = []
+# Every publisher feed has been removed (2026-11-23). Penske Media, the BBC and the Guardian have terms
+# that forbid automated collection, aggregation or commercial use of their content and feeds; NME,
+# Pitchfork, Polygon, Kotaku, Eurogamer, GameSpot and Book Riot were removed as a precaution, since
+# large publishers' terms generally say the same. The library code is kept in case a licensed feed
+# is added later; news() no longer reads it, and GDELT's open data files do the news work.
 REFRESH_BUDGET = 8 * 60          # seconds for the whole nightly refresh
 GOOGLE = "https://news.google.com/rss/search"
 GOOGLE_MAX = 40                  # Google News searches a night, for what the library can't explain
@@ -295,8 +286,8 @@ def google_search(query: str, around: dt.date, before: int = 14, after: int = 7,
 
 
 def news(query: str, around: dt.date, n: int = 6, person: bool = False, kind: str | None = None) -> list[dict]:
-    found = library_search(query, around, n=n, person=person)
-    if not found and not person:                 # GDELT's raw files: titles in quotes, from thousands of outlets
+    found: list[dict] = []                      # publisher feeds removed; see FEEDS
+    if not person:                 # GDELT's raw files: titles in quotes, from thousands of outlets
         try:
             import gdeltfiles
             found = gdeltfiles.search(query, around, n=n)
