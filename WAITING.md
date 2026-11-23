@@ -1,7 +1,7 @@
 # Waiting list
 
 Things we've decided to do (or want to) that are on hold, grouped by what they're waiting for.
-Updated as items move. Last updated: 2026-11-22 (hello@therallyback.com live on About us and in the footer).
+Updated as items move. Last updated: 2026-11-23 (news sources rebuilt: RSS feeds, GDELT raw files, Google News).
 
 ## Waiting on a decision or an account from you
 
@@ -18,7 +18,7 @@ Updated as items move. Last updated: 2026-11-22 (hello@therallyback.com live on 
 | Item | Plan phase | Notes |
 | --- | --- | --- |
 | LLC, tax ID, business bank account, trademark, logo | Step 0, Dec 2026 – Jan 2027 | About $1,500 one-time |
-| Legal review of pro terms and data-source licences | Before charging anyone (Stream 3) | Deezer and Apple feed terms in particular |
+| Legal review of data-source licences, then pro terms | Before the first newsletter sponsorship (moved earlier; see "What's free and what's paid" in the plan) | Apple and Deezer chart feed terms in particular |
 | Pro waitlist page and paid pilots | Phase A, Apr – Sep 2027 | Following is the free early signal for demand |
 | Pro accounts, catalog upload, alerts, dashboard, API | Phase B, Oct 2027, only after the go/no-go gate | 10+ organizations waiting and 3 paying pilots |
 | Licensed weekly "Rallyback 50" chart | Stream 4, free chart Q1 2028, sales Sep 2028 | The embeddable chart is the first step |
