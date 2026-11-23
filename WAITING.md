@@ -8,7 +8,7 @@ Updated as items move. Last updated: 2026-11-23 (sources reviewed against their 
 | Item | Waiting for | Then |
 | --- | --- | --- |
 | "Where to watch / listen / read / play" links (affiliate) | Joining Apple, Amazon, Bookshop.org and a game-store affiliate program | Buttons on every title and story card, plus the disclosure line |
-| Threads account (Bluesky done: therallyback.bsky.social) | You | Links on the site and in search metadata; Friday posts linking to the week's roundup (Bluesky's app password is already set up for search; posting needs the go-ahead; Threads: a Meta developer app) |
+| Bluesky posting (therallyback.bsky.social) | Your go-ahead | Daily story and Friday roundup posts (built, switched off; samples shown Nov 23). Threads dropped Nov 23: Meta didn't approve an account |
 | First Friday newsletter issue | A PO box or virtual mailbox for Beehiiv's required mailing address (not a home address) | Send the This week page as the Friday issue, then remove the "first issue goes out soon" line from the Subscribe page (`subscribePage` in site/app.js). Sign-up boxes are already live (Beehiiv, free plan: therallyback.beehiiv.com) |
 | Two-factor sign-in on every account (GitHub, Cloudflare, Google, Beehiiv, Bluesky, Currents) | You | Use an authenticator app or passkey, not text messages; save recovery codes offline; a password manager helps |
 | Domain safety | You | Cloudflare → Domain Registration: auto-renew on, transfer lock on, card on file current |
