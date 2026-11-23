@@ -1,0 +1,11 @@
+name: news-test
+on: workflow_dispatch
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Bluesky
+        run: |
+          for h in public.api.bsky.app api.bsky.app; do echo "== $h"; curl -s -w '\nHTTP %{http_code}\n' "https://$h/xrpc/app.bsky.feed.searchPosts?q=%22Fairytale%20of%20New%20York%22&limit=3&sort=top" | cut -c1-600; done
+          curl -sL https://bsky.network/docs/about-bluesky-content | python3 -c "import sys,re,html;t=sys.stdin.read();t=re.sub(r'(?s)<(script|style).*?</\1>','',t);t=html.unescape(re.sub(r'<[^>]+>',' ',t));print(re.sub(r'\s+',' ',t)[:5000])"
