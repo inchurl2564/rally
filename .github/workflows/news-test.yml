@@ -1,0 +1,18 @@
+name: news-test
+on: workflow_dispatch
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: Probe
+        run: |
+          UA="Rallyback/1.0 (+https://therallyback.com/?tab=about)"
+          curl -s -A "$UA" "https://en.wikipedia.org/w/api.php?action=parse&page=Wikipedia:Top_25_Report&prop=wikitext&format=json&formatversion=2" -o top25.json
+          python3 -c "import json;t=json.load(open('top25.json'))['parse']['wikitext'];print(len(t));print(t[:6000])"
+          curl -s -A "$UA" "https://en.wikipedia.org/w/api.php?action=query&list=prefixsearch&pssearch=Wikipedia:Top_25_Report/&pslimit=20&format=json" | head -c 3000; echo
+          curl -s "https://api.tvmaze.com/singlesearch/shows?q=stranger%20things" | head -c 1500; echo
+          curl -s "https://api.tvmaze.com/lookup/shows?imdb=tt4574334" -i | head -20
+          curl -s "https://api.tvmaze.com/schedule/web?date=2026-11-20" | python3 -c "import json,sys;d=json.load(sys.stdin);print(len(d));[print(x['_embedded']['show']['name'],x['season'],x['number'],x['airdate']) for x in d[:15]]"
