@@ -1,0 +1,17 @@
+name: GDELT files test (one-off)
+# Downloads GDELT's raw 15-minute files from GitHub's servers, times it, and searches some titles.
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: /usr/bin/time -v python gdeltfiles.py --test 24 "Minority Report" "A Beautiful Mind" "Lost in Translation" "The Nightingale" "Hunger Games" "Grand Theft Auto" "4.50 from Paddington" "Something About Amelia" "The Devils" 2>&1 | grep -v "^\s*\(Page size\|Exit status\|Socket\|Signals\|Swaps\|File system\|Average\|Minor\|Major\|Voluntary\|Involuntary\)"
+      - run: ls -la .cache/
