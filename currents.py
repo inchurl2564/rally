@@ -14,7 +14,8 @@ Currents' terms (read 2026-11-23) shape what we keep:
 Articles stay the publishers'; we only link to them.
 
   search(title, around)   articles whose headline names the title (in quotes for works, by full name
-                          for people) from 5 days before the comeback started to 2 days after.
+                          for people) from 5 days before the comeback started to 1 day after (a 7-day
+                          window: the free plan's limit per search).
 """
 
 from __future__ import annotations
@@ -59,6 +60,7 @@ def _get(params: dict) -> dict | None:
     except urllib.error.HTTPError as e:
         STATS["failed"] += 1
         if e.code in (401, 403, 429) or STATS["failed"] >= 5:      # bad key, daily cap reached, or trouble
+            # (a single 400 is one bad query, not a reason to stop)
             _off = True
             print(f"      Currents: switching off for this run ({e.code})", file=sys.stderr)
             try:
@@ -90,7 +92,7 @@ def search(title: str, around: dt.date, person: bool = False, kind: str | None =
         return []                                   # "Heist", "Arthur": everyday words in headlines
     today = dt.date.today()
     lo = max(around - dt.timedelta(days=5), today - dt.timedelta(days=LOOKBACK))
-    hi = min(around + dt.timedelta(days=2), today)
+    hi = min(around + dt.timedelta(days=1), today)           # lo..hi end of day = under 7 days
     if lo > hi:
         return []                                   # older than the free plan reaches
     STATS["searches"] += 1

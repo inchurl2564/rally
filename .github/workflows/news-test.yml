@@ -18,7 +18,7 @@ jobs:
           import currents
           # raw call once, to see the response shape and any error text
           q = urllib.parse.urlencode({"keywords": '"The Nightingale"', "language": "en", "page_size": 5,
-               "start_date": "2026-11-11T00:00:00+00:00", "end_date": "2026-11-18T23:59:59+00:00"})
+               "start_date": "2026-11-11T00:00:00+00:00", "end_date": "2026-11-17T23:59:59+00:00"})
           try:
               r = urllib.request.urlopen(urllib.request.Request(f"{currents.API}?{q}", headers={**currents.UA, "Authorization": os.environ["CURRENTS_API_KEY"]}), timeout=30)
               d = json.load(r); print("raw status", d.get("status"), "items", len(d.get("news", [])))
