@@ -15,7 +15,6 @@ It runs every day on GitHub Actions and publishes a static site to GitHub Pages.
 | [GDELT](https://www.gdeltproject.org/) news API | Headlines from the days a spike began (best-effort) |
 | [Steam](https://partner.steamgames.com/doc/webapi/ISteamUserStats#GetNumberOfCurrentPlayers) players and reviews | Older games people are playing (and reviewing) again |
 | [iTunes charts](https://itunes.apple.com/us/rss/topmovies/limit=200/json) (songs, albums, movies, US) | Older works back on the charts |
-| [Deezer charts](https://developers.deezer.com/api/chart) (tracks, albums, worldwide) | Older music back on the charts outside the US |
 | [Open Library](https://openlibrary.org/trending/daily) trending | Older books people are reading again |
 | [Project Gutenberg](https://www.gutenberg.org/browse/scores/top) top 100 | Classic books being downloaded again |
 | Wikipedia in 12 other languages | Whether a comeback is global or local |
@@ -123,7 +122,7 @@ Set `RADAR_CONTACT` to a URL or address so Wikimedia can identify your client, a
 ```
 radar.py      pipeline: discover, measure, explain (Wikidata), write site data
 early.py      watchlist + bulk pageview files → early risers
-signals.py    Steam, iTunes and Deezer charts, Open Library, Gutenberg → daily record + signals
+signals.py    Steam, iTunes charts, Open Library, Gutenberg (via Gutendex) → daily record + signals
 enrich.py     other-language Wikipedia, Bluesky, the Rallyback Score, permanent history
 explain.py    edit bursts, edit summaries, news → likely cause; corroboration
 forecast.py   upcoming sequels/adaptations/remakes, anniversaries
@@ -207,3 +206,7 @@ When the news finds no reason for a work's comeback, `youtube.py` searches YouTu
 work and says what it is (trailer, film, scene, song...), has 100,000+ views and was posted from 14 days
 before the comeback to 7 days after. One with 1M+ views and no other reason in its title makes the cause
 "viral". Nothing from YouTube is stored between runs (YouTube's terms limit keeping raw API data).
+
+Deezer's charts were dropped on 2026-11-23: its developer terms allow only approved, private,
+non-commercial use, and forbid keeping a database of its content or any text and data mining.
+Saved Deezer chart data was removed from `site/data` (it remains in git history only).

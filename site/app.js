@@ -1677,7 +1677,7 @@ function method() {
     h("ol", {},
       h("li", {}, h("b", {}, "Watch."), " Every day, read Wikimedia's bulk pageview file for ~35,000 notable older works (10+ language editions, released 10+ years ago), plus English Wikipedia's daily top 1,000."),
       h("li", {}, h("b", {}, "Measure."), " Compare each work's last 3 and 14 days with its median over the previous ~11 months. 3× over 14 days, or 2.5× over 3 days, counts. Stages: just starting (began in the last 4 days), at its peak, still going (10+ days), cooling off."),
-      h("li", {}, h("b", {}, "Confirm elsewhere."), " Record Steam players and reviews, iTunes and Deezer charts, Open Library trending and Project Gutenberg downloads every day (kept forever as open data), and check Wikipedia in 12 other languages and Bluesky posts for each comeback."),
+      h("li", {}, h("b", {}, "Confirm elsewhere."), " Record Steam players and reviews, iTunes charts, Open Library trending and Project Gutenberg downloads every day (kept forever as open data), and check Wikipedia in 12 other languages and Bluesky posts for each comeback."),
       h("li", {}, h("b", {}, "Score."), " The Rallyback Score (0–100) weighs the size of the jump (40%), the everyday audience (25%), confirmation in other places (20%) and staying power (15%)."),
       h("li", {}, h("b", {}, "Explain."), " Look in Wikidata near the spike for deaths of credited people, sequels, adaptations, remakes, new series entries, new work by the same creator, and anniversaries. For spikes it can't explain, read Wikipedia edit summaries, edit bursts and GDELT news headlines from the same days."),
       h("li", {}, h("b", {}, "Connect."), " Group spikes by a shared event, and unexplained spikes by a shared person with the same timing."),

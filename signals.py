@@ -6,7 +6,6 @@ Open sources that need no API key, matched to works through Wikidata IDs:
   Steam players      current players for older games (api.steampowered.com)        Wikidata P1733
   Steam reviews      new reviews per day, from the running total (store.steampowered.com)  P1733
   iTunes charts      top songs, albums and movies, US (itunes.apple.com RSS)      P10110 / P2281 / P6398
-  Deezer charts      top tracks and albums, worldwide (api.deezer.com)            P2724 / P2723
   Open Library       daily trending books (openlibrary.org)                         P648
   Project Gutenberg  most-downloaded ebooks, via Gutendex (gutendex.com)              P2034
 
@@ -42,8 +41,8 @@ CHARTS = {                 # key: (label, url, Wikidata property for the chart's
     "itunes-songs": ("iTunes top songs", "https://itunes.apple.com/us/rss/topsongs/limit=200/json", "P10110", {"song"}),
     "itunes-albums": ("iTunes top albums", "https://itunes.apple.com/us/rss/topalbums/limit=200/json", "P2281", {"album"}),
     "itunes-movies": ("iTunes top movies", "https://itunes.apple.com/us/rss/topmovies/limit=200/json", "P6398", {"film"}),
-    "deezer-tracks": ("Deezer top tracks", "https://api.deezer.com/chart/0/tracks?limit=100", "P2724", {"song"}),
-    "deezer-albums": ("Deezer top albums", "https://api.deezer.com/chart/0/albums?limit=100", "P2723", {"album"}),
+    # Deezer's charts were dropped on 2026-11-23: its developer terms allow only approved, private,
+    # non-commercial use, and forbid keeping a database of its content or text and data mining.
     "openlibrary": ("Open Library trending", "https://openlibrary.org/trending/daily.json?limit=1000", "P648", {"book", "manga/comic"}),
     # Gutenberg's own top-100 page turns away automated requests; Gutendex is a public service
     # built on Gutenberg's catalog for exactly this, ranking books by downloads.
@@ -115,13 +114,6 @@ def _itunes(url):
     return rows
 
 
-def _deezer(url):
-    d = _get(url)
-    return [{"rank": i, "id": str(x["id"]), "name": x["title"], "artist": (x.get("artist") or {}).get("name"),
-             "year": "", "deezer": "track" if "/tracks" in url else "album"}
-            for i, x in enumerate((d or {}).get("data") or [], 1)]
-
-
 def _openlibrary(url):
     d = _get(url)
     return [{"rank": i, "id": w["key"].rsplit("/", 1)[-1], "name": w.get("title"),
@@ -148,7 +140,7 @@ def _charts() -> dict:
     out = {}
     for key, (label, url, _, _) in CHARTS.items():
         try:
-            rows = (_itunes if "itunes" in key else _deezer if "deezer" in key
+            rows = (_itunes if "itunes" in key
                     else _openlibrary if key == "openlibrary" else _gutenberg)(url)
         except Exception as e:
             log(f"      {label}: {e}")
@@ -233,11 +225,6 @@ def _map_ids(prop: str, ids: list[str]) -> dict[str, str]:
     return out
 
 
-def _deezer_year(row) -> str:
-    d = _get(f"https://api.deezer.com/{row['deezer']}/{row['id']}") or {}
-    return (d.get("release_date") or "")[:4]
-
-
 def _match(snap: dict, watch: dict, today_year: int) -> dict[str, dict[str, int]]:
     """{source: {qid: rank}} for chart entries that are watched (notable, older) works."""
     by_q = {w["qid"]: w for w in watch.values()}
@@ -246,14 +233,14 @@ def _match(snap: dict, watch: dict, today_year: int) -> dict[str, dict[str, int]
         by_name.setdefault((w["kind"], _norm(title.replace("_", " "))), []).append(w)
     out = {}
     for src, rows in snap.items():
+        if src not in CHARTS:
+            continue                          # a source no longer used (e.g. Deezer)
         _, _, prop, kinds = CHARTS[src]
         ids = _map_ids(prop, [r["id"] for r in rows])
         got = {}
         for r in rows:
             q = ids.get(r["id"])
             cands = [] if q else [w for k in kinds for w in by_name.get((k, _norm(r["name"])), [])]
-            if cands and src.startswith("deezer") and not r["year"]:
-                r["year"] = _deezer_year(r)        # Deezer charts carry no date; look this one up
             if cands and r["year"].isdigit():
                 # A title match counts only when the chart's own release year says it's an older work:
                 # the same year for films (a new film often reuses an old title); for music and books,

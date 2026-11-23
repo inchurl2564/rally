@@ -5,7 +5,7 @@ Track record page (and announced in the feeds) the day it crosses that line. If 
 falls below its threshold (a source breaks, the record is reset), it hides itself again.
 
   staying       how long a comeback lasts, by what caused it (a death, a new release, news...)
-  lead          does Wikipedia attention move before the charts (iTunes, Deezer, Steam, Open Library)?
+  lead          does Wikipedia attention move before the charts (iTunes, Steam, Open Library)?
   star          whose news moves their old work most: people behind 3+ separate comebacks
   calibration   our own forecasts: when we said "60% chance", how often did it happen?
 
