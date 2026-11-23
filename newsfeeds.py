@@ -7,8 +7,9 @@ Replaces GDELT, which refuses requests from shared cloud addresses (GitHub's inc
                    already in the library (WordPress sites page back with ?paged=N); keep 75 days.
                    Saved in the repository, one file per day: store/news/<YYYY-MM-DD>.json.gz.
   news(q, around)  articles mentioning q, published from 14 days before the comeback started to
-                   7 days after: the library first, then GDELT's raw files (gdeltfiles.py), then
-                   Google News (at most GOOGLE_MAX a night).
+                   7 days after: the library first, then GDELT's raw files (gdeltfiles.py).
+                   (Google News was used as a last resort until 2026-11-23; its robots.txt
+                   disallows automated access to its search feed, so it's no longer called.)
 
 Each result is evidence like the rest of explain.py: {"source", "date", "text", "url",
 "published", "detail"}, where "published" is the article's own date (so a link can be checked
@@ -300,7 +301,9 @@ def news(query: str, around: dt.date, n: int = 6, person: bool = False, kind: st
             found = gdeltfiles.search(query, around, n=n)
         except Exception as e:
             log(f"      GDELT files search failed: {e}")
-    return found or google_search(query, around, n=n, person=person, kind=kind)
+    # Google News was dropped on 2026-11-23: its robots.txt disallows automated access to /rss/search,
+    # and Google's terms forbid automated access against robots.txt. google_search() is kept unused.
+    return found
 
 
 if __name__ == "__main__":

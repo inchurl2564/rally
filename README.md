@@ -197,8 +197,8 @@ entertainment), read once a night and saved in the repository as one gzipped fil
 (`store/news/`, kept 75 days; GDELT headlines in `store/gdelt/`, kept 30 days; see `daystore.py`). Each comeback is searched by its
 title in quotes in a headline (people by full name); comparisons ("'X' meets 'Y'") don't count.
 What the library can't explain is looked up in GDELT's raw 15-minute data files (`gdeltfiles.py`: a
-day of files, about 220 MB, read in under a minute; headlines that quote a title kept 30 days), then Google News (up to 40 searches a night, two-or-more-word
-titles only, with the kind of work added to the search). GDELT's search service refuses requests from
+day of files, about 220 MB, read in under a minute; headlines that quote a title kept 30 days). Google News was dropped on 2026-11-23:
+its robots.txt disallows automated access to its search feed, which Google's terms forbid. GDELT's search service refuses requests from
 shared cloud addresses, so its raw files are read instead. To test the feeds from GitHub's servers, run `python newsfeeds.py --test "Title|film" "@Person Name"`.
 
 When the news finds no reason for a work's comeback, `youtube.py` searches YouTube (official Data API v3,

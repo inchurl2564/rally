@@ -44,7 +44,7 @@ Updated as items move. Last updated: 2026-11-23 (news sources rebuilt: RSS feeds
 | --- | --- |
 | Steam review counts | Steam blocks data requests from GitHub's servers; switched off automatically, player counts still work |
 | Project Gutenberg top downloads | Gutenberg's own page turns away automated requests; now read from Gutendex (built on Gutenberg's catalog), top 128 books |
-| GDELT news matching | Its search service refuses requests from shared cloud addresses (GitHub included); now read from GDELT's raw data files instead, alongside news sites' RSS feeds and Google News (`newsfeeds.py`, `gdeltfiles.py`) |
+| GDELT news matching | Its search service refuses requests from shared cloud addresses (GitHub included); now read from GDELT's raw data files instead, alongside news sites' RSS feeds (`newsfeeds.py`, `gdeltfiles.py`); Google News dropped Nov 23 (its robots.txt disallows automated use of its search feed) |
 
 ## Cloudflare and the domain: done
 
