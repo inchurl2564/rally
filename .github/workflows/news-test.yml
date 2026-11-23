@@ -1,0 +1,11 @@
+name: news-test
+on: workflow_dispatch
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: APITube
+        run: |
+          curl -sL https://apitube.io/ | grep -o 'href="[^"]*"' | sort -u | grep -iv "\.css\|\.png\|\.svg\|font" | head -80 || true
+          for p in "" pricing terms terms-of-service tos legal/terms license faq; do echo "== /$p $(curl -sL -o /dev/null -w '%{http_code}' https://apitube.io/$p)"; curl -sL "https://apitube.io/$p" | python3 -c "import sys,re,html;t=sys.stdin.read();t=re.sub(r'(?s)<(script|style).*?</\1>','',t);t=html.unescape(re.sub(r'<[^>]+>',' ',t));print(re.sub(r'\s+',' ',t)[:14000])" || true; done
