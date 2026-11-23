@@ -170,6 +170,12 @@ def explain(project: str, title: str, query: str, around: dt.date, with_news: bo
     burst = edit_burst(project, title, around)
     # News articles first: they're dated and say why; Wikipedia edits fill in behind them.
     ev = news(query, around, person=person, kind=kind) if with_news else []
+    if kind in ("album", "song") and qid and with_news:
+        try:                                          # a reissue or remaster (MusicBrainz, CC0)
+            import musicbrainz
+            ev = musicbrainz.reissues(qid, around, kind) + ev
+        except Exception as e:
+            print(f"      MusicBrainz lookup failed for {query}: {e}", file=sys.stderr)
     if kind == "TV series" and qid and with_news:
         try:                                          # a new season, revival or special (TVmaze, CC BY-SA)
             import tvmaze
@@ -192,6 +198,12 @@ def explain(project: str, title: str, query: str, around: dt.date, with_news: bo
             ev = youtube.trending_match(query, kind) + ev
         except Exception as e:
             print(f"      YouTube trending check failed for {query}: {e}", file=sys.stderr)
+    if with_news and likely_cause(ev + wiki) is None:
+        try:                                          # people talking about it on Bluesky
+            import bluesky
+            ev = bluesky.talk(query, around, kind) + ev
+        except Exception as e:
+            print(f"      Bluesky lookup failed for {query}: {e}", file=sys.stderr)
     if video and with_news and not person and likely_cause(ev + wiki) is None:
         # No reason in the news or on Wikipedia: a trailer, viral clip or video essay often is one.
         try:

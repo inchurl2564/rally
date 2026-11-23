@@ -11,7 +11,8 @@ Updated as items move. Last updated: 2026-11-23 (news sources rebuilt: RSS feeds
 | Logo | You, Nov 23 | Site icon, share picture (`site/og.png`) and the organization logo in search results |
 | Bluesky and Threads accounts | You, Nov 23 | Links on the site and in search metadata; Friday posts linking to the week's roundup (Bluesky: an app password; Threads: a Meta developer app) |
 | First Friday newsletter issue | A PO box or virtual mailbox for Beehiiv's required mailing address (not a home address) | Send the This week page as the Friday issue. Sign-up boxes are already live (Beehiiv, free plan: therallyback.beehiiv.com) |
-| Leftover GitHub branches (`mobile-simple`, `about-cols`, `wiki-test`, `discogs-test`, `honors-test`) | Deleting them on GitHub (it won't let me) | Repo → Branches → delete |
+| Bluesky app password for the nightly search | Once the Bluesky account exists | Bluesky → Settings → Privacy and security → App passwords → add one; then GitHub repo → Settings → Secrets → Actions: `BLUESKY_HANDLE` (e.g. therallyback.bsky.social) and `BLUESKY_APP_PASSWORD` |
+| Leftover GitHub branches (`mobile-simple`, `about-cols`, `wiki-test`, `discogs-test`, `honors-test`, `sources-test`) | Deleting them on GitHub (it won't let me) | Repo → Branches → delete |
 
 ## Waiting on the business plan
 

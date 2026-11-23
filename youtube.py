@@ -105,7 +105,8 @@ def search(title: str, around: dt.date, kind: str | None = None, n: int = 3) -> 
                         "q": f'"{name}" {noun}'.strip(), "relevanceLanguage": "en",
                         "publishedAfter": f"{lo.isoformat()}T00:00:00Z", "publishedBefore": f"{hi.isoformat()}T00:00:00Z"})
     items = [x for x in (d or {}).get("items") or [] if x.get("id", {}).get("videoId")]
-    items = [x for x in items if _matches(name, _unescape(x["snippet"].get("title", "")), kind)]
+    items = [x for x in items if _matches(name, _unescape(x["snippet"].get("title", "")), kind)
+             and _segment_match(name, _unescape(x["snippet"].get("title", "")))]
     if not items:
         return []
     stats = _get("videos", {"part": "statistics", "id": ",".join(x["id"]["videoId"] for x in items)})   # 1 unit
@@ -117,10 +118,10 @@ def search(title: str, around: dt.date, kind: str | None = None, n: int = 3) -> 
         if v < MIN_VIEWS:
             continue
         day = sn.get("publishedAt", "")[:10]
-        vtitle = _unescape(sn.get("title", ""))
+        vtitle = re.sub(r"\s*#\w+", "", _unescape(sn.get("title", ""))).strip()
         out.append({"source": f"YouTube · {_unescape(sn.get('channelTitle', 'video'))}", "date": day, "published": day,
                     "text": f"{vtitle} ({v:,} views)"[:200], "url": f"https://www.youtube.com/watch?v={vid}",
-                    "detail": _unescape(sn.get("description", ""))[:200], "views": v, "video": True})
+                    "views": v, "video": True})
         if len(out) >= n:
             break
     STATS["found"] += bool(out)
@@ -167,11 +168,10 @@ def trending() -> list[dict]:
 
 
 def _segment_match(name: str, video_title: str) -> bool:
-    """A one-word title must be a whole part of the video title ("Looker (1981)"), or in quotes:
-    "Arthur" inside "James Arthur - Impossible" is someone's name, not the film."""
-    if " " in name:
-        return True
-    parts = re.split(r"\s+[-–—|x×]\s+|[|()\[\]:,]", video_title)
+    """The title must be a whole part of the video title ("All the Pretty Horses | CLIP",
+    "Looker (1981)"), or in quotes: "Arthur" in "James Arthur - Impossible", "Shutter" in
+    "Shutter Island explained" and "Kiss Me" in "Kiss Me Quick – Elvis Presley" don't count."""
+    parts = re.split(r"\s+[-–—x×~]\s+|\s*(?://|[|·•()\[\]:,#])\s*", video_title)
     if any(p.strip().lower() == name.lower() for p in parts):
         return True
     return bool(re.search(r"[\"'‘“]" + re.escape(name) + r"[\"'’”]", video_title, re.I))
@@ -188,7 +188,7 @@ def trending_match(title: str, kind: str | None = None) -> list[dict]:
         if not _matches(name, v["title"], kind) or not _segment_match(name, v["title"]):
             continue
         e = {"source": f"YouTube trending · {v['channel']}", "date": dt.date.today().isoformat(), "published": v["published"],
-             "text": f"On YouTube's trending list ({', '.join(v['regions'])}): {v['title']} ({v['views']:,} views)"[:200],
+             "text": f"On YouTube's trending list ({', '.join(v['regions'])}): {re.sub(r'\s*#\w+', '', v['title']).strip()} ({v['views']:,} views)"[:200],
              "url": f"https://www.youtube.com/watch?v={v['id']}", "views": v["views"], "video": True}
         if v["category"] == "10" and kind in ("song", "album"):
             e["cause"] = "viral"            # an old song's video on the music chart: the internet at work

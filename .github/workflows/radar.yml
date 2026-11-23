@@ -81,6 +81,8 @@ jobs:
         if: github.event_name != 'push'
         env:
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}     # optional: YouTube lookups for unexplained comebacks
+          BLUESKY_HANDLE: ${{ secrets.BLUESKY_HANDLE }}           # optional: Bluesky search (app password)
+          BLUESKY_APP_PASSWORD: ${{ secrets.BLUESKY_APP_PASSWORD }}
         run: python radar.py --site site
 
       - name: Commit results

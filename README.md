@@ -228,7 +228,17 @@ Three more open sources, added 2026-11-23:
   with up to 45 days' lead-in. Verdict "honor" (shown under In the news).
 - **YouTube's trending chart** (`youtube.trending`): 4 countries x 4 categories, 16 quota units a night, kept in
   memory only. A video naming the title counts as evidence; an old song on the Music chart counts as "viral".
-  One-word titles must stand alone in the video title ("Arthur" in "James Arthur - Impossible" doesn't count).
+  Every match (trending and search) must have the title as a whole part of the video title, or in quotes
+  ("Shutter" in "Shutter Island explained" and "Kiss Me" in "Kiss Me Quick" don't count); hashtags are ignored.
+- **MusicBrainz** (`musicbrainz.py`, core data CC0): editions of an album, or of the album a song is on, released
+  from 21 days before the start to 5 after (found through Wikidata's release group ID, P436). Verdict cause
+  "re-release". One request a second, as MusicBrainz asks; tags and ratings (non-commercial) are never read.
+- **Bluesky** (`bluesky.py`): for comebacks still unexplained, counts posts naming the title in quotes from 3 days
+  before the start to 7 after; links to the same search on Bluesky. No post text is shown or stored (posts belong
+  to their writers); the most-liked posts' words are only read in memory to see whether several agree on a
+  reason. Needs the `BLUESKY_HANDLE` and `BLUESKY_APP_PASSWORD` repository secrets (an app password), since
+  search without an account is refused; without them it is skipped. Developer guidelines:
+  https://bsky.network/docs/developer-guidelines
 
 When the news finds no reason for a work's comeback, `youtube.py` searches YouTube (official Data API v3,
 `YOUTUBE_API_KEY` repository secret; up to 60 searches a night). A video counts only if its title names the

@@ -1423,8 +1423,12 @@ def main():
     try:
         import youtube
         import tvmaze
+        import musicbrainz
+        import bluesky
         log(youtube.summary())
         log(tvmaze.summary())
+        log(musicbrainz.summary())
+        log(bluesky.summary())
     except Exception:
         pass
     # Spot-check explained spikes against independent evidence (feeds the Accuracy tab).
