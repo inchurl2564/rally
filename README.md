@@ -262,3 +262,10 @@ before the comeback to 7 days after. One with 1M+ views and no other reason in i
 Deezer's charts were dropped on 2026-11-23: its developer terms allow only approved, private,
 non-commercial use, and forbid keeping a database of its content or any text and data mining.
 Saved Deezer chart data was removed from `site/data` (it remains in git history only).
+
+## Search engines
+
+Each night, after the edition is committed and Cloudflare has published it, `tools/indexnow.py` sends the
+pages that changed (home page, title pages, weekly pages) to IndexNow (Bing, Yandex, Seznam, Naver and
+others), so they're indexed within hours. The key file `site/<key>.txt` proves ownership; it's public by
+design. Google doesn't take IndexNow; it reads the sitemap (submitted in Search Console).

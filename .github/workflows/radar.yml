@@ -100,6 +100,14 @@ jobs:
             git push
           fi
 
+      # Tell Bing and other IndexNow engines which pages tonight's edition added or changed,
+      # once Cloudflare has published them (it deploys a few minutes after the push).
+      - name: Ping search engines (IndexNow)
+        if: github.event_name != 'push'
+        continue-on-error: true
+        run: |
+          if git log -1 --format=%s | grep -q "^data: run for"; then sleep 240; python tools/indexnow.py; else echo "No new edition."; fi
+
       # Health check: opens (or adds to) one "needs attention" issue, which emails the repo owner,
       # only when something needs a person. Quiet nights send nothing.
       - name: Health check
