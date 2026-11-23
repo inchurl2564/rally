@@ -1,0 +1,23 @@
+name: news-test
+on: workflow_dispatch
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Images
+        run: |
+          python3 - <<'PY'
+          import json, urllib.request, urllib.parse
+          UA = {"User-Agent": "Rallyback/1.0 (+https://therallyback.com/?tab=about)", "Accept": "application/sparql-results+json"}
+          q = """SELECT ?item ?itemLabel ?rel ?s ?sLabel ?p ?img WHERE {
+            VALUES ?item { wd:Q94501 wd:Q94460 wd:Q94797 wd:Q212965 wd:Q1140036 }
+            VALUES ?rel { wdt:P179 wdt:P8345 }
+            ?item ?rel ?s . OPTIONAL { VALUES ?p { wdt:P18 wdt:P154 wdt:P3383 } ?s ?p ?img . }
+            SERVICE wikibase:label { bd:serviceParam wikibase:language "en". } }"""
+          d = json.load(urllib.request.urlopen(urllib.request.Request("https://query.wikidata.org/sparql?" + urllib.parse.urlencode({"query": q}), headers=UA), timeout=60))
+          for r in d["results"]["bindings"]:
+              print(r["itemLabel"]["value"], "|", r["rel"]["value"][-5:], r["sLabel"]["value"], "|", r.get("p", {}).get("value", "")[-5:], urllib.parse.unquote(r.get("img", {}).get("value", "").rsplit("/", 1)[-1]))
+          s = json.load(urllib.request.urlopen(urllib.request.Request("https://commons.wikimedia.org/w/api.php?" + urllib.parse.urlencode({"action": "query", "list": "search", "srsearch": "Grand Theft Auto logo", "srnamespace": 6, "srlimit": 15, "format": "json"}), headers=UA), timeout=30))
+          print("\nCommons:", [x["title"] for x in s["query"]["search"]])
+          PY
