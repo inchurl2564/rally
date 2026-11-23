@@ -6,30 +6,24 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with: { python-version: "3.12" }
-      - name: Currents
+      - name: Docs
+        run: |
+          curl -sL https://currentsapi.services/en/docs/search | python3 -c "import sys,re,html;t=sys.stdin.read();t=re.sub(r'(?s)<(script|style).*?</\1>','',t);t=html.unescape(re.sub(r'<[^>]+>',' ',t));print(re.sub(r'\s+',' ',t)[:9000])"
+      - name: Try variants
         env:
           CURRENTS_API_KEY: ${{ secrets.CURRENTS_API_KEY }}
         run: |
-          echo "key present: $([ -n "$CURRENTS_API_KEY" ] && echo yes || echo no)"
           python3 - <<'PY'
-          import datetime as dt, json, os, urllib.request, urllib.parse
-          import currents
-          # raw call once, to see the response shape and any error text
-          q = urllib.parse.urlencode({"keywords": '"The Nightingale"', "language": "en", "page_size": 5,
-               "start_date": "2026-11-11T00:00:00+00:00", "end_date": "2026-11-17T23:59:59+00:00"})
-          try:
-              r = urllib.request.urlopen(urllib.request.Request(f"{currents.API}?{q}", headers={**currents.UA, "Authorization": os.environ["CURRENTS_API_KEY"]}), timeout=30)
-              d = json.load(r); print("raw status", d.get("status"), "items", len(d.get("news", [])))
-              for a in d.get("news", [])[:5]: print("   ", a.get("published"), a.get("url", "")[:80], "|", a.get("title", "")[:90])
-          except urllib.error.HTTPError as e:
-              print("HTTP", e.code, e.read()[:400])
-          for t, day, person in [("The Nightingale", "2026-11-16", False), ("Reveal", "2026-11-19", False),
-                                 ("Fairytale of New York", "2026-11-18", False), ("Red Dead Redemption", "2026-11-18", False),
-                                 ("Russell Brand", "2026-11-10", True), ("Happy Birthday, Mr. President", "2026-11-20", False)]:
-              hits = currents.search(t, dt.date.fromisoformat(day), person=person)
-              print(f"\n== {t}: {len(hits)}")
-              for e in hits: print("  ", e["published"], e["source"], "|", e["text"], "|", e.get("cause"), "\n     ", e["url"][:100])
-          print(currents.summary())
+          import json, os, urllib.request, urllib.parse
+          K = os.environ["CURRENTS_API_KEY"]
+          base = {"language": "en", "page_size": 20, "start_date": "2026-11-11T00:00:00+00:00", "end_date": "2026-11-17T23:59:59+00:00"}
+          for extra in [{"keywords": "The Nightingale"}, {"keywords": "Nightingale trailer"}, {"keywords": '"The Nightingale" Fanning'},
+                        {"keywords": "Nightingale", "category": "entertainment"}, {"keywords": "Nightingale Fanning"}]:
+              q = urllib.parse.urlencode({**base, **extra})
+              try:
+                  d = json.load(urllib.request.urlopen(urllib.request.Request(f"https://api.currentsapi.services/v1/search?{q}", headers={"Authorization": K, "User-Agent": "Rallyback/1.0"}), timeout=30))
+                  ts = [a.get("title", "")[:70] for a in d.get("news", [])]
+                  print(extra, len(ts), sum("ightingale" in t for t in ts)); [print("    ", t) for t in ts[:6]]
+              except urllib.error.HTTPError as e:
+                  print(extra, "HTTP", e.code, e.read()[:200])
           PY
