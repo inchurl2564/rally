@@ -85,10 +85,14 @@ def episodes_of(qid: str, days: dict, runs: list[str]) -> list[dict]:
     for e in out:
         rows = [r for _, r in e["rows"]]
         best = max(rows, key=lambda r: (r.get("rally_score") or 0, r.get("lift") or 0))
+        # The reason comes from the latest day that found one: research later in a comeback
+        # (a new source, an editor's note) knows more than its biggest day did.
+        found = [r for r in rows if r.get("verdict") not in UNEXPLAINED | SET_ASIDE]
+        why = found[-1] if found else best
         eps.append({"start": min(str(r.get("spike_start") or e["first_seen"]) for r in rows)[:10],
                     "first_seen": e["first_seen"], "last_seen": e["last_seen"], "days": len(rows),
                     "peak_lift": max(r.get("lift") or 0 for r in rows), "score": best.get("rally_score"),
-                    "verdict": best.get("verdict"), "causes": best.get("causes") or []})
+                    "verdict": why.get("verdict"), "causes": why.get("causes") or []})
     return eps
 
 
@@ -105,7 +109,10 @@ def _cause_text(c: list, names: dict, notes: dict) -> str | None:
     if kind == "public domain":
         return f"Entered the public domain{when}"
     if kind == "honor" and detail:
-        return f"{detail[0].upper()}{detail[1:]}" + (f" ({date[:4]})" if date else "")
+        yr = f" ({date[:4]})" if date else ""
+        if who and who != detail:                      # someone credited was honored
+            return f"{who} received the {detail}{yr}"
+        return f"Honored: {detail}{yr}"
     if kind == "ripple" and who:
         return f"News about {who}{f' ({detail})' if detail else ''}{when}"
     if kind == "common thread" and who:            # a shared person, not a known reason
