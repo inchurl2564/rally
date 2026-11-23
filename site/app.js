@@ -396,7 +396,7 @@ const contactLink = () => h("a", { href: "mailto:" + CONTACT }, CONTACT);
 const NEWSLETTER = "https://therallyback.beehiiv.com/subscribe";
 // Wide screens show the sign-up mid-page; phones show it once, at the bottom (render() adds it),
 // so it doesn't interrupt the stories.
-const NEWSLETTER_PAGES = new Set(["today", "week", "about"]);
+const NEWSLETTER_PAGES = new Set(["today", "week"]);
 const inlineNewsletter = () => (SMALL.matches ? null : newsletterBox());
 function newsletterBox() {
   return h("aside", { class: "newsletter" },
@@ -1654,7 +1654,7 @@ function aboutPage() {
       h("h3", {}, "Contact us"),
       h("p", { class: "mission" }, "Questions, ideas, press or partnerships: send us a note below or write to ", contactLink(), ". For a tip or a correction about a story, the links on the story itself are fastest."),
       TIPS_FORM.action ? contactForm() : null),
-    inlineNewsletter(),
+    newsletterBox(),          // About us keeps its sign-up mid-page on phones too
     ...phoneFold("Embed the chart", "Put today's top comebacks on your own site. It updates itself every morning.", embedBox(base)),
     ...phoneFold("Feeds", "Get new comebacks every morning. Copy a link into any feed reader: Feedly, Inoreader, NetNewsWire, Outlook, Slack and others.",
       h("ul", { class: "plain" }, feeds.map(([n, d]) => h("li", {},
