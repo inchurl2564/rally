@@ -1,7 +1,7 @@
 # Waiting list
 
 Things we've decided to do (or want to) that are on hold, grouped by what they're waiting for.
-Updated as items move. Last updated: 2026-11-23 (news sources rebuilt: RSS feeds, GDELT raw files, Google News).
+Updated as items move. Last updated: 2026-11-23 (sources reviewed against their terms; new reason sources added; Currents and Bluesky keys in).
 
 ## Waiting on a decision or an account from you
 
@@ -9,9 +9,8 @@ Updated as items move. Last updated: 2026-11-23 (news sources rebuilt: RSS feeds
 | --- | --- | --- |
 | "Where to watch / listen / read / play" links (affiliate) | Joining Apple, Amazon, Bookshop.org and a game-store affiliate program | Buttons on every title and story card, plus the disclosure line |
 | Logo | You, Nov 23 | Site icon, share picture (`site/og.png`) and the organization logo in search results |
-| Bluesky and Threads accounts | You, Nov 23 | Links on the site and in search metadata; Friday posts linking to the week's roundup (Bluesky: an app password; Threads: a Meta developer app) |
+| Threads account (Bluesky done: therallyback.bsky.social) | You | Links on the site and in search metadata; Friday posts linking to the week's roundup (Bluesky's app password is already set up for search; posting needs the go-ahead; Threads: a Meta developer app) |
 | First Friday newsletter issue | A PO box or virtual mailbox for Beehiiv's required mailing address (not a home address) | Send the This week page as the Friday issue. Sign-up boxes are already live (Beehiiv, free plan: therallyback.beehiiv.com) |
-| Currents News API key | Sign up (free) at currentsapi.services, copy the API key | GitHub repo → Settings → Secrets and variables → Actions → New secret `CURRENTS_API_KEY` |
 | Leftover GitHub branches (`mobile-simple`, `about-cols`, `wiki-test`, `discogs-test`, `honors-test`, `sources-test`, `lb-test`) | Deleting them on GitHub (it won't let me) | Repo → Branches → delete |
 
 ## Waiting on the business plan
@@ -19,7 +18,7 @@ Updated as items move. Last updated: 2026-11-23 (news sources rebuilt: RSS feeds
 | Item | Plan phase | Notes |
 | --- | --- | --- |
 | LLC, tax ID, business bank account, trademark, logo | Step 0, Dec 2026 – Jan 2027 | About $1,500 one-time |
-| Legal review of data-source licences, then pro terms | Before the first newsletter sponsorship (moved earlier; see "What's free and what's paid" in the plan) | Apple chart feeds (affiliate-program terms look compatible; check the RSS generator's own note when joining). Deezer, Google News and every publisher feed dropped Nov 23 (BBC, Guardian and Penske terms rule out our use; the rest as a precaution). New: TVmaze and Wikipedia's Top 25 Report, both CC BY-SA: credit needed on the site |
+| Legal review of data-source licences, then pro terms | Before the first newsletter sponsorship (moved earlier; see "What's free and what's paid" in the plan) | Apple chart feeds (affiliate-program terms look compatible; check the RSS generator's own note when joining). Deezer, Google News, Netflix Top 10 and every publisher feed ruled out Nov 23. In use and allowed: Wikipedia/Wikidata, GDELT files, Currents (credit shown), YouTube API, TVmaze and Top 25 Report (CC BY-SA credit needed on the site), MusicBrainz/ListenBrainz (CC0; MetaBrainz asks for support once there's revenue), Bluesky (counts and links only). The 4 am check drafts the new sources wording |
 | Pro waitlist page and paid pilots | Phase A, Apr – Sep 2027 | Following is the free early signal for demand |
 | Pro accounts, catalog upload, alerts, dashboard, API | Phase B, Oct 2027, only after the go/no-go gate | 10+ organizations waiting and 3 paying pilots |
 | Licensed weekly "Rallyback 50" chart | Stream 4, free chart Q1 2028, sales Sep 2028 | The embeddable chart is the first step |
@@ -45,7 +44,9 @@ Updated as items move. Last updated: 2026-11-23 (news sources rebuilt: RSS feeds
 | --- | --- |
 | Steam review counts | Steam blocks data requests from GitHub's servers; switched off automatically, player counts still work |
 | Project Gutenberg top downloads | Gutenberg's own page turns away automated requests; now read from Gutendex (built on Gutenberg's catalog), top 128 books |
-| GDELT news matching | Its search service refuses requests from shared cloud addresses (GitHub included); now read from GDELT's raw data files instead, alongside news sites' RSS feeds (`newsfeeds.py`, `gdeltfiles.py`); Google News dropped Nov 23 (its robots.txt disallows automated use of its search feed) |
+| GDELT news matching | Its search service refuses shared cloud addresses; read from GDELT's raw data files instead (`gdeltfiles.py`), with the Currents News API as backup. Publisher feeds and Google News dropped Nov 23 over their terms |
+| Entertainment trade news (Variety, Deadline-style) | No free source covers it well (Currents' index is thin on it); needs a paid licence once there's revenue |
+| Discogs data files | Discogs now blocks automated downloads; not pursued |
 
 ## Cloudflare and the domain: done
 
