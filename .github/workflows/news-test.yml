@@ -17,6 +17,13 @@ jobs:
           import datetime as dt, signals, annotations
           rows = signals._gutenberg(signals.CHARTS["gutenberg"][1])
           print("GUTENDEX", len(rows), [r["name"] for r in rows[:5]])
+          import explain, json
+          r = annotations._mw({"action": "parse", "page": "Portal:Current events/2026 November 5", "prop": "wikitext"})
+          txt = (r or {}).get("parse", {}).get("wikitext", "")
+          print("CE PAGE", "ok" if txt else "EMPTY", len(txt), "MW off:", explain.MW.off, "fails:", explain.MW.fails)
+          print("CE BRAND LINES", [l[:120] for l in txt.splitlines() if "Brand" in l][:3])
+          d1 = signals._get("https://gutendex.com/books/?sort=popular&page=2")
+          print("GUTENDEX PAGE 2", "ok" if d1 else "FAILED", len((d1 or {}).get("results") or []))
           for name, d in [("Patrick Stewart", "2026-10-30"), ("Russell Brand", "2026-11-05"), ("Marina Sirtis", "2026-11-01")]:
               ev = annotations.current_events(name, dt.date.fromisoformat(d), days=3)
               print("CURRENT EVENTS", name, len(ev), [e["text"][:110] for e in ev[:2]])
