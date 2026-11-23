@@ -10,14 +10,14 @@ Updated as items move. Last updated: 2026-11-23 (sources reviewed against their 
 | "Where to watch / listen / read / play" links (affiliate) | Joining Apple, Amazon, Bookshop.org and a game-store affiliate program | Buttons on every title and story card, plus the disclosure line |
 | Logo | You, Nov 23 | Site icon, share picture (`site/og.png`) and the organization logo in search results |
 | Threads account (Bluesky done: therallyback.bsky.social) | You | Links on the site and in search metadata; Friday posts linking to the week's roundup (Bluesky's app password is already set up for search; posting needs the go-ahead; Threads: a Meta developer app) |
-| First Friday newsletter issue | A PO box or virtual mailbox for Beehiiv's required mailing address (not a home address) | Send the This week page as the Friday issue. Sign-up boxes are already live (Beehiiv, free plan: therallyback.beehiiv.com) |
+| First Friday newsletter issue | A PO box or virtual mailbox for Beehiiv's required mailing address (not a home address) | Send the This week page as the Friday issue, then remove the "first issue goes out soon" line from the Subscribe page (`subscribePage` in site/app.js). Sign-up boxes are already live (Beehiiv, free plan: therallyback.beehiiv.com) |
 | Two-factor sign-in on every account (GitHub, Cloudflare, Google, Beehiiv, Bluesky, Currents) | You | Use an authenticator app or passkey, not text messages; save recovery codes offline; a password manager helps |
 | Domain safety | You | Cloudflare → Domain Registration: auto-renew on, transfer lock on, card on file current |
 | Email spoofing protection (SPF + DMARC) | You (I can walk you through it) | Two TXT records in Cloudflare DNS so nobody can send fake mail from @therallyback.com |
 | Restrict the YouTube API key | You | Google Cloud Console → Credentials → the key → API restrictions: YouTube Data API v3 only |
 | Monthly backups | You | Download the GitHub repository (Code → Download ZIP) and the Beehiiv subscriber list once a month |
 | Emergency access | You | Decide who could run the site if you couldn't (password manager emergency access) |
-| Leftover GitHub branches (`mobile-simple`, `about-cols`, `wiki-test`, `discogs-test`, `honors-test`, `sources-test`, `lb-test`, `sources-wording`) | Deleting them on GitHub (it won't let me) | Repo → Branches → delete |
+| Leftover GitHub branches (`mobile-simple`, `about-cols`, `wiki-test`, `discogs-test`, `honors-test`, `sources-test`, `lb-test`, `sources-wording`, `preview-subscribe`, `preview-monthly-report` once published) | Deleting them on GitHub (it won't let me) | Repo → Branches → delete |
 
 ## Waiting on the business plan
 
