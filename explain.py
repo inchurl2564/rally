@@ -39,7 +39,8 @@ CAUSES = [
     ("sync placement", r"\b(featured in|used in|appears in|soundtrack|commercial|advert|ad campaign|trailer for|super bowl ad)"),
     ("award", r"\b(award|oscar|academy award|grammy|emmy|golden globe|bafta|hall of fame|inducted|nominat)"),
     ("re-release", r"\b(re-?release|remaster|reissue|restoration|restored|4k|anniversary edition|box set|re-?issue)"),
-    ("remake/sequel news", r"\b(remake|reboot|sequel|prequel|adaptation|announced|casting|cast as|greenlit|in development)"),
+    ("remake/sequel news", r"\b(remake|reboot|sequel|prequel|adaptation|announced|casting|cast as|greenlit|in development|"
+                           r"trailer|teaser|first look|season \d+|series order|limited series|box office|opening weekend)"),
     ("anniversary", r"\b(anniversary|years since|years ago)\b"),
     ("auction/sale", r"\b(auction|sold for|record price|copy sold)"),
     ("sports/event", r"\b(halftime|world cup|olympic|super bowl|eurovision|coronation)"),

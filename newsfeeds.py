@@ -36,22 +36,23 @@ INDEX = os.path.join(HERE, ".cache", "news_index.json")
 KEEP_DAYS = 75
 UA = {"User-Agent": "Mozilla/5.0 (compatible; Rallyback news reader; +https://therallyback.com/?tab=about)"}
 
-# (outlet, feed address, pages back on a normal night, pages back the first time)
+# (outlet, feed address, pages back on a normal night, pages back the first time; the library
+# fills in further night by night, so first reads stay short enough for every feed to fit)
 # Paged feeds are WordPress sites (?paged=N); the others are read once (they hold more items).
 FEEDS = [
-    ("Variety", "https://variety.com/feed/", 12, 60),
-    ("Deadline", "https://deadline.com/feed/", 12, 60),
-    ("The Hollywood Reporter", "https://www.hollywoodreporter.com/feed/", 10, 50),
-    ("IndieWire", "https://www.indiewire.com/feed/", 6, 30),
-    ("Billboard", "https://www.billboard.com/feed/", 10, 50),
-    ("Rolling Stone", "https://www.rollingstone.com/feed/", 8, 40),
-    ("NME", "https://www.nme.com/feed", 8, 40),
+    ("Variety", "https://variety.com/feed/", 12, 15),
+    ("Deadline", "https://deadline.com/feed/", 12, 15),
+    ("The Hollywood Reporter", "https://www.hollywoodreporter.com/feed/", 10, 15),
+    ("IndieWire", "https://www.indiewire.com/feed/", 6, 15),
+    ("Billboard", "https://www.billboard.com/feed/", 10, 15),
+    ("Rolling Stone", "https://www.rollingstone.com/feed/", 8, 15),
+    ("NME", "https://www.nme.com/feed", 8, 15),
     ("Pitchfork", "https://pitchfork.com/feed/feed-news/rss", 1, 1),
     ("Polygon", "https://www.polygon.com/rss/index.xml", 1, 1),
-    ("Kotaku", "https://kotaku.com/feed", 6, 30),
+    ("Kotaku", "https://kotaku.com/feed", 6, 15),
     ("Eurogamer", "https://www.eurogamer.net/feed", 1, 1),
     ("GameSpot", "https://www.gamespot.com/feeds/mashup/", 1, 1),
-    ("Book Riot", "https://bookriot.com/feed/", 4, 20),
+    ("Book Riot", "https://bookriot.com/feed/", 4, 15),
     ("The Guardian", "https://www.theguardian.com/culture/rss", 1, 1),
     ("The Guardian", "https://www.theguardian.com/film/rss", 1, 1),
     ("The Guardian", "https://www.theguardian.com/music/rss", 1, 1),
@@ -180,7 +181,7 @@ def refresh(budget: float = REFRESH_BUDGET) -> dict:
             STATS["new_articles"] += new
             if new == 0 and have.get(name):
                 break                                   # reached what we already have
-            time.sleep(0.8)
+            time.sleep(0.4)
         if got_any:
             STATS["feeds_ok"] += 1
         else:
