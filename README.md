@@ -188,3 +188,14 @@ Feed entries use the same plain-English reasons, link to the title page and are 
 Title pages with too little to say yet (one comeback of 2 days or less, no known reason) carry `noindex` and are
 left out of the sitemap until they grow. `site/og.png` is the default share picture (made from an HTML card;
 replace it once there's a logo). Each week also gets a permanent roundup page at `/week/<2026-W47>`, listed at `/week/`.
+
+## News behind the reasons
+
+`newsfeeds.py` keeps a rolling 75-day library of headlines from about 20 entertainment and culture
+news feeds (Variety, Deadline, The Hollywood Reporter, IndieWire, Billboard, Rolling Stone, NME,
+Pitchfork, Polygon, Kotaku, Eurogamer, GameSpot, Book Riot, the Guardian's culture sections, BBC
+entertainment), read once a night and kept in the workflow cache. Each comeback is searched by its
+title in quotes in a headline (people by full name); comparisons ("'X' meets 'Y'") don't count.
+What the library can't explain goes to Google News (up to 40 searches a night, two-or-more-word
+titles only, with the kind of work added to the search). GDELT, used before, refuses requests from
+shared cloud addresses. To test the feeds from GitHub's servers, run `python newsfeeds.py --test "Title|film" "@Person Name"`.

@@ -19,9 +19,7 @@ import os
 import statistics
 
 # Sources known to be off for good; not worth an email every night.
-# GDELT refuses requests from shared cloud addresses (GitHub's included) whatever the pace;
-# off until a replacement news source is chosen (see WAITING.md).
-KNOWN_OFF = {"Steam reviews", "GDELT news"}
+KNOWN_OFF = {"Steam reviews"}
 
 
 def _load(path, default):

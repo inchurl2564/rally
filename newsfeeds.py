@@ -210,7 +210,12 @@ def _matches(core: str, person: bool, headline: str) -> bool:
     if person:
         return bool(len(core) > 5 and " " in core.replace(r"\s+", " ")
                     and re.search(r"(?<!\w)" + core + r"(?!\w)", headline, re.I))
-    return bool(re.search(f"[{_QUOTES_OPEN}]" + core + r"(?:[:,]?\s[^’'\"”]{0,60})?" + f"[{_QUOTES_CLOSE}]", headline, re.I))
+    m = re.search(f"[{_QUOTES_OPEN}]" + core + r"(?:[:,]?\s[^’'\"”]{0,60})?" + f"[{_QUOTES_CLOSE}]", headline, re.I)
+    if not m:
+        return False
+    # A comparison is about something else: "'Minority Report' Meets 'Looper'", "a 'Heist'-style plot".
+    around = headline[max(0, m.start() - 12): m.end() + 12].lower()
+    return not re.search(r"\bmeets\b|-style|-esque|-like\b|\blike\s+[‘'\"“]|\bvibes\b|\bin the vein of\b", around)
 
 
 def _evidence(source, date, title, url, summary) -> dict:
@@ -248,6 +253,8 @@ def google_search(query: str, around: dt.date, before: int = 14, after: int = 7,
     # Google searches the whole web: naming the kind of work ("Heist" film) keeps it to coverage
     # of the work, not a stage play or a figure of speech.
     noun = "" if person else KIND_NOUN.get(kind or "", "")
+    if not person and len(q.split()) == 1:
+        return []                     # one-word titles ("Heist") are too ambiguous across the whole web
     params = {"q": f'"{q}" {noun + " " if noun else ""}after:{lo.isoformat()} before:{(hi + dt.timedelta(days=1)).isoformat()}',
               "hl": "en-US", "gl": "US", "ceid": "US:en"}
     wait = GOOGLE_GAP - (time.time() - _google_last)
