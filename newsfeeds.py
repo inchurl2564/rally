@@ -61,7 +61,8 @@ FEEDS = [
     ("The Guardian", "https://www.theguardian.com/books/rss", 1, 1),
     ("The Guardian", "https://www.theguardian.com/games/rss", 1, 1),
     ("The Guardian", "https://www.theguardian.com/tv-and-radio/rss", 1, 1),
-    ("BBC News", "https://feeds.bbci.co.uk/news/entertainment_and_arts/rss.xml", 1, 1),
+    # BBC News was removed on 2026-11-23: its terms require a licence for any business use of its RSS
+    # feeds or metadata, and forbid automated collection or computer analysis of its content.
 ]
 REFRESH_BUDGET = 8 * 60          # seconds for the whole nightly refresh
 GOOGLE = "https://news.google.com/rss/search"

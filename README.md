@@ -192,8 +192,7 @@ replace it once there's a logo). Each week also gets a permanent roundup page at
 
 `newsfeeds.py` keeps a rolling 75-day library of headlines from about 20 entertainment and culture
 news feeds (Variety, Deadline, The Hollywood Reporter, IndieWire, Billboard, Rolling Stone, NME,
-Pitchfork, Polygon, Kotaku, Eurogamer, GameSpot, Book Riot, the Guardian's culture sections, BBC
-entertainment), read once a night and saved in the repository as one gzipped file per day
+Pitchfork, Polygon, Kotaku, Eurogamer, GameSpot, Book Riot, the Guardian's culture sections), read once a night and saved in the repository as one gzipped file per day
 (`store/news/`, kept 75 days; GDELT headlines in `store/gdelt/`, kept 30 days; see `daystore.py`). Each comeback is searched by its
 title in quotes in a headline (people by full name); comparisons ("'X' meets 'Y'") don't count.
 What the library can't explain is looked up in GDELT's raw 15-minute data files (`gdeltfiles.py`: a
