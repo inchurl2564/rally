@@ -157,7 +157,16 @@ def search(query: str, around: dt.date, before: int = 14, after: int = 7, n: int
     lo, hi = (around - dt.timedelta(days=before)).isoformat(), (around + dt.timedelta(days=after)).isoformat()
     hits = sorted(((d, src, t, u) for u, (d, src, t) in _load()["items"].items()
                    if lo <= d <= hi and newsfeeds._matches(core, False, t)), reverse=True)
-    return [newsfeeds._evidence(src, d, t, u, "") for d, src, t, u in hits[:n]]
+    # Wire stories (AP, Reuters) run in dozens of papers under one headline: keep one of each.
+    seen, out = set(), []
+    for d, src, t, u in hits:
+        key = re.sub(r"\W+", " ", t.lower()).strip()[:90]
+        if key not in seen:
+            seen.add(key)
+            out.append(newsfeeds._evidence(src, d, t, u, ""))
+        if len(out) >= n:
+            break
+    return out
 
 
 if __name__ == "__main__":

@@ -7,7 +7,8 @@ Replaces GDELT, which refuses requests from shared cloud addresses (GitHub's inc
                    already in the library (WordPress sites page back with ?paged=N); keep 75 days.
                    Stored in .cache/news_index.json (kept between runs by the workflow's cache).
   news(q, around)  articles mentioning q, published from 14 days before the comeback started to
-                   7 days after: the library first, then Google News (at most GOOGLE_MAX a night).
+                   7 days after: the library first, then GDELT's raw files (gdeltfiles.py), then
+                   Google News (at most GOOGLE_MAX a night).
 
 Each result is evidence like the rest of explain.py: {"source", "date", "text", "url",
 "published", "detail"}, where "published" is the article's own date (so a link can be checked
@@ -292,8 +293,14 @@ def google_search(query: str, around: dt.date, before: int = 14, after: int = 7,
 
 
 def news(query: str, around: dt.date, n: int = 6, person: bool = False, kind: str | None = None) -> list[dict]:
-    return (library_search(query, around, n=n, person=person)
-            or google_search(query, around, n=n, person=person, kind=kind))
+    found = library_search(query, around, n=n, person=person)
+    if not found and not person:                 # GDELT's raw files: titles in quotes, from thousands of outlets
+        try:
+            import gdeltfiles
+            found = gdeltfiles.search(query, around, n=n)
+        except Exception as e:
+            log(f"      GDELT files search failed: {e}")
+    return found or google_search(query, around, n=n, person=person, kind=kind)
 
 
 if __name__ == "__main__":
