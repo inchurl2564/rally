@@ -4,8 +4,17 @@
   <id>https://therallyback.com/feeds/games.xml</id>
   <link rel="self" href="https://therallyback.com/feeds/games.xml"/>
   <link href="https://therallyback.com/"/>
-  <updated>2026-11-22T06:00:00Z</updated>
+  <updated>2026-11-23T06:00:00Z</updated>
   <author><name>The Rallyback</name></author>
+  <entry>
+    <id>https://therallyback.com/#work-Q1060715-2026-11-23</id>
+    <title>Soulcalibur (1998) is back: 2.3× its usual interest</title>
+    <link href="https://therallyback.com/w/Q1060715"/>
+    <updated>2026-11-23T06:00:00Z</updated>
+    <category term="Games"/>
+    <category term="Unexplained"/>
+    <summary>Soulcalibur, the 1998 video game, is drawing 2.3× its usual interest since Nov 23, 2026. We don&#x27;t know why yet. Know why? Tell us on the site.</summary>
+  </entry>
   <entry>
     <id>https://therallyback.com/#work-Q1371726-2026-11-19</id>
     <title>Watch Dogs (2014) is back: 1.7× its usual interest</title>
@@ -41,41 +50,5 @@
     <category term="Games"/>
     <category term="Unexplained"/>
     <summary>No trigger found · emerging. No recorded cause yet. Spike began 2026-11-20; usual 315 views/day.</summary>
-  </entry>
-  <entry>
-    <id>https://therallyback.com/#work-Q2006628-2026-11-19</id>
-    <title>Saints Row 2 (2008) is back: 1.5× usual attention</title>
-    <link href="https://therallyback.com/w/Q2006628"/>
-    <updated>2026-11-21T06:00:00Z</updated>
-    <category term="Games"/>
-    <category term="Unexplained"/>
-    <summary>Shared person, same timing · emerging. Michael Dorn (voice actor) is credited on 2 works that all started spiking around 2026-11-19. Spike began 2026-11-19; usual 223 views/day.</summary>
-  </entry>
-  <entry>
-    <id>https://therallyback.com/#work-Q1051694-2026-11-18</id>
-    <title>Midtown Madness (1999) is back: 1.6× usual attention</title>
-    <link href="https://therallyback.com/w/Q1051694"/>
-    <updated>2026-11-21T06:00:00Z</updated>
-    <category term="Games"/>
-    <category term="Unexplained"/>
-    <summary>No trigger found · emerging. No recorded cause yet. Spike began 2026-11-18; usual 116 views/day.</summary>
-  </entry>
-  <entry>
-    <id>https://therallyback.com/#work-Q2598287-2026-11-18</id>
-    <title>Crackdown 2 (2010) is back: 1.7× usual attention</title>
-    <link href="https://therallyback.com/w/Q2598287"/>
-    <updated>2026-11-21T06:00:00Z</updated>
-    <category term="Games"/>
-    <category term="Unexplained"/>
-    <summary>No trigger found · emerging. No recorded cause yet. Spike began 2026-11-18; usual 75 views/day.</summary>
-  </entry>
-  <entry>
-    <id>https://therallyback.com/#work-Q2631873-2026-11-20</id>
-    <title>Falcon 4.0 (1998) is back: 1.4× usual attention</title>
-    <link href="https://therallyback.com/w/Q2631873"/>
-    <updated>2026-11-21T06:00:00Z</updated>
-    <category term="Games"/>
-    <category term="Unexplained"/>
-    <summary>No trigger found · emerging. No recorded cause yet. Spike began 2026-11-20; usual 46 views/day.</summary>
   </entry>
 </feed>
