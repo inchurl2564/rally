@@ -564,3 +564,14 @@ p, li, .dek, .about .mission { text-wrap: pretty; }
 .credit { font-size: .82em; color: var(--muted, #6e6a64); white-space: nowrap; }
 .credit a { color: inherit; }
 .subscribe a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+
+/* A front page that changes every morning */
+.fresh-line { margin: 18px 0 0; font-size: 15px; color: var(--muted); }
+.fresh-line b { color: var(--ink); }
+.move { display: inline-block; font: 800 11px/1 var(--sans); letter-spacing: .04em; padding: 3px 5px; border-radius: 3px; vertical-align: middle; }
+.move.new { background: var(--red); color: #fff; }
+.move.up { color: var(--ok, #2e7d4f); }
+.move.down { color: var(--muted); }
+.still { margin: 28px 0 0; padding-top: 14px; border-top: 1px solid var(--hair); }
+.still ul { list-style: none; padding: 0; margin: 6px 0 0; columns: 2 320px; column-gap: 32px; }
+.still li { margin: 0 0 8px; break-inside: avoid; font-weight: 600; }
