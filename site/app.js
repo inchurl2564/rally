@@ -465,7 +465,8 @@ function renderTabs() {
   updateFollowLink();
   const contact = $("contact");
   if (contact && !contact.firstChild) contact.replaceChildren("Contact: ", contactLink(), " · Weekly newsletter: ",
-    h("a", { href: NEWSLETTER, target: "_blank", rel: "noopener" }, "subscribe free"));
+    h("a", { href: NEWSLETTER, target: "_blank", rel: "noopener" }, "subscribe free"),
+    " · Monthly: ", h("a", { href: "report/" }, "the Comeback Report"));
   const foot = $("pro-links");
   if (foot) foot.replaceChildren("For professionals: ", ...Object.keys(VIEWS).filter((k) => VIEWS[k].pro).flatMap((k, i) => [
     i ? " · " : "", h("a", { href: `?tab=${k}`, onclick: (e) => { e.preventDefault(); goto(k); } }, VIEWS[k].label)]));
@@ -1239,6 +1240,8 @@ function proPage(v) {
       h("div", { class: "chips", role: "group", "aria-label": "Professional views" }, pros.map((k) =>
         h("button", { type: "button", class: "chip", "aria-pressed": String(k === state.view), onclick: () => goto(k) }, VIEWS[k].label)))),
     h("p", { class: "intro" }, v.intro),
+    state.view === "journalists" ? h("p", {}, "Each month's numbers in one place, free to quote with a link: ",
+      h("a", { href: "report/" }, "the Comeback Report"), ".") : null,
     v.feeds ? feedStrip(v.feeds) : null,
     ...panels,
     sectionHead("Comebacks", null),
@@ -1973,7 +1976,8 @@ function weekPage() {
         }))) : []),
       // Each week also has a permanent page of its own (plain HTML, good for sharing and search).
       h("p", { class: "week-links small muted" }, "Share this roundup: ", h("a", { href: `week/${key}` }, "this week’s page"),
-        ". Looking for an earlier week? ", h("a", { href: "week/" }, "See every week"), ".")].filter(Boolean));
+        ". Looking for an earlier week? ", h("a", { href: "week/" }, "See every week"), ". ",
+        "The month so far: ", h("a", { href: `report/${(state.data.meta.window_end || "").slice(0, 7)}` }, "the Comeback Report"), ".")].filter(Boolean));
   }).catch(() => box.replaceChildren(h("p", { class: "status" }, "This week's roundup isn't ready yet. It's built with each morning's edition.")));
   return [box];
 }

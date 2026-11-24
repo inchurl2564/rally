@@ -648,6 +648,7 @@ def week_pages(site: str, site_url: str, titles: set[str]) -> list[tuple[str, st
         if i > 0:
             nav.append(f'<a href="{e(base)}/week/{keys[i - 1]}">← Week of {_span(*_week_dates(keys[i - 1]))}</a>')
         nav.append(f'<a href="{e(base)}/week/">Every week</a>')
+        nav.append(f'<a href="{e(base)}/report/{W["to"][:7]}">The month’s Comeback Report</a>')
         if i < len(keys) - 1:
             nav.append(f'<a href="{e(base)}/week/{keys[i + 1]}">Week of {_span(*_week_dates(keys[i + 1]))} →</a>')
         parts.append(f'<a class="btn" href="https://therallyback.beehiiv.com/subscribe" rel="noopener">Get this every Friday, free</a>'
