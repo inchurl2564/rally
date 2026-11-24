@@ -956,15 +956,20 @@ def fetch_series_images(qids: set[str], batch: int = 120) -> dict[str, tuple[str
 PEOPLE_IMAGE_PROPS = ["P175", "P50", "P57", "P170", "P178", "P86", "P162", "P58"]  # performer, author, director, creator, developer, composer, producer, writer
 
 
-def fetch_people_images(qids: set[str], batch: int = 80) -> dict[str, tuple[str, str]]:
+# Films and TV: the best-known cast member first (people recognise stars, not directors).
+SCREEN_IMAGE_PROPS = ["P161", "P57", "P58", "P162", "P86"]
+
+
+def fetch_people_images(qids: set[str], batch: int = 80, props_order: list[str] | None = None) -> dict[str, tuple[str, str]]:
     """For works with no free image of their own: a free photo of the person (or studio logo)
     behind them — performer, author, director, creator, developer. {work qid: (file, name)}."""
     out: dict[str, tuple[str, str]] = {}
     qids = [q for q in qids if q]
-    rank = {p: i for i, p in enumerate(PEOPLE_IMAGE_PROPS)}
+    order = props_order or PEOPLE_IMAGE_PROPS
+    rank = {p: i for i, p in enumerate(order)}
     for i in range(0, len(qids), batch):
         values = " ".join(f"wd:{q}" for q in qids[i:i + batch])
-        props = " ".join(f"wdt:{p}" for p in PEOPLE_IMAGE_PROPS)
+        props = " ".join(f"wdt:{p}" for p in order)
         q = f"""SELECT ?item ?p ?who ?whoLabel ?img ?links WHERE {{
           VALUES ?item {{ {values} }}
           VALUES ?p {{ {props} }}
@@ -1218,6 +1223,13 @@ def write_site_data(site: str, results, meta, clusters, threads, keep_runs: int,
         rp = r.get("ripple") or {}
         if not r["image"] and images.get(rp.get("qid")):
             r["image"], r["image_of"] = images[rp["qid"]], rp.get("name")
+    # Films and TV with no picture of their own: a photo of their best-known star.
+    screen = fetch_people_images({r["qid"] for r in results if not r["image"] and r.get("kind") in ("film", "TV series")},
+                                 props_order=SCREEN_IMAGE_PROPS)
+    for r in results:
+        if not r["image"] and r["qid"] in screen:
+            r["image"], r["image_of"] = screen[r["qid"]]
+    # Games, books and music: the series or franchise logo (Grand Theft Auto's), before a person.
     series = fetch_series_images({r["qid"] for r in results if not r["image"]})
     for r in results:
         if not r["image"] and r["qid"] in series:
