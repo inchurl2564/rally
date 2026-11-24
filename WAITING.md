@@ -15,7 +15,6 @@ Updated as items move. Last updated: 2026-11-23 (sources reviewed against their 
 | Restrict the YouTube API key | You | Google Cloud Console → Credentials → the key → API restrictions: YouTube Data API v3 only |
 | Monthly backups | You | Download the GitHub repository (Code → Download ZIP) and the Beehiiv subscriber list once a month |
 | Emergency access | You | Decide who could run the site if you couldn't (password manager emergency access) |
-| Leftover GitHub branches (`mobile-simple`, `about-cols`, `wiki-test`, `discogs-test`, `honors-test`, `sources-test`, `lb-test`, `sources-wording`, `preview-subscribe`, `preview-logo`, `preview-fresh-front`, `preview-monthly-report` once published) | Deleting them on GitHub (it won't let me) | Repo → Branches → delete |
 
 ## Waiting on the business plan
 
