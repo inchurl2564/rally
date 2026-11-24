@@ -864,7 +864,6 @@ function todayPage() {
   const openThreads = threads.filter((t) => !newsThreads.includes(t));
   const out = [
     howItWorks(),
-    streamSection(),
     h("section", { class: "front" },
       withPic("article", "lead", pic(null, lead.image, lead.label, 1200, lead.image_of),
         kickerEl(st.reason, st.kicker),
@@ -881,6 +880,8 @@ function todayPage() {
           h("div", { class: "s" }, scoreDot(r.rally_score), " ", moveMark(r), " ",
             g ? `${g.works.length} titles · ${g.story.kicker}` : `${mult(r)} usual interest · ${story(r).kicker}`))))), 5, "stories"))),
     newArrivals(arrivals, newToday, L.length - newToday),
+    // The month at a glance: context after the news, not before it (it changes slowly).
+    streamSection(),
   ];
   // Each section is one grid of same-shaped cards: stories about several titles (one per cause)
   // and stories about one title, biggest first. The lead's own story isn't repeated.
