@@ -1723,7 +1723,7 @@ function aboutPage() {
   const go = (view, label) => h("button", { type: "button", class: "linkish", onclick: () => goto(view) }, label);
   return [
     h("div", { class: "about" },
-      h("p", { class: "intro" }, "We notice when the past comes back, and find out why."),
+      h("p", { class: "intro" }, "Where Everything Old is News Again."),
       // Wide screens: mission and why it matters on the left, how we work beside them.
       h("div", { class: "about-cols" }, h("div", {},
       h("h3", { class: "about-first" }, "Our mission"),
