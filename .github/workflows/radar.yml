@@ -114,7 +114,7 @@ jobs:
         if: github.event_name != 'push'
         continue-on-error: true
         env:
-          BLUESKY_POST: "off"
+          BLUESKY_POST: "on"
           BLUESKY_HANDLE: therallyback.bsky.social
           BLUESKY_APP_PASSWORD: ${{ secrets.BLUEVIOLET }}
         run: |
