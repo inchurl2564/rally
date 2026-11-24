@@ -1166,6 +1166,23 @@ def cause_link(cause: str | None, evidence: list[dict] | None, start: dt.date | 
     return None
 
 
+def mark_freshness(rdir: str, data: dict, run_id: str) -> None:
+    """For a front page that changes every morning: each comeback's days_on (editions in a row it has
+    been on the list, 1 = new today) and prev_score (its Rallyback Score in the previous edition)."""
+    prev_ids = sorted(f[:-5] for f in os.listdir(rdir) if f.endswith(".json") and f[:-5] < run_id) if os.path.isdir(rdir) else []
+    prev = {}
+    if prev_ids:
+        try:
+            with open(os.path.join(rdir, f"{prev_ids[-1]}.json")) as f:
+                prev = {r["qid"]: r for r in json.load(f).get("results", [])}
+        except (OSError, json.JSONDecodeError):
+            prev = {}
+    for r in data["results"]:
+        p = prev.get(r["qid"])
+        r["days_on"] = (p.get("days_on") or 1) + 1 if p else 1
+        r["prev_score"] = p.get("rally_score") if p else None
+
+
 def write_site_data(site: str, results, meta, clusters, threads, keep_runs: int,
                     coming_up: dict | None = None) -> dict:
     """latest.json + an archive of runs + an index of runs, for the static site."""
@@ -1245,6 +1262,7 @@ def write_site_data(site: str, results, meta, clusters, threads, keep_runs: int,
     rdir = os.path.join(ddir, "runs")
     os.makedirs(rdir, exist_ok=True)
     run_id = meta["window_end"]
+    mark_freshness(rdir, data, str(run_id))
     try:
         data["solved"] = solved_cases(rdir, json.loads(json.dumps(data, default=str)), str(run_id))
     except Exception as e:
