@@ -107,8 +107,8 @@ def added_text(title: str, around: dt.date) -> list[dict]:
     def recent(e):
         return any(x <= hi and y >= lo for x, y in _dates_in(e["text"]))
 
-    # A sentence that only gives old dates ("released on August 5, 1994") is old news re-added.
-    added = [e for e in added if recent(e) or not _dates_in(e["text"])]
+    # A sentence that only gives old dates ("released on August 5, 1994", "In 1960 he...") is old news re-added.
+    added = [e for e in added if not _old_news(e["text"], around)]
     # Without a reference, a sentence counts only if it dates itself near the comeback: plot
     # summaries and themes ("since Abel died") are rewritten all the time and say nothing about now.
     added = [e for e in added if e["source"] == "Wikipedia (cited)" or recent(e)]
@@ -147,6 +147,20 @@ def _dates_in(text: str) -> list[tuple[dt.date, dt.date]]:
             last = (first + dt.timedelta(days=32)).replace(day=1) - dt.timedelta(days=1)
             out.append((first, last))
     return out
+
+
+_YEAR = re.compile(r"\b(1[89]\d\d|20\d\d)\b")
+
+
+def _old_news(text: str, around: dt.date) -> bool:
+    """True when a sentence dates itself, and every date in it is old: full dates all before 30 days
+    ahead of the comeback, or (with no full dates) every year before the comeback's year."""
+    lo, hi = around - dt.timedelta(days=30), around + dt.timedelta(days=5)
+    full = _dates_in(text)
+    if full:
+        return not any(a <= hi and b >= lo for a, b in full)
+    years = {int(y) for y in _YEAR.findall(text)}
+    return bool(years) and max(years) < around.year
 
 
 def dated_sentences(title: str, around: dt.date, before: int = 21, after: int = 5) -> list[dict]:

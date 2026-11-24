@@ -49,7 +49,7 @@ CAUSES = [
 ]
 _CAUSE_RE = [(name, re.compile(rx, re.I)) for name, rx in CAUSES]
 # Edit summaries that tell us nothing.
-_NOISE = re.compile(r"(revert|undid|undo|rv\b|vandal|bot\b|typo|copyedit|\bce\b|clean ?up|format|"
+_NOISE = re.compile(r"(revert|undid|undo|rv\b|vandal|bot\b|typo|copyedit|\bce\b|clean ?up|format|protect|"
                     r"ref(erence)?s? (fix|format)|wikilink|short description|category|disambig|"
                     r"^\s*$|^/\*.*\*/\s*$)", re.I)
 

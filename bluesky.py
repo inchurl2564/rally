@@ -115,6 +115,13 @@ def talk(title: str, around: dt.date, kind: str | None = None) -> list[dict]:
             break
     rx = re.compile(r"(?<!\w)" + re.escape(name).replace(r"\ ", r"\s+") + r"(?!\w)", re.I)
     posts = [p for p in posts if rx.search((p.get("record") or {}).get("text", ""))]
+    if kind:
+        # A work's title is often an everyday phrase ("the body", "American pop"): a post counts only
+        # if it also says what it's talking about (a film, a song, watching, reading...).
+        ctx = re.compile(r"\b(film|movie|cinema|watch|watching|rewatch|trailer|series|show|season|episode|tv|"
+                         r"song|album|track|listen|listening|band|book|novel|read|reading|author|game|play|playing|"
+                         r"remake|sequel|adaptation|cast|director|soundtrack)\b", re.I)
+        posts = [p for p in posts if ctx.search((p.get("record") or {}).get("text", ""))]
     if len(posts) < MIN_POSTS:
         return []
     # What do the most-liked posts say? Read in memory only.

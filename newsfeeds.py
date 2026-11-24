@@ -204,7 +204,9 @@ def _matches(core: str, person: bool, headline: str) -> bool:
     if person:
         return bool(len(core) > 5 and " " in core.replace(r"\s+", " ")
                     and re.search(r"(?<!\w)" + core + r"(?!\w)", headline, re.I))
-    m = re.search(f"[{_QUOTES_OPEN}]" + core + r"(?:[:,]?\s[^’'\"”]{0,60})?" + f"[{_QUOTES_CLOSE}]", headline, re.I)
+    # The quotes hold the title alone, or the title and a subtitle after a colon ('Wicked: For Good').
+    # Other words inside the same quotes mean it's a different phrase: 'May God forgive you' isn't May.
+    m = re.search(f"[{_QUOTES_OPEN}]" + core + r"(?::\s[^’'\"”]{1,60})?" + f"[{_QUOTES_CLOSE}]", headline, re.I)
     if not m:
         return False
     # A comparison is about something else: "'Minority Report' Meets 'Looper'", "a 'Heist'-style plot".
