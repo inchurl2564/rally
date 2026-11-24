@@ -43,6 +43,24 @@ CAUSE = {"death": "a death in the news", "legal": "legal headlines", "streaming"
          "new season": "a new season or special", "anniversary": "an anniversary", "auction/sale": "a big auction or sale",
          "sports/event": "a big live event", "politics": "politics"}
 SKIP = {"seasonal", "automated?", "front page", "lookup failed"}
+# Two hashtags a post: the kind of title, and #Nostalgia. More starts to look like spam.
+TAG = {"film": "Movies", "TV series": "TV", "song": "Music", "album": "Music", "musical": "Music",
+       "book": "Books", "manga/comic": "Comics", "video game": "Gaming"}
+
+
+def tagged(text: str, kind: str | None) -> str:
+    tags = [t for t in (TAG.get(kind or ""), "Nostalgia") if t]
+    return f"{text}\n\n" + " ".join(f"#{t}" for t in tags)
+
+
+def tag_facets(text: str) -> list[dict]:
+    """Bluesky only links a hashtag the post marks as one (a facet, located by UTF-8 byte offsets)."""
+    out, raw = [], text.encode("utf-8")
+    for m in re.finditer(r"(?<!\S)#(\w+)", text):
+        start = len(text[:m.start()].encode("utf-8"))
+        out.append({"index": {"byteStart": start, "byteEnd": start + len(m.group(0).encode("utf-8"))},
+                    "features": [{"$type": "app.bsky.richtext.facet#tag", "tag": m.group(1)}]})
+    return out
 
 
 def _mult(r: dict) -> str:
@@ -157,7 +175,8 @@ def choose(latest: dict, today: dt.date, state: dict) -> list[dict]:
             text = f"Why is everyone suddenly {verb} {label} ({yr})? {why}. The {n} is drawing {_mult(r)} its usual interest."
         else:
             continue
-        if len(text) > 290:
+        text = tagged(text, r.get("kind"))
+        if len(text) > 295:
             continue
         posts.append({"kind": "mystery" if mystery_day else "story", "text": text, "keys": keys(r),
                       "card": {"uri": f"{BASE}/w/{r['qid']}", "title": f"Why is {label} ({yr}) trending again?",
@@ -169,7 +188,7 @@ def choose(latest: dict, today: dt.date, state: dict) -> list[dict]:
         week = f"{iso[0]}-W{iso[1]:02d}"
         if os.path.exists(os.path.join(SITE, "week", f"{week}.html")) and f"week:{week}" not in seen:
             posts.append({"kind": "week", "keys": [f"week:{week}"],
-                          "text": "This week's comebacks: the old films, shows, songs, games and books people suddenly went back to, and why.",
+                          "text": tagged("This week's comebacks: the old films, shows, songs, games and books people suddenly went back to, and why.", None),
                           "card": {"uri": f"{BASE}/week/{week}", "title": f"The week in comebacks ({week})",
                                    "description": "Every comeback this week, with the reasons we found.", "image": None}})
     return posts
@@ -208,7 +227,7 @@ def post(posts: list[dict]) -> list[str]:
         blob = _thumb(token, c.get("image"))
         if blob:
             ext["thumb"] = blob
-        rec = {"$type": "app.bsky.feed.post", "text": p["text"], "langs": ["en"],
+        rec = {"$type": "app.bsky.feed.post", "text": p["text"], "langs": ["en"], "facets": tag_facets(p["text"]),
                "createdAt": dt.datetime.now(dt.timezone.utc).isoformat().replace("+00:00", "Z"),
                "embed": {"$type": "app.bsky.embed.external", "external": ext}}
         uris.append(_call("com.atproto.repo.createRecord", token, {"repo": did, "collection": "app.bsky.feed.post",
