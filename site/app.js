@@ -846,8 +846,15 @@ function todayPage() {
   const known = L.slice(0, 25).filter((r) => r.baseline >= 100);
   // Prefer a story we can actually tell (a named cause) over a mystery.
   const told = (r) => ["editor", "editor-release", "editor-death", "death", "derivative", "ripple", "same-creator", "anniversary", "public domain", "honor"].includes(r.verdict);
-  const lead = known.find((r) => told(r) && r.image) || known.find((r) => r.image) || known[0] ||
+  // Lead with what's new: the best comeback that joined the list today or yesterday. The big
+  // long-running ones still lead the Top 10 and the "Still going" row, so nothing is hidden.
+  const fresh = L.filter((r) => r.days_on && r.days_on <= 2 && r.baseline >= 100);
+  const lead = fresh.find((r) => told(r) && r.image) || fresh.find((r) => r.image) || fresh[0] ||
+    known.find((r) => told(r) && r.image) || known.find((r) => r.image) || known[0] ||
     L.find((r) => r.image) || L[0];
+  const newToday = L.filter((r) => r.days_on === 1).length;
+  const leadG = state.groupOf && state.groupOf.get(lead.qid);
+  const arrivals = L.filter((r) => r.days_on === 1 && r !== lead && !(leadG && state.groupOf.get(r.qid) === leadG));
   const rest = L.filter((r) => r !== lead);
   const st = story(lead);
   const is = (key) => (r) => reasonOf(r).key === key;
@@ -870,8 +877,9 @@ function todayPage() {
         foldedList(h("ol", {}, topStories(lead, rest, 10).map(({ r, g }) => h("li", {}, h("div", {},
           h("div", { class: "t" }, g ? h("a", { href: `#${g.id}`, onclick: (e) => { e.preventDefault(); focusGroup(g); } }, oldNames(g.works))
             : link(r, r.label)),
-          h("div", { class: "s" }, scoreDot(r.rally_score), " ",
+          h("div", { class: "s" }, scoreDot(r.rally_score), " ", moveMark(r), " ",
             g ? `${g.works.length} titles · ${g.story.kicker}` : `${mult(r)} usual interest · ${story(r).kicker}`))))), 5, "stories"))),
+    newArrivals(arrivals, newToday, L.length - newToday),
   ];
   // Each section is one grid of same-shaped cards: stories about several titles (one per cause)
   // and stories about one title, biggest first. The lead's own story isn't repeated.
@@ -909,6 +917,34 @@ function todayPage() {
   out.push(inlineNewsletter());
   out.push(...phoneFold(`All comebacks (${state.data.results.length})`, "Search, filter by reason, and dig into the numbers.", listSection()));
   return out.filter(Boolean);
+}
+
+// Movement since yesterday's edition: NEW, or the Rallyback Score going up or down.
+function moveMark(r) {
+  if (r.days_on === 1) return h("span", { class: "move new", title: "New on the list today" }, "NEW");
+  if (r.prev_score == null || r.rally_score == null) return null;
+  const d = r.rally_score - r.prev_score;
+  if (Math.abs(d) < 2) return null;
+  return h("span", { class: `move ${d > 0 ? "up" : "down"}`, title: `Rallyback Score ${d > 0 ? "up" : "down"} ${Math.abs(d)} since yesterday` },
+    `${d > 0 ? "▲" : "▼"}${Math.abs(d)}`);
+}
+
+// The newest comebacks, one line per story: the fresh material under the lead every morning.
+function newArrivals(items, n, going) {
+  const seen = new Set(), rows = [];
+  for (const r of items) {
+    const g = state.groupOf && state.groupOf.get(r.qid);
+    if (g && seen.has(g)) continue;
+    if (g) seen.add(g);
+    rows.push({ r, g });
+    if (rows.length === 6) break;
+  }
+  if (!rows.length) return null;
+  return h("section", { class: "still" },
+    h("h3", { class: "rail-head" }, `New today: ${fmt(n)} comebacks`, h("span", { class: "small muted" }, ` · ${fmt(going)} still going`)),
+    h("ul", {}, rows.map(({ r, g }) => h("li", {}, moveMark(r), " ",
+      g ? h("a", { href: `#${g.id}`, onclick: (e) => { e.preventDefault(); focusGroup(g); } }, oldNames(g.works)) : link(r, r.label),
+      h("span", { class: "small muted" }, ` · ${g ? `${g.works.length} titles` : `${mult(r)} usual interest`} · ${(g ? g.story : story(r)).kicker}`)))));
 }
 
 // Top N distinct stories: one entry per cause, never the lead's own story again.
