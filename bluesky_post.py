@@ -74,7 +74,9 @@ def reason(r: dict, today: dt.date) -> str | None:
         norm = lambda x: re.sub(r"[^a-z0-9]+", " ", re.sub(r"\s*\([^)]*\)", "", x.lower())).strip()
         if norm(new) == norm(r["label"]):
             new = "A new version of the same name"           # a remake that reuses the title
-        return f"{new} {'is due ' + _date(d) if d and d > today.isoformat() else 'just came out'}, and people are going back to the original"
+        when = ("is due " + _date(d) if d and d > today.isoformat()
+                else "comes out today" if d == today.isoformat() else "just came out")
+        return f"{new} {when}, and people are going back to the original"
     if v == "same-creator":
         m = re.match(r"new work by (.+?): (.+)$", text)
         if m:
