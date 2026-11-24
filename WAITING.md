@@ -8,7 +8,6 @@ Updated as items move. Last updated: 2026-11-23 (sources reviewed against their 
 | Item | Waiting for | Then |
 | --- | --- | --- |
 | "Where to watch / listen / read / play" links (affiliate) | Joining Apple, Amazon, Bookshop.org and a game-store affiliate program | Buttons on every title and story card, plus the disclosure line |
-| Bluesky posting (therallyback.bsky.social) | Your go-ahead | Daily story and Friday roundup posts (built, switched off; samples shown Nov 23). Threads dropped Nov 23: Meta didn't approve an account |
 | First Friday newsletter issue | A PO box or virtual mailbox for Beehiiv's required mailing address (not a home address) | Send the This week page as the Friday issue, then remove the "first issue goes out soon" line from the Subscribe page (`subscribePage` in site/app.js). Sign-up boxes are already live (Beehiiv, free plan: therallyback.beehiiv.com) |
 | Two-factor sign-in on every account (GitHub, Cloudflare, Google, Beehiiv, Bluesky, Currents) | You | Use an authenticator app or passkey, not text messages; save recovery codes offline; a password manager helps |
 | Domain safety | You | Cloudflare → Domain Registration: auto-renew on, transfer lock on, card on file current |
@@ -16,7 +15,7 @@ Updated as items move. Last updated: 2026-11-23 (sources reviewed against their 
 | Restrict the YouTube API key | You | Google Cloud Console → Credentials → the key → API restrictions: YouTube Data API v3 only |
 | Monthly backups | You | Download the GitHub repository (Code → Download ZIP) and the Beehiiv subscriber list once a month |
 | Emergency access | You | Decide who could run the site if you couldn't (password manager emergency access) |
-| Leftover GitHub branches (`mobile-simple`, `about-cols`, `wiki-test`, `discogs-test`, `honors-test`, `sources-test`, `lb-test`, `sources-wording`, `preview-subscribe`, `preview-logo`, `preview-monthly-report` once published) | Deleting them on GitHub (it won't let me) | Repo → Branches → delete |
+| Leftover GitHub branches (`mobile-simple`, `about-cols`, `wiki-test`, `discogs-test`, `honors-test`, `sources-test`, `lb-test`, `sources-wording`, `preview-subscribe`, `preview-logo`, `preview-fresh-front`, `preview-monthly-report` once published) | Deleting them on GitHub (it won't let me) | Repo → Branches → delete |
 
 ## Waiting on the business plan
 
