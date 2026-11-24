@@ -1223,11 +1223,12 @@ def write_site_data(site: str, results, meta, clusters, threads, keep_runs: int,
         rp = r.get("ripple") or {}
         if not r["image"] and images.get(rp.get("qid")):
             r["image"], r["image_of"] = images[rp["qid"]], rp.get("name")
-    # Films and TV with no picture of their own: a photo of their best-known star.
-    screen = fetch_people_images({r["qid"] for r in results if not r["image"] and r.get("kind") in ("film", "TV series")},
+    # Films and TV: a photo of their best-known star by default (readers recognise the star more
+    # readily than an old poster); the film's own picture only when there's no star photo.
+    screen = fetch_people_images({r["qid"] for r in results if r.get("kind") in ("film", "TV series")},
                                  props_order=SCREEN_IMAGE_PROPS)
     for r in results:
-        if not r["image"] and r["qid"] in screen:
+        if r["qid"] in screen:
             r["image"], r["image_of"] = screen[r["qid"]]
     # Games, books and music: the series or franchise logo (Grand Theft Auto's), before a person.
     series = fetch_series_images({r["qid"] for r in results if not r["image"]})
