@@ -1224,11 +1224,13 @@ def write_site_data(site: str, results, meta, clusters, threads, keep_runs: int,
         if not r["image"] and images.get(rp.get("qid")):
             r["image"], r["image_of"] = images[rp["qid"]], rp.get("name")
     # Films and TV: a photo of their best-known star by default (readers recognise the star more
-    # readily than an old poster); the film's own picture only when there's no star photo.
+    # readily than a still); before 1970, the film's own picture (the original poster) when it has one.
     screen = fetch_people_images({r["qid"] for r in results if r.get("kind") in ("film", "TV series")},
                                  props_order=SCREEN_IMAGE_PROPS)
     for r in results:
-        if r["qid"] in screen:
+        # Films made before 1970 keep their own picture (usually the original poster, public domain).
+        classic = r.get("release") and str(r["release"])[:4] < "1970" and r["image"]
+        if r["qid"] in screen and not classic:
             r["image"], r["image_of"] = screen[r["qid"]]
     # Games, books and music: the series or franchise logo (Grand Theft Auto's), before a person.
     series = fetch_series_images({r["qid"] for r in results if not r["image"]})
