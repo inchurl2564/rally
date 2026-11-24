@@ -1,7 +1,7 @@
 """
 Posts the day's story to Bluesky (therallyback.bsky.social) after each nightly edition.
 
-  Daily      the top comeback we can explain, as a question and its answer, with a link card
+  Daily      (quiet days skipped: Rallyback Score under 50) the top comeback we can explain, as a question and its answer, with a link card
              (title page, picture from Wikimedia Commons). Not the same title, or the same
              reason (one sequel lifting a whole series), twice within 14 days.
   Tue, Thu   a mystery instead: a big comeback we can't explain, asking readers if they know why.
@@ -135,6 +135,11 @@ def choose(latest: dict, today: dt.date, state: dict) -> list[dict]:
     mystery_day = today.weekday() in (1, 3)                      # Tuesday, Thursday
     for r in rs:
         if any(k in seen for k in keys(r)):
+            continue
+        # Quiet days get no post: only a strong story (Rallyback Score 50+, about the top sixth) or a
+        # big mystery (45+ and at least 10x its usual interest) is worth a follower's attention.
+        big = max(r.get("lift") or 0, r.get("lift3") or 0)
+        if (r.get("rally_score") or 0) < (45 if mystery_day else 50) or (mystery_day and big < 10):
             continue
         why = reason(r, today)
         g = group_of.get(r["qid"]) if r["verdict"] == "common thread" else None
