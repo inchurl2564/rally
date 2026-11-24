@@ -108,8 +108,8 @@ jobs:
         run: |
           if git log -1 --format=%s | grep -q "^data: run for"; then sleep 240; python tools/indexnow.py; else echo "No new edition."; fi
 
-      # The day's story on Bluesky. BLUESKY_POST stays "off" (samples printed in the log) until the
-      # owner approves; then "on". What was posted is recorded in site/data/social.json.
+      # The day's story on Bluesky (approved by the owner Nov 24; set BLUESKY_POST to "off" to pause).
+      # What was posted is recorded in site/data/social.json.
       - name: Post to Bluesky
         if: github.event_name != 'push'
         continue-on-error: true

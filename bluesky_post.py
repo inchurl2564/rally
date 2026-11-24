@@ -124,7 +124,8 @@ def choose(latest: dict, today: dt.date, state: dict) -> list[dict]:
             for w in t.get("works") or []:
                 group_of.setdefault(w.get("qid"), t)
     rs = [r for r in latest["results"] if r["verdict"] not in SKIP and (r.get("baseline") or 0) >= 100]
-    rs.sort(key=lambda r: -(r.get("rally_score") or 0))
+    # Like the front page: new comebacks (on the list today or yesterday) first, then the biggest.
+    rs.sort(key=lambda r: (not (r.get("days_on") and r["days_on"] <= 2), -(r.get("rally_score") or 0)))
     posts = []
 
     def keys(r):
