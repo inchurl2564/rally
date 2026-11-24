@@ -465,7 +465,7 @@ function renderTabs() {
   updateFollowLink();
   const contact = $("contact");
   if (contact && !contact.firstChild) contact.replaceChildren("Contact: ", contactLink(), " · Weekly newsletter: ",
-    h("a", { href: NEWSLETTER, target: "_blank", rel: "noopener" }, "subscribe free"),
+    h("a", { href: "?tab=subscribe", onclick: (e) => { e.preventDefault(); goto("subscribe"); } }, "subscribe free"),
     " · Monthly: ", h("a", { href: "report/" }, "the Comeback Report"));
   const foot = $("pro-links");
   if (foot) foot.replaceChildren("For professionals: ", ...Object.keys(VIEWS).filter((k) => VIEWS[k].pro).flatMap((k, i) => [

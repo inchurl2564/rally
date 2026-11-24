@@ -406,7 +406,7 @@ def _shell(base: str, title: str, desc: str, canon: str, img: str, ld: dict, par
 {chr(10).join(p for p in parts if p)}
 </main>
 <footer><div class="wrap">Every morning, The Rallyback finds older movies, shows, songs, games and books that people are suddenly into again, and tells you why.
-<a href="{e(base)}/">Today’s comebacks</a> · <a href="{e(base)}/week/">Every week</a> · <a href="{e(base)}/?tab=about">About us</a> · <a href="https://therallyback.beehiiv.com/subscribe" rel="noopener">Weekly newsletter</a></div></footer>
+<a href="{e(base)}/">Today’s comebacks</a> · <a href="{e(base)}/week/">Every week</a> · <a href="{e(base)}/?tab=about">About us</a> · <a href="{e(base)}/?tab=subscribe">Weekly newsletter</a></div></footer>
 </body></html>
 """
 
@@ -574,7 +574,7 @@ def month_pages(site: str, site_url: str, titles: set[str], hist: dict) -> list[
         nav.append(f'<a href="{e(base)}/report/">Every month</a>')
         if i < len(months) - 1:
             nav.append(f'<a href="{e(base)}/report/{months[i + 1]}">{dt.date.fromisoformat(months[i + 1] + "-01"):%B %Y} →</a>')
-        parts.append(f'<a class="btn" href="https://therallyback.beehiiv.com/subscribe" rel="noopener">Get the comebacks every Friday, free</a>'
+        parts.append(f'<a class="btn" href="{e(base)}/?tab=subscribe">Get the comebacks every Friday, free</a>'
                      f'<p class="small">{" · ".join(nav)}</p>')
         ld = {"@context": "https://schema.org", "@type": "Article", "headline": title.replace(" | The Rallyback", ""),
               "url": canon, "description": desc, "datePublished": month + "-01", "dateModified": mruns[-1], "inLanguage": "en",
@@ -651,7 +651,7 @@ def week_pages(site: str, site_url: str, titles: set[str]) -> list[tuple[str, st
         nav.append(f'<a href="{e(base)}/report/{W["to"][:7]}">The month’s Comeback Report</a>')
         if i < len(keys) - 1:
             nav.append(f'<a href="{e(base)}/week/{keys[i + 1]}">Week of {_span(*_week_dates(keys[i + 1]))} →</a>')
-        parts.append(f'<a class="btn" href="https://therallyback.beehiiv.com/subscribe" rel="noopener">Get this every Friday, free</a>'
+        parts.append(f'<a class="btn" href="{e(base)}/?tab=subscribe">Get this every Friday, free</a>'
                      f'<p class="small">{" · ".join(nav)}</p>')
         ld = {"@context": "https://schema.org", "@type": "Article", "headline": title.replace(" | The Rallyback", ""),
               "url": canon, "description": desc, "datePublished": W["from"], "dateModified": W["updated"], "inLanguage": "en",
