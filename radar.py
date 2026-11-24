@@ -958,6 +958,42 @@ PEOPLE_IMAGE_PROPS = ["P175", "P50", "P57", "P170", "P178", "P86", "P162", "P58"
 
 # Films and TV: the best-known cast member first (people recognise stars, not directors).
 SCREEN_IMAGE_PROPS = ["P161", "P57", "P58", "P162", "P86"]
+WD_API = "https://www.wikidata.org/w/api.php"
+
+
+def _entities(ids: list[str], props: str) -> dict:
+    out = {}
+    for i in range(0, len(ids), 50):
+        q = urllib.parse.urlencode({"action": "wbgetentities", "ids": "|".join(ids[i:i + 50]), "props": props,
+                                    "languages": "en", "format": "json"})
+        try:
+            out.update((http_json(f"{WD_API}?{q}", max_age_h=24 * 7) or {}).get("entities") or {})
+        except Exception as e:
+            print(f"      Wikidata entity lookup failed for a batch: {e}", file=sys.stderr)
+    return out
+
+
+def fetch_star_images(qids: set[str], billed: int = 3) -> dict[str, tuple[str, str]]:
+    """A photo of a film's or show's star: the first of its top-billed cast (Wikidata keeps the cast
+    in billing order) with a free photo on Commons. Ranking by fame instead picks cameos: Kevin Bacon
+    over Steve Martin and John Candy in Planes, Trains and Automobiles. {work qid: (file, name)}."""
+    def claim_ids(ent, prop):
+        return [c["mainsnak"]["datavalue"]["value"]["id"] for c in (ent.get("claims") or {}).get(prop, [])
+                if c.get("mainsnak", {}).get("datavalue") and c.get("rank") != "deprecated"]
+    works = _entities(sorted(q for q in qids if q), "claims")
+    cast = {q: claim_ids(e, "P161")[:billed] for q, e in works.items()}
+    people = _entities(sorted({p for ps in cast.values() for p in ps}), "claims|labels")
+    out = {}
+    for q, ps in cast.items():
+        for p in ps:
+            e = people.get(p) or {}
+            imgs = [c["mainsnak"]["datavalue"]["value"] for c in (e.get("claims") or {}).get("P18", [])
+                    if c.get("mainsnak", {}).get("datavalue")]
+            img = next((i for i in imgs if i.lower().endswith((".jpg", ".jpeg", ".png", ".webp", ".tif", ".tiff"))), None)
+            if img:
+                out[q] = (img, ((e.get("labels") or {}).get("en") or {}).get("value") or "")
+                break
+    return out
 
 
 def fetch_people_images(qids: set[str], batch: int = 80, props_order: list[str] | None = None) -> dict[str, tuple[str, str]]:
@@ -1225,8 +1261,10 @@ def write_site_data(site: str, results, meta, clusters, threads, keep_runs: int,
             r["image"], r["image_of"] = images[rp["qid"]], rp.get("name")
     # Films and TV: a photo of their best-known star by default (readers recognise the star more
     # readily than a still); before 1970, the film's own picture (the original poster) when it has one.
-    screen = fetch_people_images({r["qid"] for r in results if r.get("kind") in ("film", "TV series")},
-                                 props_order=SCREEN_IMAGE_PROPS)
+    screen_q = {r["qid"] for r in results if r.get("kind") in ("film", "TV series")}
+    screen = fetch_star_images(screen_q)
+    # No top-billed star with a photo: the director, writer, producer or composer.
+    screen.update({q: v for q, v in fetch_people_images(screen_q - set(screen), props_order=SCREEN_IMAGE_PROPS[1:]).items()})
     for r in results:
         # Films made before 1970 keep their own picture (usually the original poster, public domain).
         classic = r.get("release") and str(r["release"])[:4] < "1970" and r["image"]
