@@ -114,6 +114,11 @@ def added_text(title: str, around: dt.date) -> list[dict]:
     added = [e for e in added if e["source"] == "Wikipedia (cited)" or recent(e)]
     if len(added) > 3:
         added = [e for e in added if recent(e)]
+    # A cited sentence with no date at all is usually background ("After graduation, she held several
+    # jobs"): it stays as a source, but isn't read for a reason.
+    for e in added:
+        if not recent(e) and not _YEAR.search(e["text"]):
+            e["background"] = True
     return added
 
 

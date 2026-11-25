@@ -32,7 +32,7 @@ GDELT = "https://api.gdeltproject.org/api/v2/doc/doc"
 # Keyword → likely cause. Checked against edit summaries and headlines.
 CAUSES = [
     ("death", r"\b(died|dies|death of|passed away|obituar|funeral|RIP)\b"),
-    ("legal", r"\b(trial|court|verdict|lawsuit|sued|charged|sentenc|convict|acquit|arrest|allegation)"),
+    ("legal", r"\b(trial|court|verdict|lawsuit|sued|charged|sentenced|sentencing|convict|acquit|arrest|allegation)"),
     ("streaming", r"\b(netflix|prime video|amazon prime|hulu|disney\+|max\b|hbo max|peacock|paramount\+|apple tv|streaming|now streaming|added to)"),
     ("broadcast", r"\b(aired|airs|broadcast|television premiere|tv premiere|bbc|itv|channel 4|tcm|pbs|christmas special|marathon)"),
     ("viral", r"\b(tiktok|viral|meme|trend(ing)?|instagram|reels|youtube shorts|x\.com|twitter)"),
@@ -49,7 +49,8 @@ CAUSES = [
 ]
 _CAUSE_RE = [(name, re.compile(rx, re.I)) for name, rx in CAUSES]
 # Edit summaries that tell us nothing.
-_NOISE = re.compile(r"(revert|undid|undo|rv\b|vandal|bot\b|typo|copyedit|\bce\b|clean ?up|format|protect|"
+_NOISE = re.compile(r"(revert|undid|undo|rv\b|vandal|bot\b|typo|copyedit|\bce\b|clean ?up|format|protect|grammar|grammatical|"
+                    r"self-sourced|unsourced|remov(e|ed|ing)\b|\brm\b|trim|"
                     r"ref(erence)?s? (fix|format)|wikilink|short description|category|disambig|"
                     r"^\s*$|^/\*.*\*/\s*$)", re.I)
 
@@ -149,6 +150,8 @@ def likely_cause(evidence: list[dict]) -> str | None:
     import youtube
     scores: dict[str, int] = {}
     for e in evidence:
+        if e.get("background"):                # shown as a source, never read for a reason
+            continue
         if e.get("cause"):                     # a source that knows what it found (TVmaze: a new season)
             scores[e["cause"]] = scores.get(e["cause"], 0) + 2
             continue
