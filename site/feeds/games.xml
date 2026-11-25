@@ -4,8 +4,44 @@
   <id>https://therallyback.com/feeds/games.xml</id>
   <link rel="self" href="https://therallyback.com/feeds/games.xml"/>
   <link href="https://therallyback.com/"/>
-  <updated>2026-11-23T06:00:00Z</updated>
+  <updated>2026-11-24T06:00:00Z</updated>
   <author><name>The Rallyback</name></author>
+  <entry>
+    <id>https://therallyback.com/#work-Q15963969-2026-11-23</id>
+    <title>Teslagrad (2013) is back: 1.7× its usual interest</title>
+    <link href="https://therallyback.com/w/Q15963969"/>
+    <updated>2026-11-24T06:00:00Z</updated>
+    <category term="Games"/>
+    <category term="Unexplained"/>
+    <summary>Teslagrad, the 2013 video game, is drawing 1.7× its usual interest since Nov 23, 2026. We don&#x27;t know why yet. Know why? Tell us on the site.</summary>
+  </entry>
+  <entry>
+    <id>https://therallyback.com/#work-Q1750961-2026-11-22</id>
+    <title>Driver 3 (2004) is back: 1.6× its usual interest</title>
+    <link href="https://therallyback.com/w/Q1750961"/>
+    <updated>2026-11-24T06:00:00Z</updated>
+    <category term="Games"/>
+    <category term="Unexplained"/>
+    <summary>Driver 3, the 2004 video game, is drawing 1.6× its usual interest since Nov 22, 2026. We don&#x27;t know why yet. Know why? Tell us on the site.</summary>
+  </entry>
+  <entry>
+    <id>https://therallyback.com/#work-Q1330205-2026-11-22</id>
+    <title>Paperboy (1985) is back: 1.2× its usual interest</title>
+    <link href="https://therallyback.com/w/Q1330205"/>
+    <updated>2026-11-24T06:00:00Z</updated>
+    <category term="Games"/>
+    <category term="Unexplained"/>
+    <summary>Paperboy, the 1985 video game, is drawing 1.2× its usual interest since Nov 22, 2026. We don&#x27;t know why yet. Know why? Tell us on the site.</summary>
+  </entry>
+  <entry>
+    <id>https://therallyback.com/#work-Q7516444-2026-11-23</id>
+    <title>Silver Surfer (1990) is back: 1.3× its usual interest</title>
+    <link href="https://therallyback.com/w/Q7516444"/>
+    <updated>2026-11-24T06:00:00Z</updated>
+    <category term="Games"/>
+    <category term="Unexplained"/>
+    <summary>Silver Surfer, the 1990 video game, is drawing 1.3× its usual interest since Nov 23, 2026. We don&#x27;t know why yet. Know why? Tell us on the site.</summary>
+  </entry>
   <entry>
     <id>https://therallyback.com/#work-Q1060715-2026-11-23</id>
     <title>Soulcalibur (1998) is back: 2.3× its usual interest</title>
@@ -32,23 +68,5 @@
     <category term="Games"/>
     <category term="Unexplained"/>
     <summary>Tux Racer, the 2000 video game, is drawing 1.9× its usual interest since Nov 22, 2026. We don&#x27;t know why yet. Know why? Tell us on the site.</summary>
-  </entry>
-  <entry>
-    <id>https://therallyback.com/#work-Q1711359-2026-11-20</id>
-    <title>The Witness (2016) is back: 1.8× usual attention</title>
-    <link href="https://therallyback.com/w/Q1711359"/>
-    <updated>2026-11-21T06:00:00Z</updated>
-    <category term="Games"/>
-    <category term="Unexplained"/>
-    <summary>No trigger found · emerging. No recorded cause yet. Spike began 2026-11-20; usual 347 views/day.</summary>
-  </entry>
-  <entry>
-    <id>https://therallyback.com/#work-Q897376-2026-11-20</id>
-    <title>Braid (2008) is back: 1.8× usual attention</title>
-    <link href="https://therallyback.com/w/Q897376"/>
-    <updated>2026-11-21T06:00:00Z</updated>
-    <category term="Games"/>
-    <category term="Unexplained"/>
-    <summary>No trigger found · emerging. No recorded cause yet. Spike began 2026-11-20; usual 315 views/day.</summary>
   </entry>
 </feed>

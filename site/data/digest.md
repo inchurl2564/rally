@@ -1,65 +1,59 @@
-The Rallyback, the comeback report, for **2026-11-23**: 80 new findings. [Open the site](https://therallyback.com/?run=2026-11-23).
+The Rallyback, the comeback report, for **2026-11-24**: 137 new findings. [Open the site](https://therallyback.com/?run=2026-11-24).
 
 ### Shared triggers
 
-- [2 older works are back: Songs of Innocence, Under a Blood Red Sky (new work by U2: Carnaval de Luz)](https://therallyback.com/?run=2026-11-23)  
-  Songs of Innocence, Under a Blood Red Sky
-- [2 older works are back: Songs of Innocence, Under a Blood Red Sky (new work by U2: The Greatest Show on Earth (U2 song))](https://therallyback.com/?run=2026-11-23)  
-  Songs of Innocence, Under a Blood Red Sky
+- [2 older works are back: Penny Lane, Golden Slumbers (new work by The Beatles: Rubber Soul: Special Edition)](https://therallyback.com/?run=2026-11-24)  
+  Penny Lane, Golden Slumbers
 
 ### Common threads
 
-- [2 works with Pierce Brosnan are back at once, from 2026-11-16](https://therallyback.com/?run=2026-11-23)  
-  The November Man, The Matador. Likely cause: remake/sequel news.
-- [3 works with Alfred Hitchcock are back at once, from 2026-11-14](https://therallyback.com/?run=2026-11-23)  
-  Spellbound, The Paradine Case, Strangers on a Train. Likely cause: new season.
-- [4 works with Tsutomu Kitagawa are back at once, from 2026-11-03](https://therallyback.com/?run=2026-11-23)  
-  Godzilla: Tokyo S.O.S., Godzilla Against Mechagodzilla, Godzilla: Final Wars, Godzilla vs. Megaguirus. No recorded cause.
-- [4 works with Robert Mitchum are back at once, from 2026-11-21](https://therallyback.com/?run=2026-11-23)  
-  River of No Return, Rachel and the Stranger, Blood on the Moon, What a Way to Go!. Likely cause: legal.
-- [3 works with Ginger Rogers are back at once, from 2026-11-20](https://therallyback.com/?run=2026-11-23)  
-  Primrose Path, Fifth Avenue Girl, Stage Door. No recorded cause.
-- [3 works with Robert Duvall are back at once, from 2026-11-21](https://therallyback.com/?run=2026-11-23)  
-  Joe Kidd, The Eagle Has Landed, The 6th Day. No recorded cause.
-- [2 works with Samuel L. Jackson are back at once, from 2026-11-20](https://therallyback.com/?run=2026-11-23)  
-  XXX: State of the Union, xXx. Likely cause: streaming.
-- [3 works with James Newton Howard are back at once, from 2026-11-16](https://therallyback.com/?run=2026-11-23)  
-  The Hanging Tree, Flatliners, The Happening. No recorded cause.
-- [3 works with Russell Brand are back at once, from 2026-11-05](https://therallyback.com/?run=2026-11-23)  
-  Get Him to the Greek, Forgetting Sarah Marshall, Arthur. Likely cause: legal.
-- [3 works with Van Johnson are back at once, from 2026-11-19](https://therallyback.com/?run=2026-11-23)  
-  Thrill of a Romance, The End of the Affair, The Purple Rose of Cairo. No recorded cause.
-- [3 works with Rick Rubin are back at once, from 2026-11-17](https://therallyback.com/?run=2026-11-23)  
-  Danzig II: Lucifuge, Danzig III: How the Gods Kill, Danzig. Likely cause: award.
-- [2 works with Catherine O'Hara are back at once, from 2026-11-21](https://therallyback.com/?run=2026-11-23)  
-  A Simple Twist of Fate, Heartburn. Likely cause: remake/sequel news.
+- [5 works with Karl Malden are back at once, from 2026-11-20](https://therallyback.com/?run=2026-11-24)  
+  Birdman of Alcatraz, The Gunfighter, Take the High Ground!, Billion Dollar Brain, Halls of Montezuma. No recorded cause.
+- [4 works with L. Q. Jones are back at once, from 2026-11-22](https://therallyback.com/?run=2026-11-24)  
+  Buchanan Rides Alone, The Ballad of Cable Hogue, The Young Lions, Major Dundee. No recorded cause.
+- [2 works with Ann Sheridan are back at once, from 2026-11-22](https://therallyback.com/?run=2026-11-24)  
+  Woman on the Run, I Was a Male War Bride. Likely cause: broadcast.
+- [3 works with John Malkovich are back at once, from 2026-11-22](https://therallyback.com/?run=2026-11-24)  
+  In Transit, Ghost World, Places in the Heart. Likely cause: new season.
+- [3 works with Shu Qi are back at once, from 2026-11-22](https://therallyback.com/?run=2026-11-24)  
+  Bishonen, Three Times, Viva Erotica. Likely cause: award.
+- [3 works with Brian Donlevy are back at once, from 2026-11-22](https://therallyback.com/?run=2026-11-24)  
+  The Miracle of Morgan's Creek, Billy the Kid, Impact. No recorded cause.
+- [2 works with John Derek are back at once, from 2026-11-19](https://therallyback.com/?run=2026-11-24)  
+  Ghosts Can't Do It, Tarzan, the Ape Man. No recorded cause.
+- [2 works with Anne Heche are back at once, from 2026-11-22](https://therallyback.com/?run=2026-11-24)  
+  A Simple Twist of Fate, Cedar Rapids. Likely cause: legal.
+- [2 works with Dustin Hoffman are back at once, from 2026-11-20](https://therallyback.com/?run=2026-11-24)  
+  The Graduate, Straw Dogs. Likely cause: legal.
+- [2 works with Macaulay Culkin are back at once, from 2026-11-22](https://therallyback.com/?run=2026-11-24)  
+  Sex and Breakfast, Party Monster. Likely cause: remake/sequel news.
 
 ### New comebacks
 
-- [The Face of Love (2013) is back: 15.1× its usual interest](https://therallyback.com/w/Q15046522)  
-  The Face of Love, the 2013 film, is drawing 15.1× its usual interest since Nov 10, 2026. We don't know why yet. Know why? Tell us on the site.
-- [The Swan (1956) is back: 15.0× its usual interest](https://therallyback.com/w/Q466390)  
-  The Swan, the 1956 film, is drawing 15.0× its usual interest since Nov 12, 2026. We don't know why yet. Other work with Louis Jourdan came back at the same time (Nov 16, 2026). Know why? Tell us on the site.
-- [The Santa Clause 3: The Escape Clause (2006) is back: 4.0× its usual interest](https://therallyback.com/w/Q1325828)  
-  The Santa Clause 3: The Escape Clause, the 2006 film, is drawing 4.0× its usual interest since Nov 1, 2026. Why: 20th anniversary of release (Nov 2, 2026). How sure: likely.
-- [Little Odessa (1994) is back: 4.8× its usual interest](https://therallyback.com/w/Q628589)  
-  Little Odessa, the 1994 film, is drawing 4.8× its usual interest since Nov 5, 2026. Why: New work by James Gray: Paper Tiger (Nov 13, 2026). How sure: likely.
-- [The Immigrant (2013) is back: 3.2× its usual interest](https://therallyback.com/w/Q3341412)  
-  The Immigrant, the 2013 film, is drawing 3.2× its usual interest since Nov 9, 2026. Why: New work by James Gray: Paper Tiger (Nov 13, 2026). How sure: likely.
-- [Thrill of a Romance (1945) is back: 13.5× its usual interest](https://therallyback.com/w/Q960909)  
-  Thrill of a Romance, the 1945 film, is drawing 13.5× its usual interest since Nov 19, 2026. We don't know why yet. News about Tommy Dorsey (cast member) (Nov 17, 2026). Know why? Tell us on the site.
-- [The Subject Was Roses (1968) is back: 6.3× its usual interest](https://therallyback.com/w/Q1570822)  
-  The Subject Was Roses, the 1968 film, is drawing 6.3× its usual interest since Nov 11, 2026. We don't know why yet. Know why? Tell us on the site.
-- [Songs of Innocence (2014) is back: 4.1× its usual interest](https://therallyback.com/w/Q14037150)  
-  Songs of Innocence, the 2014 album, is drawing 4.1× its usual interest since Nov 11, 2026. Why: New work by U2: Carnaval de Luz (Nov 13, 2026). How sure: likely.
-- [The War (1994) is back: 3.1× its usual interest](https://therallyback.com/w/Q1167231)  
-  The War, the 1994 film, is drawing 3.1× its usual interest since Nov 13, 2026. We don't know why yet. Other work with Mare Winningham came back at the same time (Nov 13, 2026). Know why? Tell us on the site.
-- [Danzig (1988) is back: 5.1× its usual interest](https://therallyback.com/w/Q1165303)  
-  Danzig, the 1988 album, is drawing 5.1× its usual interest since Nov 17, 2026. We don't know why yet. Other work with Rick Rubin came back at the same time (Nov 17, 2026). Know why? Tell us on the site.
-- [Ghost World (2001) is back: 2.4× its usual interest](https://therallyback.com/w/Q139460)  
-  Ghost World, the 2001 film, is drawing 2.4× its usual interest since Nov 22, 2026. We don't know why yet. Other work with Patrick Fischler came back at the same time (Nov 20, 2026). Know why? Tell us on the site.
-- [Danzig II: Lucifuge (1990) is back: 5.1× its usual interest](https://therallyback.com/w/Q1165310)  
-  Danzig II: Lucifuge, the 1990 album, is drawing 5.1× its usual interest since Nov 17, 2026. We don't know why yet. Other work with Rick Rubin came back at the same time (Nov 17, 2026). Know why? Tell us on the site.
+- [Jingle All the Way (1996) is back: 4.3× its usual interest](https://therallyback.com/w/Q1064530)  
+  Jingle All the Way, the 1996 film, is drawing 4.3× its usual interest since Nov 6, 2026. Why: 30th anniversary of release (Nov 16, 2026). How sure: likely.
+- [D.O.A. (1950) is back: 19.8× its usual interest](https://therallyback.com/w/Q585983)  
+  D.O.A., the 1950 film, is drawing 19.8× its usual interest since Oct 15, 2026. We don't know why yet. Know why? Tell us on the site.
+- [Conrack (1974) is back: 11.8× its usual interest](https://therallyback.com/w/Q3280335)  
+  Conrack, the 1974 film, is drawing 11.8× its usual interest since Nov 20, 2026. We don't know why yet. Know why? Tell us on the site.
+- [Marriage on the Rocks (1965) is back: 11.2× its usual interest](https://therallyback.com/w/Q1257984)  
+  Marriage on the Rocks, the 1965 film, is drawing 11.2× its usual interest since Nov 22, 2026. We don't know why yet. Know why? Tell us on the site.
+- [The Great Sinner (1950) is back: 10.2× its usual interest](https://therallyback.com/w/Q1882322)  
+  The Great Sinner, the 1950 film, is drawing 10.2× its usual interest since Nov 22, 2026. We don't know why yet. Other work with James Anderson came back at the same time (Nov 22, 2026). Know why? Tell us on the site.
+- [Seven Old Men and a Girl (1968) is back: 12.0× its usual interest](https://therallyback.com/w/Q4415673)  
+  Seven Old Men and a Girl, the 1968 film, is drawing 12.0× its usual interest since Nov 21, 2026. Why: Albert Ivanov, screenwriter, died (Nov 21, 2026). How sure: likely.
+- [Woman on the Run (1950) is back: 4.9× its usual interest](https://therallyback.com/w/Q1307071)  
+  Woman on the Run, the 1950 film, is drawing 4.9× its usual interest since Nov 22, 2026. We don't know why yet. News about Ann Sheridan (cast member) (Nov 22, 2026). Know why? Tell us on the site.
+- [Golden Slumbers (1969) is back: 3.9× its usual interest](https://therallyback.com/w/Q210406)  
+  Golden Slumbers, the 1969 song, is drawing 3.9× its usual interest since Nov 8, 2026. Why: New work by The Beatles: Rubber Soul: Special Edition (Oct 2, 2026). How sure: likely.
+- [Dark Passage (1947) is back: 3.2× its usual interest](https://therallyback.com/w/Q1302406)  
+  Dark Passage, the 1947 film, is drawing 3.2× its usual interest since Nov 22, 2026. We don't know why yet. Other work with Franz Waxman came back at the same time (Nov 15, 2026). Know why? Tell us on the site.
+- [A Song Is Born (1948) is back: 6.8× its usual interest](https://therallyback.com/w/Q2258019)  
+  A Song Is Born, the 1948 film, is drawing 6.8× its usual interest since Nov 23, 2026. We don't know why yet. Other work with Bess Flowers came back at the same time (Nov 22, 2026). Know why? Tell us on the site.
+- [Bad Santa 2 (2016) is back: 3.7× its usual interest](https://therallyback.com/w/Q22074949)  
+  Bad Santa 2, the 2016 film, is drawing 3.7× its usual interest since Nov 7, 2026. Why: New work by Mark Waters: Hershey (Nov 25, 2026). How sure: likely.
+- [A Heart in Winter (1992) is back: 3.9× its usual interest](https://therallyback.com/w/Q594151)  
+  A Heart in Winter, the 1992 film, is drawing 3.9× its usual interest since Nov 23, 2026. We don't know why yet. Other work with Jean-Louis Livi came back at the same time (Nov 23, 2026). Know why? Tell us on the site.
 
 ---
 Leads, not conclusions: verify before publishing. To get this by email, **Watch** this repo → **Custom** → **Issues**.
