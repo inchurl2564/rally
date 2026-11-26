@@ -1039,6 +1039,32 @@ def _entities(ids: list[str], props: str) -> dict:
     return out
 
 
+def fetch_person_images_by_title(titles: set[str]) -> dict[str, tuple[str, str]]:
+    """{English Wikipedia title: (Commons photo, name)} for titles whose article is about a person
+    (Wikidata P31 = human) with a free photo. Used for editor's notes about a person."""
+    titles = sorted(t for t in titles if t)
+    if not titles:
+        return {}
+    values = " ".join('"' + t.replace("_", " ").replace("\\", "").replace('"', "") + '"@en' for t in titles)
+    q = f"""SELECT ?t ?img ?pLabel WHERE {{
+      VALUES ?t {{ {values} }}
+      ?art schema:name ?t ; schema:isPartOf <https://en.wikipedia.org/> ; schema:about ?p .
+      ?p wdt:P31 wd:Q5 ; wdt:P18 ?img .
+      SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en,mul". }}
+    }}"""
+    try:
+        rows = sparql(q)
+    except Exception as e:
+        print(f"      note-person image lookup failed: {e}", file=sys.stderr)
+        return {}
+    out: dict[str, tuple[str, str]] = {}
+    for row in rows:
+        name = urllib.parse.unquote(v(row, "img").rsplit("/", 1)[-1])
+        if name.lower().endswith((".jpg", ".jpeg", ".png", ".webp", ".tif", ".tiff")):
+            out.setdefault(v(row, "t").replace(" ", "_"), (name, v(row, "pLabel")))
+    return out
+
+
 def fetch_star_images(qids: set[str], billed: int = 3) -> dict[str, tuple[str, str]]:
     """A photo of a film's or show's star: the first of its top-billed cast (Wikidata keeps the cast
     in billing order) with a free photo on Commons. Ranking by fame instead picks cameos: Kevin Bacon
@@ -1361,6 +1387,13 @@ def write_site_data(site: str, results, meta, clusters, threads, keep_runs: int,
             w_["image"] = images.get(w_["qid"])
         if not a["image"] and a["qid"] in people:
             a["image"], a["image_of"] = people[a["qid"]]
+    # Editor's notes about a person (Robert Pattinson cast as Bond): that person's photo leads the story.
+    notes = [x["editor_note"] for x in [*results, *threads] if x.get("editor_note")]
+    by_title = fetch_person_images_by_title({n.get("entity_title", "").replace(" ", "_") for n in notes})
+    for n in notes:
+        pic = by_title.get(n.get("entity_title", "").replace(" ", "_"))
+        if pic:
+            n["image"], n["image_of"] = pic
     # A story whose headline names a person shows that person ("…as fans remember Tom Stoppard").
     for r in results:
         hp = headline_person(r)
