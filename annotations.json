@@ -214,5 +214,31 @@
     "cause": "release",
     "new_work": "Q126390739",
     "headline": "The Hunger Games films and novels are back with Sunrise on the Reaping"
+  },
+  {
+    "id": "blade-runner-2099-series-2026",
+    "status": "published",
+    "note": "Blade Runner 2099, a new Prime Video series set 50 years after Blade Runner 2049, premiered on Nov. 25 with all eight episodes.",
+    "works": [
+      "Blade Runner",
+      "Blade Runner 2049",
+      "Do Androids Dream of Electric Sheep?",
+      "Blade Runner: The Final Cut"
+    ],
+    "qids": [
+      "Q184843"
+    ],
+    "entity_name": "Blade Runner 2099",
+    "from": "2026-11-20",
+    "to": "2026-12-15",
+    "keywords": [
+      "Blade Runner 2099",
+      "Prime Video",
+      "premiere"
+    ],
+    "source": "https://press.amazonmgmstudios.com/us/en/press-release/the-future-has-arrived-prime-videos-iblade-runner-",
+    "source_kind": "Amazon MGM Studios press release (supplied by an editor)",
+    "cause": "release",
+    "headline": "The Blade Runner films are back with the new Blade Runner 2099 series"
   }
 ]
