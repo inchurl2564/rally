@@ -83,6 +83,7 @@ def connected(works: list[dict], batch: int = 6) -> dict[str, list[dict]]:
             rows = radar.sparql(q)
         except Exception as e:
             log(f"      adaptations lookup failed for a batch: {e}")
+            radar.HEALTH["lookups_failed"] += 1
             continue
         for r in rows:
             out.setdefault(radar.qid(radar.v(r, "item")), []).append({

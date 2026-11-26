@@ -86,6 +86,21 @@ jobs:
           BLUESKY_APP_PASSWORD: ${{ secrets.BLUEVIOLET }}      # the app password, saved as BLUEVIOLET
         run: python radar.py --site site
 
+      # Before saving: is tonight's edition complete? If not, stop here. Nothing is saved or published,
+      # yesterday's edition stays up, and one "needs attention" issue (an email) says what was wrong.
+      - name: Check the edition before publishing
+        id: check
+        if: github.event_name != 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if python health.py --site site --gate > gate.md; then echo "Edition looks complete."; exit 0; fi
+          cat gate.md
+          gh label create health --color d93f0b --description "The Rallyback needs attention" 2>/dev/null || true
+          gh issue create --title "The Rallyback: tonight's edition was held back" --label health \
+            --body "$(printf 'The nightly run finished, but its edition failed the completeness check, so it was not published and yesterday'"'"'s edition is still up:\n\n'; cat gate.md; printf '\nDetails: %s\n' "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID")"
+          exit 1
+
       - name: Commit results
         if: github.event_name != 'push'
         run: |
@@ -142,7 +157,7 @@ jobs:
 
       # If any step above failed, say so in an issue (an email) with a link to the run.
       - name: Report a failed run
-        if: failure() && github.event_name != 'push'
+        if: failure() && github.event_name != 'push' && steps.check.outcome != 'failure'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

@@ -59,8 +59,17 @@ Tagline in use: **"Where Everything Old is News Again."** (About us).
    MusicBrainz, YouTube, Bluesky). Up to **100** unexplained comebacks researched a night (`--explain-max`).
 5. **Write** `site/data/latest.json` + `site/data/runs/<date>.json`, title pages (`site/w/`), weekly pages
    (`site/week/`), the monthly Comeback Report (`site/report/`), feeds, sitemap, homepage static block.
-6. After commit: **IndexNow** ping (`tools/indexnow.py`), **Bluesky post** (`bluesky_post.py`), health check
-   (opens a GitHub issue only when something needs a person).
+6. **Completeness check before saving** (`health.py --gate`, added 2026-11-26): edition files readable and
+   consistent, comebacks not halved, title pages present, few "lookup failed". On a problem nothing is
+   saved or published, yesterday's edition stays up, and an issue "tonight's edition was held back" emails
+   the owner. To publish anyway after checking, rerun the workflow or loosen the threshold in `health.py`.
+7. After commit: **IndexNow** ping (`tools/indexnow.py`), **Bluesky post** (`bluesky_post.py`, at most one a
+   day), health warnings (`health.py`: a source down 3 nights, comebacks doubled, lookups or picture
+   lookups failing (`picture_lookups_failed`), more comebacks than usual without a picture; issue only when
+   something needs a person).
+8. An extra run on the same day (Actions → Run workflow) works, but runs without YouTube and Currents once
+   the nightly run has used their daily allowance (YouTube resets midnight Pacific, Currents midnight UTC),
+   so news/YouTube reasons can be thinner until the next night.
 
 Verdicts: death, derivative (sequel/remake/adaptation), same-creator, anniversary, public domain, honor,
 editor / editor-release / editor-death (editor's notes in `annotations.json`), ripple (a connected page jumped),

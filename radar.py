@@ -53,7 +53,7 @@ if __name__ == "__main__":
 _contact = os.environ.get("RADAR_CONTACT") or (
     f"https://github.com/{os.environ['GITHUB_REPOSITORY']}" if os.environ.get("GITHUB_REPOSITORY") else "")
 UA = f"Rallyback/0.4 ({_contact or 'open-data prototype'}; python-urllib)"
-HEALTH = {"pages_skipped": 0, "lookups_failed": 0, "requests": 0}
+HEALTH = {"pages_skipped": 0, "lookups_failed": 0, "picture_lookups_failed": 0, "requests": 0}
 PV = "https://wikimedia.org/api/rest_v1/metrics/pageviews"
 SPARQL = "https://query.wikidata.org/sparql"
 
@@ -951,6 +951,7 @@ def fetch_images(qids: set[str], batch: int = 150) -> dict[str, str]:
             rows = sparql(q)
         except Exception as e:
             print(f"      image lookup failed for a batch: {e}", file=sys.stderr)
+            HEALTH["picture_lookups_failed"] += 1
             continue
         rank = {"P18": 0, "P3383": 1, "P154": 2}
         best: dict[str, tuple[int, str]] = {}
@@ -1005,6 +1006,7 @@ def fetch_series_images(qids: set[str], batch: int = 120) -> dict[str, tuple[str
             rows = sparql(q)
         except Exception as e:
             print(f"      series-image lookup failed for a batch: {e}", file=sys.stderr)
+            HEALTH["picture_lookups_failed"] += 1
             continue
         best: dict[str, tuple] = {}
         for row in rows:
@@ -1036,6 +1038,7 @@ def _entities(ids: list[str], props: str) -> dict:
             out.update((http_json(f"{WD_API}?{q}", max_age_h=24 * 7) or {}).get("entities") or {})
         except Exception as e:
             print(f"      Wikidata entity lookup failed for a batch: {e}", file=sys.stderr)
+            HEALTH["lookups_failed"] += 1
     return out
 
 
@@ -1056,6 +1059,7 @@ def fetch_person_images_by_title(titles: set[str]) -> dict[str, tuple[str, str]]
         rows = sparql(q)
     except Exception as e:
         print(f"      note-person image lookup failed: {e}", file=sys.stderr)
+        HEALTH["picture_lookups_failed"] += 1
         return {}
     out: dict[str, tuple[str, str]] = {}
     for row in rows:
@@ -1112,6 +1116,7 @@ def fetch_people_images(qids: set[str], batch: int = 80, props_order: list[str] 
             rows = sparql(q)
         except Exception as e:
             print(f"      people-image lookup failed for a batch: {e}", file=sys.stderr)
+            HEALTH["picture_lookups_failed"] += 1
             continue
         best: dict[str, tuple] = {}
         for row in rows:
