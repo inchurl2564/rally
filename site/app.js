@@ -361,6 +361,7 @@ async function getJSON(url) {
 }
 
 async function init() {
+  { const y = $("copy-year"); if (y) y.textContent = new Date().getFullYear(); }
   $("today").textContent = new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
   try { state.index = await getJSON("data/index.json"); }
   catch (e) { return fail("No data yet. The first daily run hasn't finished."); }

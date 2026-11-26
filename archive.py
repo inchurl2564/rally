@@ -455,7 +455,8 @@ def _shell(base: str, title: str, desc: str, canon: str, img: str, ld: dict, par
 {chr(10).join(p for p in parts if p)}
 </main>
 <footer><div class="wrap">Every morning, The Rallyback finds older movies, shows, songs, games and books that people are suddenly into again, and tells you why.
-<a href="{e(base)}/">Today’s comebacks</a> · <a href="{e(base)}/week/">Every week</a> · <a href="{e(base)}/?tab=about">About us</a> · <a href="{e(base)}/?tab=subscribe">Weekly newsletter</a></div></footer>
+<a href="{e(base)}/">Today’s comebacks</a> · <a href="{e(base)}/week/">Every week</a> · <a href="{e(base)}/?tab=about">About us</a> · <a href="{e(base)}/?tab=subscribe">Weekly newsletter</a>
+<p class="small copy">© {dt.date.today().year} Castle Bridge Media</p></div></footer>
 </body></html>
 """
 
