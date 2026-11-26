@@ -1,0 +1,13 @@
+name: live-check (temporary)
+on: workflow_dispatch
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          curl -s https://therallyback.com/data/latest.json | python3 -c "
+          import json,sys; L=json.load(sys.stdin); R={r['qid']:r for r in L['results']}
+          for q in ['Q184843','Q1747227','Q14594724']:
+              r=R[q]; print(r['label'], '|', r['verdict'], '|', (r.get('editor_note') or {}).get('text','')[:70])
+          print('lookup failed:', sum(r['verdict']=='lookup failed' for r in L['results']))"
+          printf "home: "; curl -s -o /dev/null -w "%{http_code}\n" https://therallyback.com/

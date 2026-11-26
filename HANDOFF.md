@@ -241,8 +241,8 @@ YouTube key; LLC → trademark; delete the two paused old morning-report tasks; 
 **Engineering:**
 1. ~~Retry failed Wikidata batches~~ Done 2026-11-26: failed trigger batches are retried in pieces of 3; if that
    fails too, the reason from the latest edition in the past week (same comeback) is kept (`carry_over_triggers`).
-2. Person photo for editor-note groups (e.g. Robert Pattinson for the Bond casting) and for same-creator
-   stories (the creator's photo; the trigger qid is the new work, not the person).
+2. Person photo for editor-note groups (e.g. Robert Pattinson for the Bond casting). Same-creator stories:
+   done 2026-11-26 (the trigger keeps `person`, the creator, only when a person or band, not a studio).
 3. Tighten "sync placement" from edit summaries; consider treating Hunger Games films and books as one reason
    for Bluesky repeats.
 4. Update GitHub actions to Node 24 versions (deprecation warning in every run).
