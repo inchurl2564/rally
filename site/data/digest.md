@@ -1,11 +1,11 @@
-The Rallyback, the comeback report, for **2026-11-25**: 148 new findings. [Open the site](https://therallyback.com/?run=2026-11-25).
+The Rallyback, the comeback report, for **2026-11-25**: 147 new findings. [Open the site](https://therallyback.com/?run=2026-11-25).
 
 ### Shared triggers
 
-- [6 older works are back: The Joshua Tree, Achtung Baby, War, … (new work by U2: Carnaval de Luz)](https://therallyback.com/?run=2026-11-25)  
-  The Joshua Tree, Achtung Baby, War, The Unforgettable Fire, Numb, The Best of 1980–1990
-- [6 older works are back: The Joshua Tree, Achtung Baby, War, … (new work by U2: The Greatest Show on Earth (U2 song))](https://therallyback.com/?run=2026-11-25)  
-  The Joshua Tree, Achtung Baby, War, The Unforgettable Fire, Numb, The Best of 1980–1990
+- [6 older works are back: The Best of 1980–1990, Numb, The Joshua Tree, … (new work by U2: Carnaval de Luz)](https://therallyback.com/?run=2026-11-25)  
+  The Best of 1980–1990, Numb, The Joshua Tree, Achtung Baby, War, The Unforgettable Fire
+- [6 older works are back: The Best of 1980–1990, Numb, The Joshua Tree, … (new work by U2: The Greatest Show on Earth (U2 song))](https://therallyback.com/?run=2026-11-25)  
+  The Best of 1980–1990, Numb, The Joshua Tree, Achtung Baby, War, The Unforgettable Fire
 - [3 older works are back: Pusher, Pusher II, Pusher 3 (new work by Nicolas Winding Refn: Her Private Hell)](https://therallyback.com/?run=2026-11-25)  
   Pusher, Pusher II, Pusher 3
 - [2 older works are back: Carrie, Bag of Bones (new work by Stephen King: Other Worlds Than These (attention rose before release))](https://therallyback.com/?run=2026-11-25)  
@@ -16,23 +16,21 @@ The Rallyback, the comeback report, for **2026-11-25**: 148 new findings. [Open 
 ### Common threads
 
 - [7 works with Spencer Tracy are back at once, from 2026-11-24](https://therallyback.com/?run=2026-11-25)  
-  Malaya, The Mountain, A Guy Named Joe, The Old Man and the Sea, Northwest Passage, Up the River, Captains Courageous. No recorded cause.
+  Malaya, Up the River, The Old Man and the Sea, The Mountain, A Guy Named Joe, Captains Courageous, Northwest Passage. No recorded cause.
+- [2 works with Pierce Brosnan are back at once, from 2026-11-16](https://therallyback.com/?run=2026-11-25)  
+  The November Man, Remember Me. Likely cause: remake/sequel news.
 - [5 works with Rob Lowe are back at once, from 2026-11-24](https://therallyback.com/?run=2026-11-25)  
-  Masquerade, Illegally Yours, Bad Influence, Oxford Blues, The Hotel New Hampshire. Likely cause: streaming.
+  Illegally Yours, The Hotel New Hampshire, Bad Influence, Masquerade, Oxford Blues. Likely cause: streaming.
 - [2 works with Anthony Quayle are back at once, from 2026-11-14](https://therallyback.com/?run=2026-11-25)  
   Ice Cold in Alex, The Eagle Has Landed. No recorded cause.
-- [3 works with Colin Thurston are back at once, from 2026-11-25](https://therallyback.com/?run=2026-11-25)  
-  Save a Prayer, Duran Duran, Rio. No recorded cause.
 - [3 works with Nile Rodgers are back at once, from 2026-11-25](https://therallyback.com/?run=2026-11-25)  
-  Arena, Astronaut, Paper Gods. No recorded cause.
+  Paper Gods, Arena, Astronaut. No recorded cause.
+- [3 works with Colin Thurston are back at once, from 2026-11-25](https://therallyback.com/?run=2026-11-25)  
+  Duran Duran, Save a Prayer, Rio. No recorded cause.
 - [3 works with Frank Sinatra are back at once, from 2026-11-25](https://therallyback.com/?run=2026-11-25)  
   Marriage on the Rocks, Tony Rome, Lady in Cement. Likely cause: viral.
-- [2 works with Elizabeth Taylor are back at once, from 2026-11-24](https://therallyback.com/?run=2026-11-25)  
-  Life with Father, National Velvet. Likely cause: legal.
-- [2 works with Russell Brand are back at once, from 2026-11-05](https://therallyback.com/?run=2026-11-25)  
-  Get Him to the Greek, Arthur. Likely cause: legal.
-- [2 works with Gérard Depardieu are back at once, from 2026-11-21](https://therallyback.com/?run=2026-11-25)  
-  My Father the Hero, My Father the Hero. Likely cause: legal.
+- [2 works with Terry Kilburn are back at once, from 2026-11-25](https://therallyback.com/?run=2026-11-25)  
+  Goodbye, Mr. Chips, National Velvet. No recorded cause.
 
 ### New comebacks
 
