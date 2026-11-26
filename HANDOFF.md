@@ -204,8 +204,13 @@ Playwright + Chromium are pre-installed for screenshots; the chart library (cdnj
 therallyback.com itself is unreachable from here too: to check the live site, use the same pattern with a
 temporary `live-check.yml` that curls the pages (wait in a loop for a deploy), then delete it. To test the
 archive locally, run `archive.build('site', ...)` with `sys.modules['radar'] = None` (skips the free-reading
-lookup) on two copies (old and new code) and diff `site/`. `site/data/leaders.json` differs run to run
-(ties in sets), so ignore it in such diffs.
+lookup) on two copies (old and new code) and diff `site/`.
+
+**Tests:** `tests/test_rules.py` (no network, under a second; `python -m pytest -q tests`) pins each matching
+rule in section 6 that fixed a real wrong reason, plus the retry/carry-over, person photos, title bundles and
+the check before publishing. GitHub runs them on every code push (`.github/workflows/tests.yml`). When you
+fix a new wrong reason, add a test with the real example. Archive output is deterministic (identical data
+gives identical files), so old/new diffs show only real changes.
 
 ### Google Search Console
 "Not indexed" reasons that are intentional: **Excluded by 'noindex'** (thin title pages), **Page with

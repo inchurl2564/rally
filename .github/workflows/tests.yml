@@ -1,0 +1,21 @@
+name: Tests
+
+# The matching rules and safeguards, checked whenever the code changes (not on nightly data commits).
+# A failure here emails the person who pushed. Run locally: python -m pytest -q tests
+on:
+  push:
+    branches: [main]
+    paths: ["*.py", "tests/**", "site/app.js", ".github/workflows/tests.yml"]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pytest
+      - run: python -m pytest -q tests

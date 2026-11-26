@@ -882,7 +882,7 @@ def leaders(site: str, hist: dict, runs: list[str]) -> None:
     tw, tb = sum(cw.values()) or 1, sum(cb.values()) or 1
     decades = sorted([{"decade": d, "this_week": n, "share": round(n / tw, 3),
                        "usual_share": round(cb.get(d, 0) / tb, 3) if before else None} for d, n in cw.items()],
-                     key=lambda x: -x["this_week"])
+                     key=lambda x: (-x["this_week"], x["decade"]))
     fr: dict[str, set] = {}
     for r in week:
         for q in days[r]:
@@ -893,8 +893,8 @@ def leaders(site: str, hist: dict, runs: list[str]) -> None:
         if names.get(f):
             by_name.setdefault(names[f], set()).update(qs)
     franchises = sorted([{"name": n, "titles": len(qs),
-                          "top": sorted(({"qid": q, "label": works[q][0]} for q in qs), key=lambda x: x["label"])[:5]}
-                         for n, qs in by_name.items() if len(qs) >= 2], key=lambda x: -x["titles"])[:12]
+                          "top": sorted(({"qid": q, "label": works[q][0]} for q in qs), key=lambda x: (x["label"], x["qid"]))[:5]}
+                         for n, qs in by_name.items() if len(qs) >= 2], key=lambda x: (-x["titles"], x["name"]))[:12]
     _save(os.path.join(site, "data", "leaders.json"), {
         "month": top(end.replace(day=1)), "year": top(end.replace(month=1, day=1)),
         "decades": decades, "franchises": franchises, "updated": runs[-1],
