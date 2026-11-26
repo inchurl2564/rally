@@ -1,0 +1,17 @@
+name: live-check (temporary)
+on: workflow_dispatch
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          curl -s https://therallyback.com/sitemap.xml | grep -o '<loc>[^<]*' | sed 's/<loc>//' > urls.txt
+          echo "sitemap addresses: $(wc -l < urls.txt)"
+          echo "status counts (no redirects followed):"
+          xargs -P 16 -I{} curl -s -o /dev/null -w "%{http_code} {}\n" {} < urls.txt > res.txt
+          cut -d' ' -f1 res.txt | sort | uniq -c
+          echo "not 200:"; grep -v '^200' res.txt | head -20
+          echo "noindex among sitemap pages:"; head -40 urls.txt | xargs -I{} sh -c 'curl -s {} | grep -q noindex && echo {}' | head
+          echo "redirect sources Google may know:"
+          for u in https://therallyback.com/w/Q102225.html https://therallyback.com/index.html https://www.therallyback.com/ http://therallyback.com/ https://inchurl2564.github.io/rally/ https://therallyback.com/week/2026-W48.html https://therallyback.com/report/2026-11/ https://therallyback.com/week; do
+            curl -s -o /dev/null -w "%{http_code} $u -> %{redirect_url}\n" $u; done
