@@ -1010,6 +1010,8 @@ function combinedSpark(ws) {
 // "same person" group, or the person who died or was honoured for a shared trigger.
 function personPic(g) {
   const hed = (g.story && g.story.hed) || "";
+  const n = g.note || (g.t && g.t.editor_note);     // an editor's note about a person (a casting, a verdict)
+  if (n && n.image && n.image_of && hed.includes(n.image_of)) return { image: n.image, label: n.image_of, image_of: n.image_of };
   if (g.t && g.t.image && g.t.name && hed.includes(g.t.name)) return { image: g.t.image, label: g.t.name, image_of: g.t.name };
   const t = g.trigger;
   if (t && t.image && ["death", "honor"].includes(t.type)) {

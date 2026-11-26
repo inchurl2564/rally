@@ -333,6 +333,8 @@ def apply(results: list[dict], threads: list[dict]) -> None:
             note["headline"] = n["headline"]
         if n.get("via"):            # e.g. "reader tip": credited when the mystery is marked solved
             note["via"] = n["via"]
+        if n.get("entity_title"):   # the Wikipedia article it's about; a person's photo can lead its story
+            note["entity_title"] = n["entity_title"]
         for r in results:
             if not lo <= r["spike_start"] <= hi:
                 continue
