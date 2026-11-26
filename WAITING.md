@@ -8,7 +8,7 @@ Updated as items move. Last updated: 2026-11-23 (sources reviewed against their 
 | Item | Waiting for | Then |
 | --- | --- | --- |
 | "Where to watch / listen / read / play" links (affiliate) | Joining Apple, Amazon, Bookshop.org and a game-store affiliate program | Buttons on every title and story card, plus the disclosure line |
-| First Friday newsletter issue | A PO box or virtual mailbox for Beehiiv's required mailing address (not a home address) | Send the This week page as the Friday issue, then remove the "first issue goes out soon" line from the Subscribe page (`subscribePage` in site/app.js). Sign-up boxes are already live (Beehiiv, free plan: therallyback.beehiiv.com) |
+| First Friday newsletter issue | PO box ready (Nov 26; business mailing address for Castle Bridge Media, kept in the private accounts list). Waiting on: the owner entering it in Beehiiv | Send the This week page as the Friday issue, then remove the "first issue goes out soon" line from the Subscribe page (`subscribePage` in site/app.js). Sign-up boxes are already live (Beehiiv, free plan: therallyback.beehiiv.com) |
 | Two-factor sign-in on every account (GitHub, Cloudflare, Google, Beehiiv, Bluesky, Currents) | You | Use an authenticator app or passkey, not text messages; save recovery codes offline; a password manager helps |
 | Domain safety | You | Cloudflare → Domain Registration: auto-renew on, transfer lock on, card on file current |
 | Email spoofing protection (SPF + DMARC) | You (I can walk you through it) | Two TXT records in Cloudflare DNS so nobody can send fake mail from @therallyback.com |

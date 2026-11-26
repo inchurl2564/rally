@@ -237,7 +237,7 @@ temporary pageview/lookup caches, rebuilt if lost), **Beehiiv** (subscribers), *
 
 ## 9. Marketing and money (summary of the plan)
 
-Order: owned channels (newsletter waiting on a PO box; Cloudflare Web Analytics not yet on; affiliate
+Order: owned channels (newsletter: PO box ready Nov 26, next is entering it in Beehiiv; Cloudflare Web Analytics not yet on; affiliate
 sign-ups Apple + Bookshop.org) → search (title pages, IndexNow, Comeback Report) → Bluesky (automated) →
 communities (Reddit OC days, Show HN, podcasts) → press (journalist query services, embeddable chart) →
 newsletter growth. Revenue: affiliates first, newsletter sponsors from ~2,000 subscribers, pro alerts for
@@ -247,7 +247,7 @@ after forming the LLC).
 
 ## 10. Suggested next steps
 
-**Owner:** PO box → first Friday newsletter (then remove "first issue goes out soon"); Apple + Bookshop.org
+**Owner:** enter the PO box (Castle Bridge Media's mailing address) in Beehiiv → first Friday newsletter (then remove "first issue goes out soon"); Apple + Bookshop.org
 affiliate applications; Cloudflare Web Analytics; two-factor on all accounts; SPF/DMARC records; restrict the
 YouTube key; LLC → trademark; delete the two paused old morning-report tasks; delete the merged branches
 `preview-monthly-report` and `note-blade-runner-2099`; add editor's notes for big unexplained comebacks.
