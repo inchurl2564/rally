@@ -164,6 +164,8 @@ film), people with common names. Editor-note groups (e.g. the Bond casting) have
 
 ## 8. Measuring quality: the morning report
 
+- The report is also **emailed**: `.github/workflows/morning-report.yml` posts it as a comment on issue #1
+  "Morning reports" as the GitHub bot (GitHub doesn't email you about your own actions).
 - Scheduled task "Rallyback morning report" fires **into this session** at 4:47 a.m. Pacific
   (trigger `trig_01M2QwBJEEya6XthiqP6iDyv`). An older copy (`trig_01C85nXnZBrMYQF15uojBUnL`) that started
   fresh sessions is **paused**; those sessions had no repo access. Delete it from claude.ai's scheduled tasks.
@@ -179,6 +181,22 @@ write `.github/workflows/news-test.yml` (workflow_dispatch), push, run with
 with `gh api .../actions/jobs/<id>/logs`, then delete the workflow. GraphQL is blocked; use REST via `gh api`.
 YouTube's daily quota is shared with the nightly run (resets midnight Pacific); Currents' 250/day too (UTC).
 Playwright + Chromium are pre-installed for screenshots; the chart library (cdnjs) doesn't load here.
+
+## 8b. Storage (measured 2026-11-26)
+
+Where data lives: **GitHub repo** (source of truth, full history: code, `site/data`, title/weekly/report
+pages, `store/gdelt`), **Cloudflare** (serves the current copy of `site/`), **GitHub Actions cache** (`.cache`,
+temporary pageview/lookup caches, rebuilt if lost), **Beehiiv** (subscribers), **Google Forms/Sheets** (tips),
+**Bluesky** (posts), **Claude** (business plan doc).
+- Repo on GitHub: 22.6 MB. Each nightly data commit adds ~1.9 MB compressed (~12 MB raw), i.e. ~0.7 GB/year.
+  GitHub recommends under 1 GB (reached around early 2028) and strongly under 5 GB; files over 100 MB are blocked.
+- Site files: 2,467 (1,204 title pages + 1,205 `site/data/works/*.json` + the rest), growing ~160 a night
+  (~80 new titles x 2 files). **Cloudflare Workers Free allows 20,000 files per deploy** (Paid $5/month:
+  100,000) → at this pace the limit arrives around **March 2027**. This is the first real storage limit.
+- Options, cheapest first: bundle `site/data/works/*.json` into ~100 shard files (halves the count); don't
+  write files for noindexed thin title pages (~37%); Workers Paid ($5/month); later move old run archives
+  out of git (Cloudflare R2 free tier) if the repo nears 1 GB.
+- The morning report checks repo size and file count on Mondays.
 
 ## 9. Marketing and money (summary of the plan)
 

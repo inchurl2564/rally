@@ -27,6 +27,13 @@ Updated as items move. Last updated: 2026-11-23 (sources reviewed against their 
 | Licensed weekly "Rallyback 50" chart | Stream 4, free chart Q1 2028, sales Sep 2028 | The embeddable chart is the first step |
 | A feed per followed title | When there's demand (or with pro alerts) | Following works in the browser for now |
 
+## Storage to watch
+
+| Item | When |
+| --- | --- |
+| Cloudflare Free allows 20,000 site files per deploy (2,467 on Nov 26, growing ~160 a night) | Around March 2027: bundle the works data files, skip files for thin title pages, or Workers Paid ($5/month, 100,000 files). The Monday morning report tracks it |
+| GitHub recommends repos under 1 GB (22.6 MB on Nov 26, ~0.7 GB a year) | Around early 2028: move old run archives out of git |
+
 ## Waiting on data (these happen by themselves)
 
 | Item | When |
