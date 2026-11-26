@@ -136,8 +136,9 @@ site/         static site (index.html, app.js, style.css) and data/, feeds/
 
 Each night `archive.py` turns the permanent record into:
 
-- `site/data/works/<qid>.json`: a page per title, with every comeback (when, how big, why), its chart,
-  what's coming for it and related titles. Opened on the site at `?work=<qid>`.
+- `site/data/works/<n>.json`: every title's data, bundled 256 ways (Q123 is in `<123 mod 256>.json`, keyed by
+  Wikidata ID): every comeback (when, how big, why), its chart, what's coming for it and related titles.
+  Opened on the site at `?work=<qid>`. Bundled so the file count stays fixed (Cloudflare's 20,000-file limit).
 - `site/data/works/index.json`: every title we've tracked, for the "Search all titles" box.
 - `site/w/<qid>.html`: a share link per title, with a proper title, description and picture for link
   previews; it opens the title page.

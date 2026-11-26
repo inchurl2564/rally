@@ -191,12 +191,13 @@ temporary pageview/lookup caches, rebuilt if lost), **Beehiiv** (subscribers), *
 **Bluesky** (posts), **Claude** (business plan doc).
 - Repo on GitHub: 22.6 MB. Each nightly data commit adds ~1.9 MB compressed (~12 MB raw), i.e. ~0.7 GB/year.
   GitHub recommends under 1 GB (reached around early 2028) and strongly under 5 GB; files over 100 MB are blocked.
-- Site files: 2,467 (1,204 title pages + 1,205 `site/data/works/*.json` + the rest), growing ~160 a night
-  (~80 new titles x 2 files). **Cloudflare Workers Free allows 20,000 files per deploy** (Paid $5/month:
-  100,000) → at this pace the limit arrives around **March 2027**. This is the first real storage limit.
-- Options, cheapest first: bundle `site/data/works/*.json` into ~100 shard files (halves the count); don't
-  write files for noindexed thin title pages (~37%); Workers Paid ($5/month); later move old run archives
-  out of git (Cloudflare R2 free tier) if the repo nears 1 GB.
+- Site files: 1,516 after title data was bundled into 256 files on 2026-11-26 (was 2,467: one data file per
+  title). Now growing ~80 a night (one `site/w/` page per new title). **Cloudflare Workers Free allows 20,000
+  files per deploy** (Paid $5/month: 100,000) → at this pace the limit arrives around **July 2027**.
+- Next options: serve thin (noindexed, ~43%) title pages from one shared page that fills itself in from the
+  data (same address, so Share links keep working; needs a preview). Don't simply skip thin pages: Share
+  buttons and new mysteries link to them. Or Workers Paid ($5/month). Later move old run archives out of
+  git (Cloudflare R2 free tier) if the repo nears 1 GB.
 - The morning report checks repo size and file count on Mondays.
 
 ## 9. Marketing and money (summary of the plan)

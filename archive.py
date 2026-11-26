@@ -3,8 +3,11 @@ The archive: a permanent page for every title The Rallyback has ever caught comi
 plus the searchable index, leaderboards and the weekly roundup. Built each night from the
 permanent record (site/data/history), today's edition and the forecast checks.
 
-  site/data/works/<qid>.json   one title: every comeback (dates, size, causes), its chart,
-                               what's coming for it, related titles
+  site/data/works/<n>.json     titles bundled 256 ways (n = the Wikidata number mod 256, see
+                               shard_of), each {qid: title}: every comeback (dates, size, causes),
+                               its chart, what's coming for it, related titles. Bundled so the
+                               file count stays fixed as titles pile up (Cloudflare caps a deploy
+                               at 20,000 files)
   site/data/works/index.json   every title, compact, for "Has it come back before?" search
   site/w/<qid>.html            a readable page per title, written out in plain HTML so search
                                engines and link previews see it: why it's back, every comeback,
@@ -50,6 +53,51 @@ def _save(path, obj):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w") as f:
         json.dump(obj, f, separators=(",", ":"))
+
+
+SHARDS = 256            # site/app.js has the same number (WORK_SHARDS); change both together
+
+
+def shard_of(qid: str) -> int:
+    return int(qid[1:]) % SHARDS
+
+
+class Works:
+    """Every title's data, read from and written back to the bundle files (site/data/works/<n>.json).
+    Also reads the old one-file-per-title layout (works/Q123.json) and removes it on save."""
+
+    def __init__(self, site: str):
+        self.dir = os.path.join(site, "data", "works")
+        self.docs: dict[str, dict] = {}
+        self.dirty: set[int] = set()
+        self.legacy: list[str] = []
+        names = sorted(os.listdir(self.dir)) if os.path.isdir(self.dir) else []
+        for f in names:
+            if re.fullmatch(r"Q\d+\.json", f):
+                d = _load(os.path.join(self.dir, f), None)
+                if isinstance(d, dict):
+                    self.docs[f[:-5]] = d
+                    self.dirty.add(shard_of(f[:-5]))
+                self.legacy.append(f)
+        for f in names:
+            if re.fullmatch(r"\d+\.json", f):
+                for q, d in (_load(os.path.join(self.dir, f), {}) or {}).items():
+                    self.docs.setdefault(q, d)
+
+    def get(self, qid: str, default=None):
+        return self.docs.get(qid, default)
+
+    def put(self, qid: str, doc: dict) -> None:
+        self.docs[qid] = doc
+        self.dirty.add(shard_of(qid))
+
+    def save(self) -> None:
+        for n in sorted(self.dirty):
+            part = {q: self.docs[q] for q in sorted(self.docs, key=lambda q: int(q[1:])) if shard_of(q) == n}
+            _save(os.path.join(self.dir, f"{n}.json"), part)
+        for f in self.legacy:
+            os.remove(os.path.join(self.dir, f))
+        self.dirty, self.legacy = set(), []
 
 
 def _d(s: str) -> dt.date:
@@ -145,6 +193,7 @@ def build(site: str, site_url: str = "") -> None:
     names, works = hist["names"], hist["works"]
     notes = {n["id"]: n.get("note") for n in _load("annotations.json", []) if isinstance(n, dict) and n.get("id")}
     wdir = os.path.join(site, "data", "works")
+    store = Works(site)
     today_run = runs[-1]
     cu = latest.get("coming_up", {})
     coming: dict[str, list] = {}
@@ -179,11 +228,10 @@ def build(site: str, site_url: str = "") -> None:
             continue
         best = max((e["score"] or 0) for e in eps)
         index.append([q, label, str(year), kind, len(eps), eps[-1]["last_seen"], best])
-        path = os.path.join(wdir, f"{q}.json")
         on_today = q in R
-        if not on_today and q not in coming and os.path.exists(path):
+        if not on_today and q not in coming and store.get(q):
             continue                                  # nothing new for this title tonight
-        old = _load(path, {})
+        old = store.get(q, {})
         r = R.get(q, {})
         rel: dict[str, str] = {}
         for f in fr:
@@ -212,14 +260,15 @@ def build(site: str, site_url: str = "") -> None:
             "related": [{"qid": o, "label": works[o][0], "year": str(works[o][2]), "why": why} for o, why in related if o in works],
             "updated": today_run,
         }
-        _save(path, doc)
+        store.put(q, doc)
         written += 1
     index.sort(key=lambda x: (-x[4], -(x[6] or 0)))
     _save(os.path.join(wdir, "index.json"), {"fields": ["qid", "label", "year", "kind", "comebacks", "last_seen", "best_score"],
                                             "works": index, "updated": today_run})
     leaders(site, hist, runs)
     weekly(site, hist, runs, latest)
-    pages(site, site_url, [q for q, *_ in index], hist)
+    pages(site, site_url, [q for q, *_ in index], hist, store)
+    store.save()
     homepage(site, latest, hist)
     log(f"      archive: {len(index)} titles ({written} pages updated)")
 
@@ -446,7 +495,7 @@ MONTH_REASON = {"ripple": "In the news", "editor": "In the news", "coverage": "I
                 "anniversary": "Anniversary", "public domain": "Anniversary"}
 
 
-def month_pages(site: str, site_url: str, titles: set[str], hist: dict) -> list[tuple[str, str]]:
+def month_pages(site: str, site_url: str, titles: set[str], hist: dict, store: Works) -> list[tuple[str, str]]:
     """The monthly Comeback Report (site/report/<2026-11>.html) and a list of every month: the month's
     biggest comebacks, why things came back, by kind, and the biggest mysteries. Written for readers and
     for journalists, who are free to cite it with a link. Returns (address, last updated) for the sitemap."""
@@ -525,7 +574,7 @@ def month_pages(site: str, site_url: str, titles: set[str], hist: dict) -> list[
             q, ep = g[0]
             why = why_of[q][1]
             more = f" and {len(g) - 1} more title{'s' if len(g) > 2 else ''}" if len(g) > 1 else ""
-            doc = _load(os.path.join(site, "data", "works", f"{q}.json"), {}) or {}
+            doc = store.get(q) or {}
             items.append(f'<li><h3>{link(q, f"{label(q)} ({year(q)})")}{e(more)}</h3>'
                          f'<p>The {e(str(year(q)))} {e(NOUN.get(kind(q), kind(q)))} reached {ep["peak_lift"]}× its usual interest'
                          f' from {_day(ep["start"])}. {e("Why: " + _sentence(why)) if why else "Why: we don’t know yet."}</p>'
@@ -694,13 +743,13 @@ def _write_if_changed(path: str, text: str) -> None:
         f.write(text)
 
 
-def pages(site: str, site_url: str, qids: list[str], hist: dict) -> None:
+def pages(site: str, site_url: str, qids: list[str], hist: dict, store: Works) -> None:
     """Write every title's page (cheap: plain text from files already on disk), the sitemap and robots.txt."""
-    wdir, pdir = os.path.join(site, "data", "works"), os.path.join(site, "w")
+    pdir = os.path.join(site, "w")
     os.makedirs(pdir, exist_ok=True)
     docs = {}
     for q in qids:
-        d = _load(os.path.join(wdir, f"{q}.json"), None)
+        d = store.get(q)
         if d and d.get("episodes"):
             docs[q] = d
     books = [q for q, d in docs.items() if d.get("kind") in reading.BOOK_KINDS]
@@ -708,7 +757,7 @@ def pages(site: str, site_url: str, qids: list[str], hist: dict) -> None:
     for q, d in docs.items():
         if d.get("kind") in reading.BOOK_KINDS and d.get("read", []) != free.get(q, []):
             d["read"] = free.get(q, [])
-            _save(os.path.join(wdir, f"{q}.json"), d)
+            store.put(q, d)
         page = _page(site_url, d)
         path = os.path.join(pdir, f"{q}.html")
         try:
@@ -721,7 +770,7 @@ def pages(site: str, site_url: str, qids: list[str], hist: dict) -> None:
             f.write(page)
     base = site_url.rstrip("/")
     if base:
-        weeks = week_pages(site, site_url, set(docs)) + month_pages(site, site_url, set(docs), hist)
+        weeks = week_pages(site, site_url, set(docs)) + month_pages(site, site_url, set(docs), hist, store)
         urls = [f"  <url><loc>{base}/</loc></url>"] + [
             f"  <url><loc>{u}</loc>{f'<lastmod>{d}</lastmod>' if d else ''}</url>" for u, d in weeks] + [
             f"  <url><loc>{base}/w/{q}</loc><lastmod>{d.get('updated') or d['episodes'][-1]['last_seen']}</lastmod></url>"

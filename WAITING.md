@@ -31,7 +31,7 @@ Updated as items move. Last updated: 2026-11-23 (sources reviewed against their 
 
 | Item | When |
 | --- | --- |
-| Cloudflare Free allows 20,000 site files per deploy (2,467 on Nov 26, growing ~160 a night) | Around March 2027: bundle the works data files, skip files for thin title pages, or Workers Paid ($5/month, 100,000 files). The Monday morning report tracks it |
+| Cloudflare Free allows 20,000 site files per deploy (1,516 on Nov 26 after bundling title data, growing ~80 a night) | Around July 2027: serve thin title pages from one shared page, or Workers Paid ($5/month, 100,000 files). Revisit in spring. The Monday morning report tracks it |
 | GitHub recommends repos under 1 GB (22.6 MB on Nov 26, ~0.7 GB a year) | Around early 2028: move old run archives out of git |
 
 ## Waiting on data (these happen by themselves)

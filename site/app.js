@@ -1800,6 +1800,13 @@ function openWork(qid) { state.workId = qid; goto("work"); }
 const titleLink = (qid, label) => h("a", { href: titleHref(qid), onclick: (e) => { e.preventDefault(); openWork(qid); } }, label);
 const cached = {};
 const loadOnce = (url) => (cached[url] = cached[url] || getJSON(url).catch((e) => { delete cached[url]; throw e; }));
+// Title data comes in 256 bundles (archive.py SHARDS): Q123 lives in data/works/<123 % 256>.json.
+const WORK_SHARDS = 256;
+const loadWork = (qid) => {
+  const n = Number(String(qid).slice(1));
+  if (!/^Q\d+$/.test(qid)) return Promise.reject(new Error("not a title id"));
+  return loadOnce(`data/works/${n % WORK_SHARDS}.json`).then((part) => { if (!part[qid]) throw new Error("no such title"); return part[qid]; });
+};
 
 // How sure we are about the reason, in one word.
 const CONFIDENCE = {
@@ -1845,7 +1852,7 @@ function updateFollowLink() {
 function workPage() {
   const qid = state.workId;
   const box = h("div", { class: "workpage" }, h("p", { class: "status" }, "Loading…"));
-  loadOnce(`data/works/${encodeURIComponent(qid)}.json`).then((w) => box.replaceChildren(...workView(w)))
+  loadWork(qid).then((w) => box.replaceChildren(...workView(w)))
     .catch(() => box.replaceChildren(h("p", { class: "status" }, "We haven't tracked a comeback for this title yet."), searchBox()));
   return [box];
 }
@@ -1926,7 +1933,7 @@ function followingPage() {
   for (const f of list) {
     const tr = h("tr", {}, h("td", {}, h("b", {}, titleLink(f.qid, f.label))), h("td", { class: "muted" }, "…"), h("td", {}, followBtn(f.qid, f.label)));
     rows.append(tr);
-    loadOnce(`data/works/${encodeURIComponent(f.qid)}.json`).then((w) => {
+    loadWork(f.qid).then((w) => {
       const r = state.byQid[f.qid], next = (w.coming || [])[0], last = w.episodes.at(-1);
       tr.children[1].replaceChildren(r ? h("span", { class: "ok" }, `Back now: ${mult(r)} its usual interest`)
         : next ? `Coming up ${short(next.date)}: ${next.text}` : `Last back ${fmtDate(last.last_seen)}`);
