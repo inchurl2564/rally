@@ -281,6 +281,9 @@ def main() -> None:
               f"   card: {p['card']['title']} | {p['card']['description']} | {p['card']['uri']} | picture: {p['card']['image']}")
     if not live or not posts:
         return
+    if any(p["date"] == today.isoformat() and p.get("uris") for p in state["posted"]):
+        print("Bluesky: already posted today (an extra run of the edition); nothing posted")
+        return
     try:
         done = post(posts)
     except Exception as e:
