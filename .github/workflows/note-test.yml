@@ -1,0 +1,14 @@
+name: note-test (temporary)
+on: workflow_dispatch
+jobs:
+  t:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: test-note-photo }
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: |
+          python -c "
+          import radar
+          print(radar.fetch_person_images_by_title({'Robert_Pattinson','Russell_Brand','Godzilla_(franchise)','The_Cat_in_the_Hat','Friday_the_13th_(franchise)'}))"
