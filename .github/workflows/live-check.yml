@@ -1,0 +1,15 @@
+name: live-check (temporary)
+on: workflow_dispatch
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          for i in $(seq 1 20); do
+            v=$(curl -s "https://therallyback.com/data/latest.json?nocache=$i$RANDOM" | python3 -c "import json,sys; L=json.load(sys.stdin); print([r['verdict'] for r in L['results'] if r['qid']=='Q184843'][0])")
+            echo "try $i: Blade Runner = $v"; [ "$v" = "editor-release" ] && break; sleep 30; done
+          curl -s https://therallyback.com/data/latest.json | python3 -c "
+          import json,sys; L=json.load(sys.stdin); R={r['qid']:r for r in L['results']}
+          for q in ['Q184843','Q1747227','Q14594724']:
+              r=R[q]; print(r['label'], '|', r['verdict'], '|', r.get('image_of'), '|', (r.get('editor_note') or {}).get('text','')[:60])
+          print('lookup failed:', sum(r['verdict']=='lookup failed' for r in L['results']))"
