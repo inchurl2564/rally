@@ -153,9 +153,12 @@ def choose(latest: dict, today: dt.date, state: dict) -> list[dict]:
         return [r["qid"]] + ([f"{t.get('type')}:{t.get('qid')}"] if t.get("qid") else [])
 
     mystery_day = today.weekday() in (1, 3)                      # Tuesday, Thursday
+    cands = []
     for r in rs:
         if any(k in seen for k in keys(r)):
             continue
+        if not r.get("image"):
+            continue                       # every post has a picture: no picture, the next story
         # Quiet days get no post: only a strong story (Rallyback Score 50+, about the top sixth) or a
         # big mystery (45+ and at least 10x its usual interest) is worth a follower's attention.
         big = max(r.get("lift") or 0, r.get("lift3") or 0)
@@ -178,11 +181,15 @@ def choose(latest: dict, today: dt.date, state: dict) -> list[dict]:
         text = tagged(text, r.get("kind"))
         if len(text) > 295:
             continue
-        posts.append({"kind": "mystery" if mystery_day else "story", "text": text, "keys": keys(r),
+        cands.append({"kind": "mystery" if mystery_day else "story", "text": text, "keys": keys(r),
                       "card": {"uri": f"{BASE}/w/{r['qid']}", "title": f"Why is {label} ({yr}) trending again?",
                                "description": why + "." if why else "We don't know yet. Do you?",
                                "image": r.get("image")}})
-        break
+        if len(cands) == 4:
+            break
+    if cands:
+        # If the first story's picture can't be fetched when posting, the next one goes out instead.
+        posts.append({**cands[0], "alts": cands[1:]})
     if today.weekday() == 4:                                       # Friday: the week's roundup
         iso = (today - dt.timedelta(days=1)).isocalendar()
         week = f"{iso[0]}-W{iso[1]:02d}"
@@ -190,7 +197,8 @@ def choose(latest: dict, today: dt.date, state: dict) -> list[dict]:
             posts.append({"kind": "week", "keys": [f"week:{week}"],
                           "text": tagged("This week's comebacks: the old films, shows, songs, games and books people suddenly went back to, and why.", None),
                           "card": {"uri": f"{BASE}/week/{week}", "title": f"The week in comebacks ({week})",
-                                   "description": "Every comeback this week, with the reasons we found.", "image": None}})
+                                   "description": "Every comeback this week, with the reasons we found.",
+                                   "image": f"{BASE}/og.png"}})
     return posts
 
 
@@ -206,7 +214,8 @@ def _call(method: str, token: str | None = None, body: dict | bytes | None = Non
 def _thumb(token: str, image: str | None):
     if not image:
         return None
-    url = f"https://commons.wikimedia.org/wiki/Special:FilePath/{urllib.parse.quote(image)}?width=800"
+    url = image if image.startswith("http") else \
+        f"https://commons.wikimedia.org/wiki/Special:FilePath/{urllib.parse.quote(image)}?width=800"
     try:
         with urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=30) as r:
             raw, ctype = r.read(), r.headers.get("Content-Type", "image/jpeg").split(";")[0]
@@ -217,22 +226,31 @@ def _thumb(token: str, image: str | None):
         return None
 
 
-def post(posts: list[dict]) -> list[str]:
+def post(posts: list[dict]) -> list[tuple[str, list[str]]]:
+    """Posts each, with its picture; a post whose picture can't be fetched gives way to its next
+    alternative, and with none left nothing is posted. Returns [(uri, keys)] of what went out."""
     s = _call("com.atproto.server.createSession", body={"identifier": os.environ["BLUESKY_HANDLE"],
                                                          "password": os.environ["BLUESKY_APP_PASSWORD"]})
-    token, did, uris = s["accessJwt"], s["did"], []
-    for p in posts:
+    token, did, done = s["accessJwt"], s["did"], []
+    for first in posts:
+        p, blob = None, None
+        for option in [first] + first.get("alts", []):
+            blob = _thumb(token, option["card"].get("image"))
+            if blob:
+                p = option
+                break
+            print(f"no picture for: {option['card']['title']} (trying the next story)")
+        if not p:
+            print("Bluesky: no story with a picture today, nothing posted")
+            continue
         c = p["card"]
-        ext = {"uri": c["uri"], "title": c["title"], "description": c["description"]}
-        blob = _thumb(token, c.get("image"))
-        if blob:
-            ext["thumb"] = blob
+        ext = {"uri": c["uri"], "title": c["title"], "description": c["description"], "thumb": blob}
         rec = {"$type": "app.bsky.feed.post", "text": p["text"], "langs": ["en"], "facets": tag_facets(p["text"]),
                "createdAt": dt.datetime.now(dt.timezone.utc).isoformat().replace("+00:00", "Z"),
                "embed": {"$type": "app.bsky.embed.external", "external": ext}}
-        uris.append(_call("com.atproto.repo.createRecord", token, {"repo": did, "collection": "app.bsky.feed.post",
-                                                                    "record": rec})["uri"])
-    return uris
+        done.append((_call("com.atproto.repo.createRecord", token, {"repo": did, "collection": "app.bsky.feed.post",
+                                                                    "record": rec})["uri"], p["keys"]))
+    return done
 
 
 def main() -> None:
@@ -264,15 +282,17 @@ def main() -> None:
     if not live or not posts:
         return
     try:
-        uris = post(posts)
+        done = post(posts)
     except Exception as e:
         print(f"Bluesky post failed: {e}")
         return
+    if not done:
+        return
     state["posted"] = [p for p in state["posted"] if p["date"] >= (today - dt.timedelta(days=60)).isoformat()]
-    state["posted"].append({"date": today.isoformat(), "keys": [k for p in posts for k in p["keys"]], "uris": uris})
+    state["posted"].append({"date": today.isoformat(), "keys": [k for _, ks in done for k in ks], "uris": [u for u, _ in done]})
     with open(STATE, "w") as f:
         json.dump(state, f, indent=1)
-    print(f"Posted {len(uris)} to Bluesky")
+    print(f"Posted {len(done)} to Bluesky")
 
 
 if __name__ == "__main__":
