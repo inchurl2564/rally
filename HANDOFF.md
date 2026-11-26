@@ -16,11 +16,13 @@ Tagline in use: **"Where Everything Old is News Again."** (About us).
 - **Repository:** `inchurl2564/rally` (public). Site files in `site/`.
 - **Hosting:** Cloudflare (Workers serves `site/`); every push to `main` publishes within a few minutes.
   `.html` addresses redirect to extensionless ones (`/w/Q123`, `/week/2026-W48`, `/report/2026-11`).
+  "Always Use HTTPS" is on (2026-11-26): http:// forwards to https://; www forwards to the bare domain.
 - **Nightly run:** GitHub Actions `.github/workflows/radar.yml`, 2 a.m. Pacific. Two cron lines (09:00 and
   10:00 UTC) cover daylight saving; a gate job lets only the right one do the work. GitHub often starts it
   up to an hour late. The main step takes ~60 minutes (2 hours on 2026-11-26 because Wikidata was slow).
-- **Business plan:** Claude doc https://claude.ai/artifact/871TVez4bTz6A1SdQezwy2 (sections include What's free
-  and what's paid, Budget, Marketing plan, Security and resilience, Implementation plan, Risks).
+- **Business plan:** Claude doc https://claude.ai/artifact/871TVez4bTz6A1SdQezwy2 (sections include Progress to
+  date, What's free and what's paid, Budget, Marketing plan, Security and resilience, Implementation plan, Risks).
+  Keep "Progress to date" (a dated log, newest first) and the Status column in the Step 0 table current.
 - **Accounts list:** a private file the owner keeps (not in this public repo): GitHub, Cloudflare (domain,
   hosting, DNS, email routing), Gmail (receives hello@therallyback.com), Beehiiv (newsletter), Google Forms
   (tips/contact), Google Search Console, Bing Webmaster Tools, Google Cloud (YouTube key), Bluesky,
@@ -39,6 +41,11 @@ Tagline in use: **"Where Everything Old is News Again."** (About us).
 - Never work around a site that blocks automated access (no spoofed user agents, no bypassing blocks).
 - Check a data source's terms before adding it: commercial use must be allowed (see section 5).
 - Before saying something is live, check the live site.
+- **Editor's notes are reader-visible:** write them, test them, but push to `main` only after the owner says
+  so ("push it"). The session's permission check blocks an unapproved push of a note. A stop hook asks for
+  every change to be committed and pushed: if the owner hasn't approved yet, push to a side branch (not
+  `main`) and say so. Published notes need a `source` link; for a reason the owner supplies, find a primary
+  source (the studio's announcement, Wikipedia) and mark it "(supplied by an editor)".
 
 ## 3. The nightly pipeline (radar.py and friends)
 
@@ -150,6 +157,9 @@ paid licence fixes it, later, once there is revenue.
 Known remaining weak spots: plot or background text in edit summaries ("appears in" → sync placement),
 ripples through an actor who isn't in the film, same-named different works (The Body 2001 vs a new Netflix
 film), people with common names. Editor-note groups (e.g. the Bond casting) have no person photo yet.
+Same-name spillover: people searching for a new release land on an older work with the same name (the 1977
+film *Grand Theft Auto* during GTA VI). Fix with an editor's note on that title's `qids` plus `new_work`
+(the new release's Wikidata ID) so it joins that story; leave `works` empty so other titles aren't caught.
 
 ## 7. Bluesky posting (`bluesky_post.py`, on since 2026-11-25)
 
@@ -182,6 +192,17 @@ write `.github/workflows/news-test.yml` (workflow_dispatch), push, run with
 with `gh api .../actions/jobs/<id>/logs`, then delete the workflow. GraphQL is blocked; use REST via `gh api`.
 YouTube's daily quota is shared with the nightly run (resets midnight Pacific); Currents' 250/day too (UTC).
 Playwright + Chromium are pre-installed for screenshots; the chart library (cdnjs) doesn't load here.
+therallyback.com itself is unreachable from here too: to check the live site, use the same pattern with a
+temporary `live-check.yml` that curls the pages (wait in a loop for a deploy), then delete it. To test the
+archive locally, run `archive.build('site', ...)` with `sys.modules['radar'] = None` (skips the free-reading
+lookup) on two copies (old and new code) and diff `site/`. `site/data/leaders.json` differs run to run
+(ties in sets), so ignore it in such diffs.
+
+### Google Search Console
+"Not indexed" reasons that are intentional: **Excluded by 'noindex'** (thin title pages), **Page with
+redirect** (`.html` and www addresses), **Alternate page with proper canonical tag** (the old GitHub address,
+`?tab=`/`?work=` links). Every sitemap address was checked on 2026-11-26: all load directly (200), none noindex.
+Search Console emails once per new reason; watch the indexed-pages count instead.
 
 ## 8b. Storage (measured 2026-11-26)
 
@@ -214,8 +235,8 @@ after forming the LLC).
 
 **Owner:** PO box → first Friday newsletter (then remove "first issue goes out soon"); Apple + Bookshop.org
 affiliate applications; Cloudflare Web Analytics; two-factor on all accounts; SPF/DMARC records; restrict the
-YouTube key; LLC → trademark; delete the two paused old morning-report tasks; add editor's notes for big
-unexplained comebacks.
+YouTube key; LLC → trademark; delete the two paused old morning-report tasks; delete the merged branches
+`preview-monthly-report` and `note-blade-runner-2099`; add editor's notes for big unexplained comebacks.
 
 **Engineering:**
 1. ~~Retry failed Wikidata batches~~ Done 2026-11-26: failed trigger batches are retried in pieces of 3; if that
