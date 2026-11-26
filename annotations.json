@@ -240,5 +240,25 @@
     "source_kind": "Amazon MGM Studios press release (supplied by an editor)",
     "cause": "release",
     "headline": "The Blade Runner films are back with the new Blade Runner 2099 series"
+  },
+  {
+    "id": "gta-1977-film-name-2026",
+    "status": "published",
+    "note": "People looking up Grand Theft Auto VI, the video game released Nov. 19, are landing on Ron Howard's 1977 film of the same name.",
+    "works": [],
+    "qids": [
+      "Q1747227"
+    ],
+    "entity_name": "Grand Theft Auto VI",
+    "from": "2026-11-12",
+    "to": "2026-12-15",
+    "keywords": [
+      "Grand Theft Auto VI",
+      "release"
+    ],
+    "source": "https://en.wikipedia.org/wiki/Grand_Theft_Auto_VI",
+    "source_kind": "Wikipedia (supplied by an editor)",
+    "cause": "release",
+    "new_work": "Q23648408"
   }
 ]
