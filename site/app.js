@@ -1547,9 +1547,17 @@ function focusGroup(g) {
   focusCard(g.works[0].qid);
   const el = $(g.id);
   if (!el) return;
+  openAround(el);
   el.querySelector(".group-members").open = false;
   el.scrollIntoView({ block: "start" });
   for (const ms of [700, 1400]) setTimeout(() => { if (Math.abs(el.getBoundingClientRect().top) > 40) el.scrollIntoView({ block: "start" }); }, ms);
+}
+
+// On phones the cards sit inside collapsed sections ("All comebacks", "show more"): a link to a card
+// has to open every closed section around it first, or the page can't scroll to it.
+function openAround(el) {
+  for (let d = el.closest("details:not([open])"); d; d = d.parentElement && d.parentElement.closest("details:not([open])")) d.open = true;
+  for (let x = el.parentElement; x; x = x.parentElement) if (x.hidden) x.hidden = false;
 }
 
 function focusCard(qid) {
@@ -1564,6 +1572,7 @@ function focusCard(qid) {
     el = $(`w-${qid}`);
   }
   if (!el) return;
+  openAround(el);
   const grp = el.closest(".group-members");
   if (grp) grp.open = true;
   const d = el.querySelector("details");
