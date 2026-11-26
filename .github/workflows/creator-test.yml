@@ -1,0 +1,24 @@
+name: creator-test (temporary)
+on: workflow_dispatch
+jobs:
+  t:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: test-creator-photo }
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: |
+          python - <<'PY'
+          import json, datetime as dt, radar
+          L = json.load(open("site/data/latest.json"))
+          ws = [{"qid": r["qid"], "label": r["label"], "triggers": []} for r in L["results"] if r["verdict"] == "same-creator"]
+          radar._same_creator(ws, dt.date(2026, 8, 1))
+          persons = {t["person"] for w in ws for t in w["triggers"] if t.get("person")}
+          imgs = radar.fetch_images(persons)
+          for w in ws:
+              t = next((t for t in w["triggers"]), None)
+              if t:
+                  print(f'{w["label"][:30]:30} | {t["text"][:55]:55} | person={t.get("person")} | photo={imgs.get(t.get("person"))}')
+          print(len(ws), "same-creator titles;", sum(1 for w in ws if any(t.get("person") for t in w["triggers"])), "with a person or band")
+          PY
