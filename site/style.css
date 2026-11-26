@@ -575,3 +575,4 @@ p, li, .dek, .about .mission { text-wrap: pretty; }
 .still { margin: 28px 0 0; padding-top: 14px; border-top: 1px solid var(--hair); }
 .still ul { list-style: none; padding: 0; margin: 6px 0 0; columns: 2 320px; column-gap: 32px; }
 .still li { margin: 0 0 8px; break-inside: avoid; font-weight: 600; }
+.about-link { text-decoration: underline; text-underline-offset: 3px; }
