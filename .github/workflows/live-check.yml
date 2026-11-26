@@ -1,0 +1,9 @@
+name: live-check (temporary)
+on: workflow_dispatch
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          for u in http://therallyback.com/ http://therallyback.com/w/Q102225 http://www.therallyback.com/ https://therallyback.com/ https://therallyback.com/w/Q102225; do
+            curl -s -o /dev/null -w "%{http_code} $u -> %{redirect_url}\n" $u; done
