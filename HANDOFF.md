@@ -167,8 +167,9 @@ film), people with common names. Editor-note groups (e.g. the Bond casting) have
 - The report is also **emailed**: `.github/workflows/morning-report.yml` posts it as a comment on issue #1
   "Morning reports" as the GitHub bot (GitHub doesn't email you about your own actions).
 - Scheduled task "Rallyback morning report" fires **into this session** at 4:47 a.m. Pacific
-  (trigger `trig_01M2QwBJEEya6XthiqP6iDyv`). An older copy (`trig_01C85nXnZBrMYQF15uojBUnL`) that started
-  fresh sessions is **paused**; those sessions had no repo access. Delete it from claude.ai's scheduled tasks.
+  (trigger `trig_01Gg1bCbduQmLTch2SiCpWaT`, moved here 2026-11-26). Two older copies are **paused**:
+  `trig_01M2QwBJEEya6XthiqP6iDyv` (fired into the previous session) and `trig_01C85nXnZBrMYQF15uojBUnL`
+  (started fresh sessions with no repo access). Delete both from claude.ai's scheduled tasks.
 - `python tools/nightly_report.py` prints the explained-share table (counted like the site: a same-person
   group with a reason counts as explained), evidence by source, every reason to check, and privacy checks.
 - Recent explained share: 39–46% (Nov 19–25). Editor's notes have fallen 36 → 21 as old notes age out;
@@ -212,7 +213,7 @@ after forming the LLC).
 
 **Owner:** PO box → first Friday newsletter (then remove "first issue goes out soon"); Apple + Bookshop.org
 affiliate applications; Cloudflare Web Analytics; two-factor on all accounts; SPF/DMARC records; restrict the
-YouTube key; LLC → trademark; delete the paused old morning-report task; add editor's notes for big
+YouTube key; LLC → trademark; delete the two paused old morning-report tasks; add editor's notes for big
 unexplained comebacks.
 
 **Engineering:**
