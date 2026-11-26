@@ -363,20 +363,62 @@ def sanity_checks(project: str, w: dict, end: dt.date, recent_days: int) -> None
 # Step 4: explain - look for triggers in Wikidata
 # --------------------------------------------------------------------------- #
 
-def find_triggers(works: list[dict], since: dt.date, batch: int = 12) -> None:
+TRIGGER_TYPES = {"deaths": "death", "derivatives": "derivative", "same-creator": "same-creator",
+                 "honors": "honor", "public domain": "public domain"}
+
+
+def find_triggers(works: list[dict], since: dt.date, batch: int = 12, retry_batch: int = 3,
+                  retry_pause: float = 20) -> None:
     for w in works:
         w["triggers"] = []
+    lookups = (("deaths", _deaths), ("derivatives", _derivatives), ("same-creator", _same_creator),
+               ("honors", _honors), ("public domain", _public_domain_people))
+    failed = []
     for i in range(0, len(works), batch):
         chunk = works[i:i + batch]
-        for name, fn in (("deaths", _deaths), ("derivatives", _derivatives), ("same-creator", _same_creator),
-                         ("honors", _honors), ("public domain", _public_domain_people)):
+        for name, fn in lookups:
             try:
                 fn(chunk, since)
             except Exception as e:  # Wikidata's 60s query limit; don't let one batch sink the run
                 print(f"      {name} lookup failed for a batch: {e}", file=sys.stderr)
+                failed.append((name, fn, chunk))
+    # Second try for failed batches, in smaller pieces (smaller queries finish inside the limit).
+    if failed:
+        time.sleep(retry_pause)
+    for name, fn, chunk in failed:
+        for j in range(0, len(chunk), retry_batch):
+            part = chunk[j:j + retry_batch]
+            try:
+                fn(part, since)
+                print(f"      {name} retry worked for {len(part)} titles", file=sys.stderr)
+            except Exception as e:
+                print(f"      {name} retry failed for {len(part)} titles: {e}", file=sys.stderr)
                 HEALTH["lookups_failed"] += 1
-                for w in chunk:
+                for w in part:
                     w.setdefault("lookup_failed", []).append(name)
+
+
+def carry_over_triggers(works: list[dict], editions: list[list[dict]]) -> int:
+    """A lookup that failed twice keeps the triggers of that kind from the latest earlier edition that had
+    them for the same comeback (same spike start), so a bad night on Wikidata doesn't wipe a known reason.
+    `editions`: earlier editions' results, newest first."""
+    n = 0
+    for w in works:
+        if not w.get("lookup_failed"):
+            continue
+        kinds = {TRIGGER_TYPES[x] for x in w["lookup_failed"]}
+        for results in editions:
+            p = next((r for r in results or [] if r.get("qid") == w["qid"]), None)
+            if not p or str(p.get("spike_start")) != str(w["spike_start"]):
+                continue
+            old = [t for t in p.get("triggers") or [] if t.get("type") in kinds]
+            for t in old:
+                text = re.sub(r" \((upcoming|attention rose before release)\)$", "", t.get("text", ""))
+                w["triggers"].append({k: val for k, val in t.items() if k != "lead_days"} | {"text": text})
+                n += 1
+            if old:
+                break
+    return n
 
 
 def _prep(works, since):
@@ -1471,6 +1513,19 @@ def main():
     if results:
         since = min(r["spike_start"] for r in results) - dt.timedelta(days=50)
         find_triggers(results, since)
+        if args.site and any(r.get("lookup_failed") for r in results):
+            rdir = os.path.join(args.site, "data", "runs")
+            paths = [os.path.join(args.site, "data", "latest.json")] + [
+                os.path.join(rdir, x) for x in sorted(os.listdir(rdir), reverse=True)[:7]] if os.path.isdir(rdir) else []
+            editions = []
+            for path in paths:
+                try:
+                    with open(path) as f:
+                        editions.append(json.load(f).get("results"))
+                except (OSError, json.JSONDecodeError):
+                    pass
+            n = carry_over_triggers(results, editions)
+            log(f"      kept {n} reasons from earlier editions where Wikidata failed twice")
         for r in results:
             r["window_end"] = end
             annotate(r)

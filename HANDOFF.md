@@ -218,7 +218,8 @@ YouTube key; LLC → trademark; delete the two paused old morning-report tasks; 
 unexplained comebacks.
 
 **Engineering:**
-1. Retry failed Wikidata batches (two derivative batches failed on 2026-11-26 → 18 "lookup failed").
+1. ~~Retry failed Wikidata batches~~ Done 2026-11-26: failed trigger batches are retried in pieces of 3; if that
+   fails too, the reason from the latest edition in the past week (same comeback) is kept (`carry_over_triggers`).
 2. Person photo for editor-note groups (e.g. Robert Pattinson for the Bond casting) and for same-creator
    stories (the creator's photo; the trigger qid is the new work, not the person).
 3. Tighten "sync placement" from edit summaries; consider treating Hunger Games films and books as one reason
