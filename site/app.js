@@ -1765,7 +1765,7 @@ function aboutPage() {
         h("li", {}, h("b", {}, "Keeping score in public. "), "We predict comebacks before they happen and check afterwards whether we were right. See the ", go("accuracy", "Track record"), "."),
         h("li", {}, h("b", {}, "Readers help. "), "Know why something is back, or spotted a mistake? Use ", h("i", {}, "Know why? Tell us"), " on any story. Tips that check out become editor's notes.")))),
       h("h3", {}, "Who we are"),
-      h("p", { class: "mission" }, "The Rallyback is made by ", h("a", { class: "about-link", href: "https://www.castlebridgemedia.com/" }, "Castle Bridge Media"),
+      h("p", { class: "mission" }, "The Rallyback is made by ", h("a", { class: "about-link", href: "https://www.castlebridgemedia.com/", target: "_blank", rel: "noopener" }, "Castle Bridge Media"),
         ", which connects stories, data and the people who love them. We publish genre fiction, produce podcasts about entertainment, and build data-driven sites that track trends in culture."),
       h("h3", {}, "Contact us"),
       h("p", { class: "mission" }, "Questions, ideas, press or partnerships: send us a note below or write to ", contactLink(), ". For a tip or a correction about a story, the links on the story itself are fastest."),
