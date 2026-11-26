@@ -489,7 +489,7 @@ def _same_creator(works, since):
     # (c) new release by the same artist / author / director
     props = " ".join(f"wdt:{p}" for p in SAME_CREATOR_PROPS)
     q = f"""
-    SELECT DISTINCT ?item ?c ?cLabel ?new ?newLabel ?date WHERE {{
+    SELECT DISTINCT ?item ?c ?cLabel ?new ?newLabel ?date ?who WHERE {{
       VALUES ?item {{ {values} }}
       VALUES ?prop {{ {props} }}
       ?item ?prop ?c .
@@ -498,6 +498,8 @@ def _same_creator(works, since):
       FILTER(?new != ?item)
       ?new wdt:P577 ?date .
       FILTER(?date >= {lit})
+      # A person or a band, whose photo can lead the story (not a studio or publisher).
+      BIND(EXISTS {{ VALUES ?pt {{ wd:Q5 wd:Q215380 wd:Q5741069 wd:Q9212979 }} ?c wdt:P31 ?pt }} AS ?who)
       SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en,mul". }}
     }} LIMIT 2000"""
     for row in sparql(q):
@@ -506,6 +508,7 @@ def _same_creator(works, since):
             "type": "same-creator", "date": v(row, "date")[:10], "weight": 2,
             "text": f"new work by {v(row, 'cLabel')}: {v(row, 'newLabel')}",
             "qid": qid(v(row, "new")),
+            "person": qid(v(row, "c")) if v(row, "who") == "true" else None,   # the creator, for their photo
         })
 
 
@@ -973,7 +976,7 @@ def headline_person(r: dict) -> tuple[str, str] | None:
         return t["qid"], text.split(" (")[0]
     if v == "same-creator" and t.get("qid"):
         m = re.match(r"new work by (.+?):", text)
-        return (None, m.group(1)) if m else None       # the trigger's qid is the new work, not the person
+        return (t.get("person"), m.group(1)) if m else None   # the trigger's qid is the new work; "person" is the creator
     if v == "honor" and t.get("qid") and "): " in text:
         return t["qid"], text.split(" (")[0]
     rp = r.get("ripple") or {}
@@ -1303,7 +1306,7 @@ def write_site_data(site: str, results, meta, clusters, threads, keep_runs: int,
                    spike_start=r["spike_start"].isoformat(), peak_day=r["peak_day"].isoformat(),
                    spark_start=(r["spark_start"] + dt.timedelta(days=len(r["spark"]) - 365)).isoformat(),
                    spark=r["spark"][-365:],
-                   triggers=[{k: t.get(k) for k in ("type", "date", "text", "qid", "lead_days", "weight", "shared", "approx")}
+                   triggers=[{k: t.get(k) for k in ("type", "date", "text", "qid", "lead_days", "weight", "shared", "approx", "person")}
                              for t in r["triggers"]])
         return out
 
