@@ -1,0 +1,28 @@
+name: Morning report
+# Posts the morning report as a comment on the pinned "Morning reports" issue, as the GitHub bot,
+# so GitHub emails it to the repository owner (GitHub doesn't email you about your own actions).
+on:
+  workflow_dispatch:
+    inputs:
+      report:
+        description: "The report (Markdown)"
+        required: true
+permissions:
+  issues: write
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Comment on the Morning reports issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPORT: ${{ inputs.report }}
+        run: |
+          gh label create morning-report --color 1d76db --description "Daily morning report" --repo "$GITHUB_REPOSITORY" 2>/dev/null || true
+          n=$(gh issue list --repo "$GITHUB_REPOSITORY" --label morning-report --state open --json number --jq '.[0].number')
+          if [ -z "$n" ]; then
+            n=$(gh issue create --repo "$GITHUB_REPOSITORY" --label morning-report --title "Morning reports" \
+                --body "Each morning's report on the nightly edition is added here as a comment, which GitHub emails to the owner." | grep -o '[0-9]*$')
+          fi
+          printf '%s' "$REPORT" > report.md
+          gh issue comment "$n" --repo "$GITHUB_REPOSITORY" --body-file report.md
