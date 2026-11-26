@@ -96,8 +96,8 @@ def added_text(title: str, around: dt.date) -> list[dict]:
         if raw.lstrip().startswith(("|", "{{", "!", "[[Category", "[[File", "<!--")):
             continue
         text = _clean(raw)
-        if len(text) < 40:
-            continue
+        if len(text) < 40 or re.search(r"\|\s*[\w-]+\s*=", text) or text.endswith(("}}", "</ref>")):
+            continue                          # a fragment of a citation or template, not a sentence
         url = (_REF_URL.search(raw) or _BARE_URL.search(raw))
         added.append({"source": "Wikipedia (cited)" if url else "Wikipedia edit", "date": around.isoformat(),
                       "text": text[:300], "url": url.group(1) if url else
