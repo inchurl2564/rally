@@ -228,4 +228,7 @@ unexplained comebacks.
 6. Written corrections policy (defamation risk from automated reasons) before sponsorships.
 7. Once affiliates are approved: "Watch / Listen / Read / Play" buttons + Apple artwork next to Apple badges.
 8. Mastodon cross-posting if Bluesky works well.
-9. Monthly: export the business plan; check `WAITING.md`.
+9. Spring 2027 (before the July 2027 file limit): revisit thin title pages (no reason yet, on our list 2 days or
+   less, ~43% of `site/w/`). Plan: serve them from one shared page that fills itself in from the title data, at
+   the same address so Share links keep working (needs a preview). Alternative: Workers Paid ($5/month).
+10. Monthly: export the business plan; check `WAITING.md`.
