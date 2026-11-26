@@ -919,6 +919,27 @@ def fetch_images(qids: set[str], batch: int = 150) -> dict[str, str]:
     return out
 
 
+PERSON_RIPPLES = ("franchise", "series", "character", "source material", "sequel or adaptation")
+
+
+def headline_person(r: dict) -> tuple[str, str] | None:
+    """(person qid, name) when a story's headline is about a person: someone credited who died, a
+    creator's new release, someone honoured, or the person in the news it rides on."""
+    t = (r.get("triggers") or [{}])[0]
+    text, v = t.get("text") or "", r.get("verdict")
+    if v == "death" and t.get("qid"):
+        return t["qid"], text.split(" (")[0]
+    if v == "same-creator" and t.get("qid"):
+        m = re.match(r"new work by (.+?):", text)
+        return (None, m.group(1)) if m else None       # the trigger's qid is the new work, not the person
+    if v == "honor" and t.get("qid") and "): " in text:
+        return t["qid"], text.split(" (")[0]
+    rp = r.get("ripple") or {}
+    if v == "ripple" and rp.get("qid") and rp.get("relation") not in PERSON_RIPPLES:
+        return rp["qid"], rp.get("name") or ""
+    return None
+
+
 def fetch_series_images(qids: set[str], batch: int = 120) -> dict[str, tuple[str, str]]:
     """For works with no free image of their own: the logo (or image) of the series or franchise they
     belong to, from Commons via Wikidata. Better than a photo of the studio's office or a crew member:
@@ -1253,6 +1274,7 @@ def write_site_data(site: str, results, meta, clusters, threads, keep_runs: int,
            {s["who"] for s in (coming_up or {}).get("subjects", [])} | \
            {w["qid"] for s in (coming_up or {}).get("subjects", []) for w in s["works"]}
     want |= {(r.get("ripple") or {}).get("qid") for r in results}
+    want |= {(headline_person(r) or (None,))[0] for r in results} - {None}
     images = fetch_images(want)
     for r in results:
         r["image"], r["image_of"] = images.get(r["qid"]), None
@@ -1294,6 +1316,11 @@ def write_site_data(site: str, results, meta, clusters, threads, keep_runs: int,
             w_["image"] = images.get(w_["qid"])
         if not a["image"] and a["qid"] in people:
             a["image"], a["image_of"] = people[a["qid"]]
+    # A story whose headline names a person shows that person ("…as fans remember Tom Stoppard").
+    for r in results:
+        hp = headline_person(r)
+        if hp and hp[0] and images.get(hp[0]) and images[hp[0]].lower().endswith((".jpg", ".jpeg", ".png", ".webp", ".tif", ".tiff")):
+            r["image"], r["image_of"] = images[hp[0]], hp[1]
     data = {
         "meta": meta,
         "results": [work(r) for r in results],

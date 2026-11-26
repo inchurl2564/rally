@@ -784,7 +784,7 @@ function buildCauseGroups() {
   // Patrick Stewart died, so that group claims it before the one about a new Ebenezer film.
   const own = (t) => t.works.filter((q) => R[q] && R[q].verdict === t.type).length;
   [...(D.shared_triggers || [])].sort((a, b) => own(b) - own(a) || b.works.length - a.works.length).forEach((t, i) =>
-    claim(`shared-${i}`, t.works, (free) => ({ story: sharedStory({ ...t, works: free }), sources: () => [] })));
+    claim(`shared-${i}`, t.works, (free) => ({ story: sharedStory({ ...t, works: free }), sources: () => [], trigger: t })));
   bySize((D.common_threads || []).filter(threadExplained), (t) => t.works.length).forEach((t, i) =>
     claim(`thread-${i}`, t.works.map((w) => w.qid), (free) => {
       const tt = { ...t, works: t.works.filter((w) => free.includes(w.qid)) };
@@ -963,7 +963,8 @@ function topStories(lead, rest, n) {
 }
 
 function threadFeature(t) {
-  const st = threadStory(t), top = topPictured(t.works.map((w) => state.byQid[w.qid]).filter(Boolean));
+  const st = threadStory(t), named = t.image && st.hed.includes(t.name);
+  const top = named ? null : topPictured(t.works.map((w) => state.byQid[w.qid]).filter(Boolean));
   return withPic("article", "feature", top ? pic(null, top.image, top.label, 300, top.image_of)
       : pic(null, t.image, t.name, 300, t.name),
     h("div", {}, kickerEl(st.reason, st.kicker),
@@ -1005,8 +1006,21 @@ function combinedSpark(ws) {
   return sparkline({ spark: vals, baseline: ws.reduce((t, w) => t + w.baseline, 0), spark_start: ws[0].spark_start,
     spike_start: start, peak, peak_day: addDays(ws[0].spark_start, pi), label: `these ${ws.length} titles combined` }, true);
 }
+// A group story whose headline names a person shows that person: the person in the news for a
+// "same person" group, or the person who died or was honoured for a shared trigger.
+function personPic(g) {
+  const hed = (g.story && g.story.hed) || "";
+  if (g.t && g.t.image && g.t.name && hed.includes(g.t.name)) return { image: g.t.image, label: g.t.name, image_of: g.t.name };
+  const t = g.trigger;
+  if (t && t.image && ["death", "honor"].includes(t.type)) {
+    const name = (t.text || "").split(" (")[0];
+    if (name && hed.includes(name) && !/\.svg$/i.test(t.image)) return { image: t.image, label: name, image_of: name };
+  }
+  return null;
+}
+
 function groupStoryCard(g) {
-  const ws = g.works, top = topPictured(ws) || null, best = topOf(ws);
+  const ws = g.works, top = personPic(g) || topPictured(ws) || null, best = topOf(ws);
   const scores = ws.map((w) => w.rally_score).filter((x) => x != null);
   const years = ws.map((w) => +w.release_year).filter(Boolean);
   const span = years.length ? (Math.min(...years) === Math.max(...years) ? `${years[0]}` : `${Math.min(...years)}–${Math.max(...years)}`) : "";
