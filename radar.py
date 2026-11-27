@@ -1427,6 +1427,8 @@ def write_site_data(site: str, results, meta, clusters, threads, keep_runs: int,
         hp = headline_person(r)
         if hp and hp[0] and images.get(hp[0]) and images[hp[0]].lower().endswith((".jpg", ".jpeg", ".png", ".webp", ".tif", ".tiff")):
             r["image"], r["image_of"] = images[hp[0]], hp[1]
+    import corrections          # pictures fixed by an editor (corrections.json)
+    corrections.pictures(results)
     data = {
         "meta": meta,
         "results": [work(r) for r in results],
@@ -1699,6 +1701,10 @@ def main():
 
     import annotations
     annotations.apply(results, threads)
+    import corrections          # stories taken down by an editor (corrections.json)
+    gone = corrections.take_down(results, threads, clusters)
+    if gone:
+        log(f"      taken down by an editor: {', '.join(gone)}")
 
     coming_up = {"derivatives": [], "anniversaries": []}
     if watch:

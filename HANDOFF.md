@@ -181,6 +181,21 @@ film *Grand Theft Auto* during GTA VI). Fix with an editor's note on that title'
 - Release-day wording: "comes out today". To pause: set `BLUESKY_POST: "off"` in radar.yml.
 - Preview: `python bluesky_post.py --dry-run --day YYYY-MM-DD` or `--week`.
 
+## 7b. Fixing a live mistake fast (Quick fix, added 2026-11-27)
+
+A full run takes ~90 minutes; a correction doesn't need one. **Quick fix** re-applies editor's notes and
+corrections to the edition that's already live and rebuilds the pages, with no new data: ~2 minutes to run
+plus 2-5 for Cloudflare, so live in under 10 minutes.
+1. Add the fix: a wrong reason or headline → an editor's note in `annotations.json` (as usual); a story
+   that must come down, or a wrong picture → an entry in `corrections.json` (format in `corrections.py`):
+   `{"id": "...", "qid": "Q123", "action": "take down", "why": "...", "date": "YYYY-MM-DD"}` or
+   `{"id": "...", "qid": "Q123", "action": "picture", "image": "Commons file.jpg" | null, "image_of": "...", ...}`.
+2. Push, then run it: `gh api -X POST repos/inchurl2564/rally/actions/workflows/quickfix.yml/dispatches -f ref=main`
+   (or Actions → Quick fix → Run workflow). Optional input `delete_bluesky`: a link to one of our posts to delete.
+3. Check the live site. Corrections stay in force every night until the entry is removed.
+Needs a full run: anything that needs new data (a new kind of reason, new numbers). `quickfix.py` locally:
+`python quickfix.py --site site`.
+
 ## 8. Measuring quality: the morning report
 
 - The report is also **emailed**: `.github/workflows/morning-report.yml` posts it as a comment on issue #1

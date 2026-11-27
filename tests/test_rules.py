@@ -237,3 +237,59 @@ def test_band_member_death_reads_naturally():
          "triggers": [{"type": "death", "date": "2026-11-26", "qid": "Q1", "text": "Andy Taylor (member of Duran Duran) died"}]}
     assert bluesky_post.reason(r, dt.date(2026, 11, 27)).startswith("Andy Taylor, a member of Duran Duran, died")
     assert radar.headline_person(r) == ("Q1", "Andy Taylor")
+
+
+# ---------- quick fixes ----------
+
+def test_take_down_works_on_pipeline_and_saved_shapes():
+    import corrections
+    items = [{"qid": "Q2", "action": "take down"}]
+    # a saved edition: thread works are {"qid", "role"}, shared trigger works are qids
+    res = [{"qid": "Q1"}, {"qid": "Q2"}, {"qid": "Q3"}]
+    threads = [{"works": [{"qid": "Q1"}, {"qid": "Q2"}]}, {"works": [{"qid": "Q1"}, {"qid": "Q3"}, {"qid": "Q2"}]}]
+    shared = [{"works": ["Q2"]}, {"works": ["Q1", "Q2", "Q3"]}]
+    assert corrections.take_down(res, threads, shared, items) == ["Q2"]
+    assert [r["qid"] for r in res] == ["Q1", "Q3"]
+    assert threads == [{"works": [{"qid": "Q1"}, {"qid": "Q3"}]}]          # a group left with one title goes
+    assert shared == [{"works": ["Q1", "Q3"]}]
+    # the pipeline: thread works are (work, role) pairs, shared works are work dicts
+    res2 = [{"qid": "Q1"}, {"qid": "Q2"}]
+    th2 = [{"works": [({"qid": "Q1"}, "cast"), ({"qid": "Q2"}, "cast"), ({"qid": "Q4"}, "cast")]}]
+    corrections.take_down(res2, th2, [], items)
+    assert [w[0]["qid"] for w in th2[0]["works"]] == ["Q1", "Q4"]
+
+
+def test_picture_correction():
+    import corrections
+    res = [{"qid": "Q1", "image": "a.jpg", "image_of": "A"}, {"qid": "Q2", "image": "b.jpg", "image_of": None}]
+    corrections.pictures(res, [{"qid": "Q1", "action": "picture", "image": None},
+                               {"qid": "Q2", "action": "picture", "image": "c.jpg", "image_of": "C"}])
+    assert res == [{"qid": "Q1", "image": None, "image_of": None}, {"qid": "Q2", "image": "c.jpg", "image_of": "C"}]
+
+
+def test_quickfix_fixes_the_live_edition(tmp_path, monkeypatch):
+    import corrections
+    import quickfix
+    site = tmp_path / "site"
+    for d in ("runs", "history", "works"):
+        (site / "data" / d).mkdir(parents=True)
+    (site / "feeds").mkdir()
+    res = [{"qid": "Q1", "label": "A", "verdict": "unexplained", "spike_start": "2026-11-20", "triggers": []},
+           {"qid": "Q2", "label": "B", "verdict": "unexplained", "spike_start": "2026-11-20", "triggers": []}]
+    ed = {"meta": {"window_end": "2026-11-26"}, "results": res, "common_threads": [], "shared_triggers": []}
+    for p in (site / "data" / "runs" / "2026-11-26.json", site / "data" / "latest.json"):
+        p.write_text(json.dumps(ed))
+    (site / "data" / "index.json").write_text(json.dumps({"runs": [{"id": "2026-11-26", "n": 2}]}))
+    row = [1, 1, 50, "unexplained", "emerging", 10, "2026-11-20", 0, []]
+    (site / "data" / "history" / "2026-11.json").write_text(json.dumps({"days": {"2026-11-26": {"Q1": list(row), "Q2": list(row)}}}))
+    monkeypatch.setattr(annotations, "load", lambda: [{"id": "n1", "status": "published", "source": "https://x", "note": "Why.",
+                                                       "cause": "release", "works": [], "qids": ["Q1"], "from": "2026-11-18"}])
+    monkeypatch.setattr(corrections, "load", lambda path=None: [{"qid": "Q2", "action": "take down"}])
+    out = quickfix.fix_edition(str(site))
+    assert out["changed"] == ["Q1"] and out["taken_down"] == ["Q2"]
+    saved = json.loads((site / "data" / "runs" / "2026-11-26.json").read_text())
+    assert [r["qid"] for r in saved["results"]] == ["Q1"] and saved["results"][0]["verdict"] == "editor-release"
+    assert saved["results"][0]["spike_start"] == "2026-11-20"                    # dates saved back as text
+    assert json.loads((site / "data" / "latest.json").read_text()) == saved
+    day = json.loads((site / "data" / "history" / "2026-11.json").read_text())["days"]["2026-11-26"]
+    assert "Q2" not in day and day["Q1"][3] == "editor-release" and ["note", None, "n1", None] in day["Q1"][8]

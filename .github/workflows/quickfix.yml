@@ -1,0 +1,46 @@
+name: Quick fix
+
+# Re-applies editor's notes (annotations.json) and corrections (corrections.json) to the live edition and
+# rebuilds the pages, without gathering new data: live in minutes instead of a 90-minute run.
+# Use: add the note or correction, push, then Actions → Quick fix → Run workflow.
+on:
+  workflow_dispatch:
+    inputs:
+      delete_bluesky:
+        description: "Optional: link to one of our Bluesky posts to delete (leave empty to keep posts)"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+concurrency:
+  group: revival-radar          # never at the same time as the nightly run
+  cancel-in-progress: false
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Re-apply notes and corrections
+        env:
+          BLUESKY_HANDLE: therallyback.bsky.social
+          BLUESKY_APP_PASSWORD: ${{ secrets.BLUEVIOLET }}
+          DELETE_BLUESKY: ${{ inputs.delete_bluesky }}
+        run: python quickfix.py --site site --site-url https://therallyback.com/ --delete-bluesky "$DELETE_BLUESKY"
+      - name: Check the edition before publishing
+        run: python health.py --site site --gate
+      - name: Publish
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add site/data site/feeds site/w site/week site/report site/index.html site/sitemap.xml
+          if git diff --cached --quiet; then echo "Nothing changed."; exit 0; fi
+          git commit -m "fix: quick fix of the live edition"
+          git pull --rebase origin main
+          git push
