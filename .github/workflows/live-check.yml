@@ -1,0 +1,12 @@
+name: live-check (temporary)
+on: workflow_dispatch
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          curl -s -A "TheRallyback/1.0 (https://therallyback.com)" "https://en.wikipedia.org/w/api.php?action=query&prop=extracts&explaintext=1&format=json&formatversion=2&titles=The_Lord_of_the_Rings:_The_Rings_of_Power_season_3" | python3 -c "
+          import json,sys,re; p=json.load(sys.stdin)['query']['pages'][0]; t=p.get('extract','(missing)')
+          print('LEN', len(t)); print('LEAD:', t[:1500].replace(chr(10),' / '))
+          for s in re.split(r'(?<=[.])\s+', t):
+              if re.search(r'premiere|released|November|October|finale|Akallab|Silmarillion|Ainulindal|Morgoth|episodes', s): print('S:', s[:300])" | head -40
