@@ -1,0 +1,10 @@
+name: live-check (temporary)
+on: workflow_dispatch
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          for i in $(seq 1 20); do
+            if curl -s "https://therallyback.com/style.css?n=$i$RANDOM" | grep -q 'Following, when shown, gets its own line'; then echo "LIVE on try $i"; break; fi
+            echo "try $i: not yet"; sleep 30; done
