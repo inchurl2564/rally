@@ -323,5 +323,31 @@
     "cause": "death",
     "new_work": "Q527834",
     "headline": "{n} Duran Duran titles are back as fans remember Andy Taylor"
+  },
+  {
+    "id": "rings-of-power-s3-2026",
+    "status": "published",
+    "note": "The Rings of Power season 3, set in Tolkien's Second Age, premiered on Prime Video on Nov. 11, sending fans to the deeper Middle-earth writings behind it.",
+    "works": [],
+    "qids": [
+      "Q331142",
+      "Q330826",
+      "Q503793"
+    ],
+    "entity_name": "The Rings of Power season 3",
+    "related": [
+      "J. R. R. Tolkien"
+    ],
+    "from": "2026-11-08",
+    "to": "2026-12-31",
+    "keywords": [
+      "Rings of Power",
+      "season 3",
+      "Prime Video"
+    ],
+    "source": "https://en.wikipedia.org/wiki/The_Lord_of_the_Rings:_The_Rings_of_Power_season_3",
+    "source_kind": "Wikipedia (supplied by an editor)",
+    "cause": "release",
+    "headline": "{n} Tolkien books are back with The Rings of Power season 3"
   }
 ]
