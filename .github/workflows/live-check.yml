@@ -1,0 +1,42 @@
+name: live-check (temporary)
+on: workflow_dispatch
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v4
+        with: { node-version: "20" }
+      - run: npm i playwright@1.49.1 >/dev/null 2>&1 && npx playwright install --with-deps chromium >/dev/null 2>&1 && echo ready
+      - run: |
+          cat > c.js <<'JS'
+          const { chromium, devices } = require('playwright');
+          (async () => {
+            const b = await chromium.launch(); const base = 'https://therallyback.com';
+            const pages = ['/', '/week/', '/report/2026-11', '/w/Q2478017', '/w/Q184843'];
+            for (const [name, opts] of [['desktop', { viewport: { width: 1280, height: 900 } }], ['phone', devices['iPhone 13']]]) {
+              const ctx = await b.newContext(opts);
+              for (const u of pages) {
+                const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
+                const r = await p.goto(base + u, { waitUntil: 'networkidle' }); await p.waitForTimeout(1500);
+                const t = await p.evaluate(() => document.body.innerText);
+                const cur = (t.match(/Powered by Currents News API/g) || []).length;
+                const curLinks = await p.evaluate(() => [...document.querySelectorAll('a')].filter(a => /currentsapi|Currents/.test(a.textContent) || /Powered by Currents/.test((a.parentElement||{}).textContent||'')).length);
+                console.log(`${name} ${u} status=${r.status()} errors=${errs.length ? errs.join('; ') : 'none'} currents-credit=${cur} edition=${(t.match(/Latest edition · [A-Za-z]+ \d+/)||[''])[0]}`);
+                await p.close();
+              }
+              if (name === 'phone') {
+                const p = await ctx.newPage(); await p.goto(base + '/', { waitUntil: 'networkidle' }); await p.waitForTimeout(2000);
+                const link = p.locator('.top10 a, ol a').filter({ hasText: /./ }).nth(2);
+                const txt = await link.textContent().catch(() => '');
+                await link.click().catch(() => {}); await p.waitForTimeout(1500);
+                const seen = await p.evaluate((t) => { const h = [...document.querySelectorAll('h3, h2')].find(x => t && x.textContent.includes(t.trim().slice(0, 18))); if (!h) return 'no matching story'; const r = h.getBoundingClientRect(); return r.top >= -5 && r.top < innerHeight ? 'story on screen' : 'story off screen (top ' + Math.round(r.top) + ')'; }, txt);
+                console.log(`phone tap "${(txt||'').trim().slice(0,40)}" -> ${seen}`);
+                const people = await p.evaluate(() => [...document.querySelectorAll('article')].map(a => { const h = (a.querySelector('h2,h3')||{}).textContent || ''; const c = (a.querySelector('.credit')||{}).textContent || ''; return [h, c]; }).filter(([h, c]) => /remember|died|back with|by [A-Z]/.test(h)).slice(0, 8));
+                people.forEach(([h, c]) => console.log(`  person story: ${h.slice(0,70)} || ${c.slice(0,50)}`));
+              }
+              await ctx.close();
+            }
+            await b.close();
+          })();
+          JS
+          node c.js
