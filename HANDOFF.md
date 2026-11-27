@@ -87,6 +87,8 @@ weak link, lookup failed; set aside: seasonal, automated?, front page.
   then the streamgraph ("The month in comebacks"); then sections (In the news, New releases, In memoriam,
   Unexplained). Each edition records `days_on` and `prev_score` per comeback (`mark_freshness` in radar.py).
 - **Phones:** cards sit inside collapsed sections; links open the section before scrolling (`openAround`).
+- **Header and footer:** brand yellow #F3C716 (the icon's color) with the black logo, same in light and dark,
+  on every page (since 2026-11-27). To undo: `git revert 685d6e77`, push, then run Quick fix (static pages).
 - **Logo:** wordmark in masthead, footer and title-page headers (inverted in dark mode); yellow "Rb" icon for
   favicon/apple-touch/Google logo; share card `site/og.png` = wordmark on yellow #F3C716. Files in `site/logo/`.
 - **Fonts:** Playfair Display (serif) + Libre Franklin (sans), Google Fonts, OFL.
