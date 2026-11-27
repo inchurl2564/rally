@@ -293,3 +293,15 @@ def test_quickfix_fixes_the_live_edition(tmp_path, monkeypatch):
     assert json.loads((site / "data" / "latest.json").read_text()) == saved
     day = json.loads((site / "data" / "history" / "2026-11.json").read_text())["days"]["2026-11-26"]
     assert "Q2" not in day and day["Q1"][3] == "editor-release" and ["note", None, "n1", None] in day["Q1"][8]
+
+
+def test_note_explains_a_group_made_mostly_of_its_titles(monkeypatch):
+    notes = [{"id": "at", "status": "published", "source": "https://x", "note": "Andy Taylor has died.", "cause": "death",
+              "works": [], "qids": ["Q1", "Q2", "Q3"], "from": "2026-11-20"}]
+    monkeypatch.setattr(annotations, "load", lambda: notes)
+    day = dt.date(2026, 11, 25)
+    res = [{"qid": q, "label": q, "verdict": "common thread", "spike_start": day} for q in ("Q1", "Q2", "Q3", "Q9")]
+    mostly = {"name": "Colin Thurston", "around": day, "works": [{"qid": "Q1"}, {"qid": "Q2"}, {"qid": "Q9"}]}
+    barely = {"name": "Someone Else", "around": day, "works": [{"qid": "Q3"}, {"qid": "Q8"}, {"qid": "Q9"}]}
+    annotations.apply(res, [mostly, barely])
+    assert mostly.get("editor_note", {}).get("id") == "at" and "editor_note" not in barely

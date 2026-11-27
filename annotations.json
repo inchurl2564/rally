@@ -280,5 +280,48 @@
     "source": "https://www.youtube.com/watch?v=wl7uj7n7DoY",
     "source_kind": "Netflix's official trailer (supplied by an editor)",
     "cause": "release"
+  },
+  {
+    "id": "andy-taylor-death-2026",
+    "status": "published",
+    "note": "Andy Taylor, Duran Duran's original guitarist, has died at 65.",
+    "works": [],
+    "qids": [
+      "Q675901",
+      "Q2478017",
+      "Q1933194",
+      "Q588352",
+      "Q2328257",
+      "Q1933301",
+      "Q2314929",
+      "Q2453076",
+      "Q2413614",
+      "Q2314940",
+      "Q2717224",
+      "Q2531156",
+      "Q2467189",
+      "Q2453067",
+      "Q2453134",
+      "Q20649012",
+      "Q956662",
+      "Q2537872",
+      "Q1930532",
+      "Q2067478",
+      "Q3648309"
+    ],
+    "entity_name": "Andy Taylor",
+    "entity_title": "Andy_Taylor_(guitarist)",
+    "from": "2026-11-20",
+    "to": "2026-12-31",
+    "keywords": [
+      "Andy Taylor",
+      "Duran Duran",
+      "died"
+    ],
+    "source": "https://www.pbs.org/newshour/arts/andy-taylor-guitarist-of-new-wave-icons-duran-duran-dies-at-65",
+    "source_kind": "PBS NewsHour (supplied by an editor)",
+    "cause": "death",
+    "new_work": "Q527834",
+    "headline": "{n} Duran Duran titles are back as fans remember Andy Taylor"
   }
 ]
