@@ -1,0 +1,12 @@
+name: live-check (temporary)
+on: workflow_dispatch
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          for i in $(seq 1 30); do
+            a=$(curl -s "https://therallyback.com/style.css?n=$i$RANDOM" | grep -c "brand yellow header" || true)
+            b=$(curl -s "https://therallyback.com/w/Q2478017?n=$i$RANDOM" | grep -c "background:#f3c716" || true)
+            if [ "$a" -gt 0 ] && [ "$b" -gt 0 ]; then echo "LIVE at $(date -u +%H:%M:%S): homepage and title pages (try $i)"; break; fi
+            echo "try $i: homepage $a, title page $b"; sleep 20; done
