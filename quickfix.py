@@ -46,6 +46,14 @@ def fix_edition(site: str) -> dict:
     results, threads = ed["results"], ed.get("common_threads", [])
     before = {r["qid"]: (r["verdict"], (r.get("editor_note") or {}).get("id"), r.get("image")) for r in results}
 
+    # Photos the nightly run attached to notes (Robert Pattinson for the Bond casting): re-applying a note
+    # rebuilds it from annotations.json, which has no photo, so keep the ones the edition already has.
+    pics = {}
+    for x in results + threads:
+        n = x.get("editor_note") or {}
+        if n.get("image"):
+            pics[n["id"]] = (n["image"], n.get("image_of"))
+
     # Editor's notes: the matching code compares dates, so lend it date objects for a moment.
     for r in results:
         r["spike_start"] = dt.date.fromisoformat(str(r["spike_start"])[:10])
@@ -56,6 +64,11 @@ def fix_edition(site: str) -> dict:
         r["spike_start"] = r["spike_start"].isoformat()
     for t in threads:
         t["around"] = t["around"].isoformat()
+
+    for x in results + threads:
+        n = x.get("editor_note")
+        if n and n.get("id") in pics and not n.get("image"):
+            n["image"], n["image_of"] = pics[n["id"]]
 
     removed = corrections.take_down(results, threads, ed.get("shared_triggers"))
     pictured = corrections.pictures(results)

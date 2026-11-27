@@ -295,6 +295,26 @@ def test_quickfix_fixes_the_live_edition(tmp_path, monkeypatch):
     assert "Q2" not in day and day["Q1"][3] == "editor-release" and ["note", None, "n1", None] in day["Q1"][8]
 
 
+def test_quickfix_keeps_note_photos(tmp_path, monkeypatch):
+    import corrections
+    import quickfix
+    site = tmp_path / "site"
+    for d in ("runs", "history"):
+        (site / "data" / d).mkdir(parents=True)
+    note = {"text": "Cast as Bond.", "source": "https://x", "id": "bond", "cause": "news",
+            "image": "Robert Pattinson.jpg", "image_of": "Robert Pattinson"}
+    res = [{"qid": "Q1", "label": "A", "verdict": "editor", "spike_start": "2026-11-16", "triggers": [], "editor_note": dict(note)}]
+    ed = {"meta": {"window_end": "2026-11-26"}, "results": res, "common_threads": [], "shared_triggers": []}
+    (site / "data" / "runs" / "2026-11-26.json").write_text(json.dumps(ed))
+    (site / "data" / "index.json").write_text(json.dumps({"runs": [{"id": "2026-11-26", "n": 1}]}))
+    monkeypatch.setattr(annotations, "load", lambda: [{"id": "bond", "status": "published", "source": "https://x",
+                                                       "note": "Cast as Bond.", "cause": "news", "works": [], "qids": ["Q1"], "from": "2026-11-14"}])
+    monkeypatch.setattr(corrections, "load", lambda path=None: [])
+    quickfix.fix_edition(str(site))
+    saved = json.loads((site / "data" / "runs" / "2026-11-26.json").read_text())
+    assert saved["results"][0]["editor_note"]["image"] == "Robert Pattinson.jpg"
+
+
 def test_note_explains_a_group_made_mostly_of_its_titles(monkeypatch):
     notes = [{"id": "at", "status": "published", "source": "https://x", "note": "Andy Taylor has died.", "cause": "death",
               "works": [], "qids": ["Q1", "Q2", "Q3"], "from": "2026-11-20"}]
