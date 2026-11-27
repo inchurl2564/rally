@@ -4,8 +4,26 @@
   <id>https://therallyback.com/feeds/games.xml</id>
   <link rel="self" href="https://therallyback.com/feeds/games.xml"/>
   <link href="https://therallyback.com/"/>
-  <updated>2026-11-25T06:00:00Z</updated>
+  <updated>2026-11-26T06:00:00Z</updated>
   <author><name>The Rallyback</name></author>
+  <entry>
+    <id>https://therallyback.com/#work-Q2759489-2026-11-24</id>
+    <title>Muv-Luv (2003) is back: 1.4× its usual interest</title>
+    <link href="https://therallyback.com/w/Q2759489"/>
+    <updated>2026-11-26T06:00:00Z</updated>
+    <category term="Games"/>
+    <category term="New release"/>
+    <summary>Muv-Luv, the 2003 video game, is drawing 1.4× its usual interest since Nov 24, 2026. Why: New entry in the franchise: Muv-Luv: Tactics – Kalidasa at Nightmare (Jan 1, 2027). How sure: likely.</summary>
+  </entry>
+  <entry>
+    <id>https://therallyback.com/#work-Q2537396-2026-11-25</id>
+    <title>Afrika (2008) is back: 1.6× its usual interest</title>
+    <link href="https://therallyback.com/w/Q2537396"/>
+    <updated>2026-11-26T06:00:00Z</updated>
+    <category term="Games"/>
+    <category term="Unexplained"/>
+    <summary>Afrika, the 2008 video game, is drawing 1.6× its usual interest since Nov 25, 2026. We don&#x27;t know why yet. Know why? Tell us on the site.</summary>
+  </entry>
   <entry>
     <id>https://therallyback.com/#work-Q1087397-2026-11-23</id>
     <title>Serious Sam II (2005) is back: 1.4× its usual interest</title>
@@ -41,50 +59,5 @@
     <category term="Games"/>
     <category term="Unexplained"/>
     <summary>Gothic 3, the 2006 video game, is drawing 1.3× its usual interest since Nov 24, 2026. We don&#x27;t know why yet. Know why? Tell us on the site.</summary>
-  </entry>
-  <entry>
-    <id>https://therallyback.com/#work-Q15963969-2026-11-23</id>
-    <title>Teslagrad (2013) is back: 1.7× its usual interest</title>
-    <link href="https://therallyback.com/w/Q15963969"/>
-    <updated>2026-11-24T06:00:00Z</updated>
-    <category term="Games"/>
-    <category term="Unexplained"/>
-    <summary>Teslagrad, the 2013 video game, is drawing 1.7× its usual interest since Nov 23, 2026. We don&#x27;t know why yet. Know why? Tell us on the site.</summary>
-  </entry>
-  <entry>
-    <id>https://therallyback.com/#work-Q1750961-2026-11-22</id>
-    <title>Driver 3 (2004) is back: 1.6× its usual interest</title>
-    <link href="https://therallyback.com/w/Q1750961"/>
-    <updated>2026-11-24T06:00:00Z</updated>
-    <category term="Games"/>
-    <category term="Unexplained"/>
-    <summary>Driver 3, the 2004 video game, is drawing 1.6× its usual interest since Nov 22, 2026. We don&#x27;t know why yet. Know why? Tell us on the site.</summary>
-  </entry>
-  <entry>
-    <id>https://therallyback.com/#work-Q1330205-2026-11-22</id>
-    <title>Paperboy (1985) is back: 1.2× its usual interest</title>
-    <link href="https://therallyback.com/w/Q1330205"/>
-    <updated>2026-11-24T06:00:00Z</updated>
-    <category term="Games"/>
-    <category term="Unexplained"/>
-    <summary>Paperboy, the 1985 video game, is drawing 1.2× its usual interest since Nov 22, 2026. We don&#x27;t know why yet. Know why? Tell us on the site.</summary>
-  </entry>
-  <entry>
-    <id>https://therallyback.com/#work-Q7516444-2026-11-23</id>
-    <title>Silver Surfer (1990) is back: 1.3× its usual interest</title>
-    <link href="https://therallyback.com/w/Q7516444"/>
-    <updated>2026-11-24T06:00:00Z</updated>
-    <category term="Games"/>
-    <category term="Unexplained"/>
-    <summary>Silver Surfer, the 1990 video game, is drawing 1.3× its usual interest since Nov 23, 2026. We don&#x27;t know why yet. Know why? Tell us on the site.</summary>
-  </entry>
-  <entry>
-    <id>https://therallyback.com/#work-Q1060715-2026-11-23</id>
-    <title>Soulcalibur (1998) is back: 2.3× its usual interest</title>
-    <link href="https://therallyback.com/w/Q1060715"/>
-    <updated>2026-11-23T06:00:00Z</updated>
-    <category term="Games"/>
-    <category term="Unexplained"/>
-    <summary>Soulcalibur, the 1998 video game, is drawing 2.3× its usual interest since Nov 23, 2026. We don&#x27;t know why yet. Know why? Tell us on the site.</summary>
   </entry>
 </feed>
