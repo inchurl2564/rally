@@ -592,3 +592,17 @@ p, li, .dek, .about .mission { text-wrap: pretty; }
   .mast-right .run-pick select { letter-spacing: 0; font-size: 11.5px; }
   .mast-sub { padding: 6px 10px; letter-spacing: .03em; }
 }
+
+/* ---------- brand yellow header and footer (the icon's #F3C716, same in light and dark) ---------- */
+/* The colors inside are set locally, so everything in the header and footer reads dark-on-yellow in both modes. */
+.mast, .foot {
+  --ink: #1b1a1f; --muted: #4a4540; --rule: #1b1a1f; --hair: rgba(27, 26, 31, .2);
+  --paper: rgba(255, 255, 255, .55); --paper-2: #f3c716; --red: #1b1a1f; --red-ink: #f3c716;
+  background: #f3c716; color: #1b1a1f;
+}
+.mast { border-bottom-color: #1b1a1f; }
+.foot { border-top-color: #1b1a1f; }
+.mast .wordmark, .foot .foot-wordmark { filter: none !important; }   /* the black logo, as on the icon */
+.mast .tab.cta, .mast .tab.cta:hover, .mast .tab.cta[aria-current="page"], .mast .mast-sub, .mast .mast-sub:hover { color: #f3c716; }
+.mast .tab.cta[aria-current="page"] { box-shadow: 0 0 0 2px #f3c716, 0 0 0 4px #1b1a1f; }
+.mast .mast-search input::placeholder { color: #4a4540; }
