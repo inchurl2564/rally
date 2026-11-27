@@ -1,0 +1,34 @@
+name: band-test (temporary)
+on: workflow_dispatch
+jobs:
+  t:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: test-band-deaths }
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: |
+          python - <<'PY'
+          import json, datetime as dt, radar
+          d = json.load(open("site/data/runs/2026-11-26.json"))
+          music = [r for r in d["results"] if r.get("kind") in ("album", "song", "single", "musical work", "studio album", "live album", "compilation album", "extended play")]
+          print(len(music), "music comebacks")
+          ws = []
+          for r in music:
+              w = {"qid": r["qid"], "label": r["label"], "triggers": [], "spike_start": dt.date.fromisoformat(r["spike_start"]),
+                   "peak_day": dt.date.fromisoformat(r["peak_day"]), "release": dt.date(int(r["release_year"]), 1, 1), "release_prec": 9,
+                   "window_end": dt.date(2026, 11, 26)}
+              ws.append(w)
+          since = min(w["spike_start"] for w in ws) - dt.timedelta(days=50)
+          for i in range(0, len(ws), 12):
+              radar._deaths(ws[i:i + 12], since)
+          member = [(w, t) for w in ws for t in w["triggers"] if "member of" in t["text"]]
+          print(len(member), "band-member deaths found (before the timing rule)")
+          for w in ws:
+              before = [t["text"] for t in w["triggers"] if "member of" in t["text"]]
+              if not before: continue
+              radar.annotate(w)
+              kept = [t["text"] for t in w["triggers"] if "member of" in t["text"]]
+              print(f'{w["label"][:34]:34} | found: {before[0][:55]:55} | kept after timing: {bool(kept)} | verdict now: {w["verdict"]}')
+          PY
