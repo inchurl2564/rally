@@ -17,6 +17,17 @@
    "uris": [
     "at://did:plc:mdgolddkdksw4ebrlsyg6a6x/app.bsky.feed.post/3n37qcbpxy724"
    ]
+  },
+  {
+   "date": "2026-11-27",
+   "keys": [
+    "Q2478017",
+    "week:2026-W48"
+   ],
+   "uris": [
+    "at://did:plc:mdgolddkdksw4ebrlsyg6a6x/app.bsky.feed.post/3n3c6wphxla2z",
+    "at://did:plc:mdgolddkdksw4ebrlsyg6a6x/app.bsky.feed.post/3n3c6wqovjv2k"
+   ]
   }
  ]
 }
