@@ -61,7 +61,7 @@ class _Source:
     def __init__(self, name, min_interval):
         self.name, self.min_interval, self.last, self.fails, self.off = name, min_interval, 0.0, 0, False
 
-    def get(self, url, headers=None):
+    def get(self, url, headers=None, _retry=True):
         if self.off:
             return None
         wait = self.min_interval - (time.time() - self.last)
@@ -74,15 +74,27 @@ class _Source:
                 raw = r.read()
             self.fails = 0
             return json.loads(raw) if raw.strip() else None
-        except (urllib.error.HTTPError, urllib.error.URLError, TimeoutError, ConnectionError,
-                json.JSONDecodeError) as e:
-            self.fails += 1
-            if self.fails >= 3:
-                print(f"      {self.name}: switching off for this run after repeated errors ({e})",
-                      file=sys.stderr)
-                self.off = True
-                radar.HEALTH.setdefault("sources_off", []).append(self.name)
-            return None
+        except urllib.error.HTTPError as e:
+            # "Slow down" (429): wait as long as the server asks, go slower for the rest of the run, try once more.
+            if e.code == 429 and _retry:
+                ra = e.headers.get("Retry-After") if e.headers else None
+                pause = min(float(ra), 120) if ra and ra.isdigit() else 30
+                self.min_interval = min(self.min_interval * 2, 8)
+                print(f"      {self.name}: asked to slow down; waiting {pause:.0f}s, then one request every "
+                      f"{self.min_interval:.0f}s", file=sys.stderr)
+                time.sleep(pause)
+                return self.get(url, headers, _retry=False)
+            return self._failed(e)
+        except (urllib.error.URLError, TimeoutError, ConnectionError, json.JSONDecodeError) as e:
+            return self._failed(e)
+
+    def _failed(self, e):
+        self.fails += 1
+        if self.fails >= 3:
+            print(f"      {self.name}: switching off for this run after repeated errors ({e})", file=sys.stderr)
+            self.off = True
+            radar.HEALTH.setdefault("sources_off", []).append(self.name)
+        return None
 
 
 MW = _Source("Wikipedia edit summaries", 1.0)

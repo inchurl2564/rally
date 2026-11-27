@@ -91,6 +91,24 @@ def test_sentences_dated_only_in_the_past_are_old_news():
     assert not annotations._old_news("The film was a hit.", around)       # undated: not old news
 
 
+def test_wikipedia_slow_down_waits_and_retries(monkeypatch):
+    import io
+    import urllib.error
+    calls, slept = [], []
+
+    def fake_urlopen(req, timeout=0):
+        calls.append(req.full_url)
+        if len(calls) == 1:
+            raise urllib.error.HTTPError(req.full_url, 429, "Too Many Requests", {"Retry-After": "5"}, None)
+        return io.BytesIO(b'{"ok": true}')
+
+    monkeypatch.setattr(explain.urllib.request, "urlopen", fake_urlopen)
+    monkeypatch.setattr(explain.time, "sleep", lambda s: slept.append(s))
+    src = explain._Source("test", 1.0)
+    assert src.get("https://example.org/x") == {"ok": True}       # waited, slowed down, then got it
+    assert 5 in slept and src.min_interval == 2 and not src.off and src.fails == 0
+
+
 # ---------- Wikidata reasons ----------
 
 def test_year_only_honors_move_to_their_usual_month():
