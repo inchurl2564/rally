@@ -229,3 +229,11 @@ def test_gate_holds_back_broken_editions(tmp_path):
     assert health.gate(_site(tmp_path / "b", pages=False), today)           # title pages missing
     assert health.gate(_site(tmp_path / "c", failed=200), today)            # reasons lost to lookups
     assert health.gate(_site(tmp_path / "d"), dt.date(2026, 12, 5))         # edition didn't move forward
+
+
+def test_band_member_death_reads_naturally():
+    import bluesky_post
+    r = {"verdict": "death", "label": "Seven and the Ragged Tiger",
+         "triggers": [{"type": "death", "date": "2026-11-26", "qid": "Q1", "text": "Andy Taylor (member of Duran Duran) died"}]}
+    assert bluesky_post.reason(r, dt.date(2026, 11, 27)).startswith("Andy Taylor, a member of Duran Duran, died")
+    assert radar.headline_person(r) == ("Q1", "Andy Taylor")
