@@ -89,6 +89,8 @@ weak link, lookup failed; set aside: seasonal, automated?, front page.
 - **Phones:** cards sit inside collapsed sections; links open the section before scrolling (`openAround`).
 - **Header and footer:** brand yellow #F3C716 (the icon's color) with the black logo, same in light and dark,
   on every page (since 2026-11-27). To undo: `git revert 685d6e77`, push, then run Quick fix (static pages).
+- **Menu:** on its own band, black in light mode and off-white in dark mode; Subscribe is red (since 2026-11-27).
+  To undo: `git revert f9f5e81b` and push.
 - **Logo:** wordmark in masthead, footer and title-page headers (inverted in dark mode); yellow "Rb" icon for
   favicon/apple-touch/Google logo; share card `site/og.png` = wordmark on yellow #F3C716. Files in `site/logo/`.
 - **Fonts:** Playfair Display (serif) + Libre Franklin (sans), Google Fonts, OFL.
