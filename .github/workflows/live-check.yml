@@ -1,0 +1,11 @@
+name: live-check (temporary)
+on: workflow_dispatch
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          for i in $(seq 1 30); do
+            a=$(curl -s "https://therallyback.com/style.css?n=$i$RANDOM" | grep -c "the band itself ends the header" || true)
+            if [ "$a" -gt 0 ]; then echo "LIVE at $(date -u +%H:%M:%S) (try $i)"; break; fi
+            echo "try $i: not yet"; sleep 20; done
