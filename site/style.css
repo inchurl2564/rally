@@ -579,7 +579,16 @@ p, li, .dek, .about .mission { text-wrap: pretty; }
 /* Subscribe in the top row: phones only (desktop keeps the red button at the end of the menu) */
 .mast-sub { display: none; }
 @media (max-width: 600px) {
-  .mast-sub { display: inline-block; order: 3; margin-left: auto; color: #fff; background: var(--red); border-radius: 999px;
-    padding: 6px 14px; font: 800 12px var(--sans); text-transform: uppercase; letter-spacing: .07em; text-decoration: none; }
+  /* One row: edition menu (shrinks if it must) and Subscribe; Following, when shown, gets its own line below. */
+  .mast-right { flex-wrap: wrap; column-gap: 10px; }
+  .mast-right .run-pick { order: 1; flex: 1 1 0; min-width: 0; }
+  .mast-right .run-pick select { max-width: 100%; }
+  .mast-sub { display: inline-block; order: 2; flex: none; margin-left: auto; color: #fff; background: var(--red); border-radius: 999px;
+    padding: 6px 12px; font: 800 12px var(--sans); text-transform: uppercase; letter-spacing: .06em; text-decoration: none; }
   .mast-sub:hover { color: #fff; filter: brightness(.92); }
+  .mast-right .follow-link { order: 3; flex-basis: 100%; }
+}
+@media (max-width: 360px) {   /* the smallest phones: a little tighter so the date isn't clipped */
+  .mast-right .run-pick select { letter-spacing: 0; font-size: 11.5px; }
+  .mast-sub { padding: 6px 10px; letter-spacing: .03em; }
 }
