@@ -102,7 +102,7 @@ function storyText(r) {
     case "death": {
       const who = t.text.split(" (")[0], role = (t.text.match(/\(([^)]+)\)/) || [])[1];
       return { kicker: "In Memoriam", hed: `${w} is back as fans remember ${who}`,
-        dek: `The ${yr} ${n} has drawn ${x} its usual interest since ${who}${role ? `, its ${role},` : ""} died on ${fmtDate(t.date)}.` };
+        dek: `The ${yr} ${n} has drawn ${x} its usual interest since ${who}${role ? `, ${/^member of /.test(role) ? "a" : "its"} ${role},` : ""} died on ${fmtDate(t.date)}.` };
     }
     case "derivative": {
       const [rel, ...rest] = t.text.split(": "), nw = strip(rest.join(": "));

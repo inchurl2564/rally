@@ -102,7 +102,8 @@ def reason(r: dict, today: dt.date) -> str | None:
     if v == "death":
         m = re.match(r"(.+?) \(([^)]+)\) died", text)
         if m:
-            return f"{m.group(1)}, its {m.group(2)}, died on {_date(t['date'])}"
+            art = "a" if m.group(2).startswith("member of ") else "its"
+            return f"{m.group(1)}, {art} {m.group(2)}, died on {_date(t['date'])}"
     if v == "anniversary":
         m = re.match(r"(\d+)", text)
         return f"It turns {m.group(1)}" if m else None

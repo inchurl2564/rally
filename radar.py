@@ -449,6 +449,29 @@ def _deaths(works, since):
             "text": f"{v(row, 'personLabel')} ({role}) died",
             "qid": qid(v(row, "person")),
         })
+    # (a2) deaths of members of a credited band ("Seven and the Ragged Tiger" is credited to Duran Duran,
+    # not to Andy Taylor). Members are listed on the band (has part) or on the person (member of).
+    q = f"""
+    SELECT ?item ?band ?bandLabel ?person ?personLabel ?died WHERE {{
+      VALUES ?item {{ {values} }}
+      VALUES ?prop {{ wdt:P175 wdt:P170 wdt:P86 }}
+      ?item ?prop ?band .
+      {{ ?band wdt:P527 ?person . }} UNION {{ ?person wdt:P463 ?band . }}
+      ?person wdt:P31 wd:Q5 ; wdt:P570 ?died .
+      FILTER(?died >= {lit})
+      SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en,mul". }}
+    }}"""
+    seen = {(t["qid"], id(w)) for w in works for t in w["triggers"] if t.get("type") == "death"}
+    for row in sparql(q):
+        w = by_q[qid(v(row, "item"))]
+        if (qid(v(row, "person")), id(w)) in seen:
+            continue
+        seen.add((qid(v(row, "person")), id(w)))
+        w["triggers"].append({
+            "type": "death", "date": v(row, "died")[:10], "weight": 3,
+            "text": f"{v(row, 'personLabel')} (member of {v(row, 'bandLabel')}) died",
+            "qid": qid(v(row, "person")),
+        })
 
 
 
