@@ -343,8 +343,14 @@ def apply(results: list[dict], threads: list[dict]) -> None:
                 r["editor_note"] = note
                 if r["verdict"] not in ("death", "derivative", "same-creator", "anniversary", "public domain", "honor"):
                     r["verdict"] = EDITOR_VERDICT.get(note["cause"], "editor")
+        covered = {r["qid"] for r in results if (r.get("editor_note") or {}).get("id") == n["id"]}
         for t in threads:
-            if t["name"].lower() in names and lo <= t["around"] <= hi:
+            if not lo <= t["around"] <= hi:
+                continue
+            # A group of titles is explained by the note when it names the group's person, or when most of
+            # its titles are ones the note covers (Duran Duran albums grouped under their producer).
+            qs = [(w[0] if isinstance(w, (list, tuple)) else w).get("qid") for w in t["works"]]
+            if t["name"].lower() in names or (qs and sum(q in covered for q in qs) * 2 > len(qs)):
                 t["editor_note"] = note
 
 
