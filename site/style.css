@@ -603,6 +603,26 @@ p, li, .dek, .about .mission { text-wrap: pretty; }
 .mast { border-bottom-color: #1b1a1f; }
 .foot { border-top-color: #1b1a1f; }
 .mast .wordmark, .foot .foot-wordmark { filter: none !important; }   /* the black logo, as on the icon */
-.mast .tab.cta, .mast .tab.cta:hover, .mast .tab.cta[aria-current="page"], .mast .mast-sub, .mast .mast-sub:hover { color: #f3c716; }
-.mast .tab.cta[aria-current="page"] { box-shadow: 0 0 0 2px #f3c716, 0 0 0 4px #1b1a1f; }
+/* Subscribe: red, in the menu and (phones) in the top row */
+.mast .tab.cta, .mast .tab.cta:hover, .mast .tab.cta[aria-current="page"], .mast .mast-sub, .mast .mast-sub:hover { background: #c2401e; color: #fff; }
+.mast .tab.cta[aria-current="page"] { box-shadow: 0 0 0 2px var(--navbg, #f3c716), 0 0 0 4px #c2401e; }
+/* The menu on its own full-width band: black in light mode, off-white in dark mode */
+.mast:has(.nav) { border-bottom: 0; }   /* the band itself ends the header */
+.mast .nav { --navbg: #1b1a1f; background: var(--navbg); border-top: 0; box-shadow: 0 0 0 100vmax var(--navbg); clip-path: inset(-1px -100vmax); }
+.mast .nav .tab:not(.cta) { color: #f3c716; }
+.mast .nav .tab:not(.cta):hover { color: #fff; }
+.mast .nav .tab:not(.cta)[aria-current="page"] { color: #fff; border-bottom-color: #f3c716; }
+.mast .nav .tabs.pro { background: #2b2a31; border-top-color: #3a3940; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .mast .nav { --navbg: #faf8f4; }
+  :root:not([data-theme="light"]) .mast .nav .tab:not(.cta) { color: #1b1a1f; }
+  :root:not([data-theme="light"]) .mast .nav .tab:not(.cta):hover { color: #c2401e; }
+  :root:not([data-theme="light"]) .mast .nav .tab:not(.cta)[aria-current="page"] { color: #c2401e; border-bottom-color: #c2401e; }
+  :root:not([data-theme="light"]) .mast .nav .tabs.pro { background: #f2eee7; border-top-color: #e5e0d7; }
+}
+:root[data-theme="dark"] .mast .nav { --navbg: #faf8f4; }
+:root[data-theme="dark"] .mast .nav .tab:not(.cta) { color: #1b1a1f; }
+:root[data-theme="dark"] .mast .nav .tab:not(.cta):hover { color: #c2401e; }
+:root[data-theme="dark"] .mast .nav .tab:not(.cta)[aria-current="page"] { color: #c2401e; border-bottom-color: #c2401e; }
+:root[data-theme="dark"] .mast .nav .tabs.pro { background: #f2eee7; border-top-color: #e5e0d7; }
 .mast .mast-search input::placeholder { color: #4a4540; }
