@@ -269,7 +269,7 @@ code { font-size: 13px; background: var(--paper-2); padding: 1px 5px; }
   .section-head { flex-direction: column; align-items: flex-start; margin-top: 48px; padding: 14px 16px 15px; border-left-width: 8px; }
   .section-head h2 { font-size: 28px; }
   .tabs { justify-content: flex-start; }
-  .tab.cta { position: sticky; right: 0; margin-left: 8px; box-shadow: -14px 0 12px -2px var(--paper); }
+  .tab.cta { display: none; }   /* phones: Subscribe sits in the top row instead, so it never covers the menu */
   .bigstat b { font-size: 38px; }
 }
 
@@ -576,3 +576,10 @@ p, li, .dek, .about .mission { text-wrap: pretty; }
 .still ul { list-style: none; padding: 0; margin: 6px 0 0; columns: 2 320px; column-gap: 32px; }
 .still li { margin: 0 0 8px; break-inside: avoid; font-weight: 600; }
 .about-link { text-decoration: underline; text-underline-offset: 3px; }
+/* Subscribe in the top row: phones only (desktop keeps the red button at the end of the menu) */
+.mast-sub { display: none; }
+@media (max-width: 600px) {
+  .mast-sub { display: inline-block; order: 3; margin-left: auto; color: #fff; background: var(--red); border-radius: 999px;
+    padding: 6px 14px; font: 800 12px var(--sans); text-transform: uppercase; letter-spacing: .07em; text-decoration: none; }
+  .mast-sub:hover { color: #fff; filter: brightness(.92); }
+}
