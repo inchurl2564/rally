@@ -260,5 +260,25 @@
     "source_kind": "Wikipedia (supplied by an editor)",
     "cause": "release",
     "new_work": "Q23648408"
+  },
+  {
+    "id": "the-body-netflix-name-2026",
+    "status": "published",
+    "note": "People looking up Netflix's new film The Body are landing on this 2001 film of the same name.",
+    "works": [],
+    "qids": [
+      "Q1120143"
+    ],
+    "entity_name": "The Body (Netflix film)",
+    "from": "2026-10-10",
+    "to": "2026-12-15",
+    "keywords": [
+      "The Body",
+      "Netflix",
+      "trailer"
+    ],
+    "source": "https://www.youtube.com/watch?v=wl7uj7n7DoY",
+    "source_kind": "Netflix's official trailer (supplied by an editor)",
+    "cause": "release"
   }
 ]
