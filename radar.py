@@ -707,6 +707,14 @@ def annotate(w: dict) -> None:
         w["verdict"] = "weak link"
 
 
+def long_dead(died: str | None, around: dt.date, years: int = 5) -> bool:
+    """True when the person died more than `years` years before the comeback."""
+    try:
+        return bool(died) and (around - dt.date.fromisoformat(str(died)[:10])).days > years * 365
+    except ValueError:
+        return False
+
+
 def common_threads(works: list[dict], window: int = 7, batch: int = 25) -> list[dict]:
     """Among spikes with no explanation, find people credited on several of them whose
     spikes began within a few days of each other. Wikidata may not say what happened,
@@ -720,12 +728,13 @@ def common_threads(works: list[dict], window: int = 7, batch: int = 25) -> list[
         values = " ".join(f"wd:{w['qid']}" for w in chunk)
         by_q = {w["qid"]: w for w in chunk}
         q = f"""
-        SELECT DISTINCT ?item ?prop ?person ?personLabel ?pa WHERE {{
+        SELECT DISTINCT ?item ?prop ?person ?personLabel ?pa ?died WHERE {{
           VALUES ?item {{ {values} }}
           VALUES ?prop {{ {props} }}
           ?item ?prop ?person .
           ?person wdt:P31 wd:Q5 .
           OPTIONAL {{ ?pa schema:about ?person; schema:isPartOf <https://en.wikipedia.org/> . }}
+          OPTIONAL {{ ?person wdt:P570 ?died . }}
           SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en,mul". }}
         }}"""
         try:
@@ -738,7 +747,8 @@ def common_threads(works: list[dict], window: int = 7, batch: int = 25) -> list[
             pq = qid(v(row, "person"))
             pa = v(row, "pa")
             g = people.setdefault(pq, {"qid": pq, "name": nice_label(v(row, "personLabel")), "works": {},
-                                       "title": urllib.parse.unquote(pa.split("/wiki/", 1)[1]) if pa else None})
+                                       "title": urllib.parse.unquote(pa.split("/wiki/", 1)[1]) if pa else None,
+                                       "died": (v(row, "died") or "")[:10] or None})
             g["works"][qid(v(row, "item"))] = (by_q[qid(v(row, "item"))], CREDIT_PROPS[qid(v(row, "prop"))][0])
     threads = []
     for g in people.values():
@@ -748,7 +758,7 @@ def common_threads(works: list[dict], window: int = 7, batch: int = 25) -> list[
         mid = starts[len(starts) // 2]
         hits = [(w, role) for w, role in g["works"].values() if abs((w["spike_start"] - mid).days) <= window]
         if len(hits) >= 2:
-            threads.append({"qid": g["qid"], "name": g["name"], "around": mid, "title": g["title"],
+            threads.append({"qid": g["qid"], "name": g["name"], "around": mid, "title": g["title"], "died": g.get("died"),
                             "works": sorted(hits, key=lambda h: h[0]["spike_start"])})
     threads.sort(key=lambda t: -len(t["works"]))
     # Big casts make chance overlaps: keep a work in only its strongest thread.
@@ -1677,6 +1687,11 @@ def main():
     for t in threads:
         if t.get("title"):
             e = explain.explain(args.project, t["title"], t["name"], t["around"], with_news=not args.no_news, person=True)
+            # Legal trouble or a death in today's news can't be about someone who died years ago: it's another person
+            # with the same name (Sam Wood, director, died 1949; a different Sam Wood refused bail in 2026).
+            if e["cause"] in ("legal", "death") and long_dead(t.get("died"), t["around"]):
+                log(f"      {t['name']}: dropped a '{e['cause']}' reason (died {t['died'][:4]}; news is about someone else)")
+                e = {**e, "cause": None, "evidence": [x for x in e["evidence"] if not str(x.get("source", "")).startswith("News")]}
             t.update(evidence=e["evidence"], cause=e["cause"], edit_burst=e["edit_burst"])
     try:
         import youtube

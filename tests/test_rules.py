@@ -325,3 +325,10 @@ def test_note_explains_a_group_made_mostly_of_its_titles(monkeypatch):
     barely = {"name": "Someone Else", "around": day, "works": [{"qid": "Q3"}, {"qid": "Q8"}, {"qid": "Q9"}]}
     annotations.apply(res, [mostly, barely])
     assert mostly.get("editor_note", {}).get("id") == "at" and "editor_note" not in barely
+
+
+def test_no_news_search_under_a_long_dead_persons_name():
+    # Sam Wood the director died in 1949; 2026 news about another Sam Wood in court isn't about him.
+    assert radar.long_dead("1949-09-22", dt.date(2026, 11, 27))
+    assert not radar.long_dead("2026-11-23", dt.date(2026, 11, 27))       # a recent death is the news
+    assert not radar.long_dead(None, dt.date(2026, 11, 27))               # alive: nothing dropped
