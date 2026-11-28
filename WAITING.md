@@ -26,6 +26,7 @@ Updated as items move. Last updated: 2026-11-23 (sources reviewed against their 
 
 | Item | Plan phase | Notes |
 | --- | --- | --- |
+| Add YouTube to the business plan: where it fits (reach vs. revenue), monetization (YouTube Partner Program bar, sponsorships, driving newsletter sign-ups), costs and time | When the owner asks | The owner wants this "at some point"; the video plan and decisions are in HANDOFF.md step 8b |
 | LLC, tax ID, business bank account, trademark, logo | Step 0, Dec 2026 – Jan 2027 | About $1,500 one-time |
 | Legal review of data-source licences, then pro terms | Before the first newsletter sponsorship (moved earlier; see "What's free and what's paid" in the plan) | Apple chart feeds (affiliate-program terms look compatible; check the RSS generator's own note when joining). Deezer, Google News, Netflix Top 10 and every publisher feed ruled out Nov 23. In use and allowed: Wikipedia/Wikidata, GDELT files, Currents (credit shown), YouTube API, TVmaze and Top 25 Report (CC BY-SA credit needed on the site), MusicBrainz/ListenBrainz (CC0; MetaBrainz asks for support once there's revenue), Bluesky (counts and links only). The site's sources wording was updated to match on Nov 23 |
 | Pro waitlist page and paid pilots | Phase A, Apr – Sep 2027 | Following is the free early signal for demand |
