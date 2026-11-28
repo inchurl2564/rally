@@ -308,6 +308,13 @@ YouTube key; LLC → trademark; delete the two paused old morning-report tasks; 
    owner watches it in the YouTube Studio app and taps to make it public. Keep the tap even after YouTube's
    compliance review (videos can't be corrected like the site). Every upload sets "not made for kids", the AI
    label if YouTube's rules require it, and a title/description from the site's data with a link to therallyback.com.
+   **Then TikTok and Instagram Reels (decided Nov 28), same vertical video:** order YouTube (trial) → TikTok →
+   Instagram. TikTok: send each video to the owner's TikTok inbox as a draft (one tap to post); direct public
+   posting needs TikTok's app review. Instagram: needs a Business/Creator account linked to a Facebook Page and
+   Meta's app approval (Meta declined our Threads account, so expect friction); its API publishes immediately, so
+   the job waits for the owner's "publish" link (e.g. in the email announcing each video). Music must be licensed
+   for all three platforms (YouTube Audio Library alone isn't enough); set each platform's AI label where required.
+   Check each platform's current developer rules before building (written from memory, not verified).
 9. Spring 2027 (before the July 2027 file limit): revisit thin title pages (no reason yet, on our list 2 days or
    less, ~43% of `site/w/`). Plan: serve them from one shared page that fills itself in from the title data, at
    the same address so Share links keep working (needs a preview). Alternative: Workers Paid ($5/month).
