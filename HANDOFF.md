@@ -294,6 +294,15 @@ YouTube key; LLC → trademark; delete the two paused old morning-report tasks; 
    reviews every video before upload (a video can't be corrected like the site); check YouTube's AI labelling.
    Uploads manual at first (API uploads stay private until YouTube's compliance review). Vary formats (charts,
    mysteries, deep dives) to stay clear of YouTube's repetitive-content rules. Decide who builds it.
+   **Sample reviewed (Nov 28):** a 64 s, 1080x1920 Short from the Nov 26 list (hook, 4 stories with animated
+   charts counting up from "usual interest", 2 mysteries stamped "Reason: unknown", "Know why? Tell us in the
+   comments"). All figures matched the site's `lift` exactly; keep it that way (use `lift`, not `peak_lift`).
+   Before building: (1) Shorts safe zones: YouTube's title/caption covers ~the bottom fifth and its buttons the
+   right edge; move the "WHY" box up and end charts ~15% in from the right; check in YouTube's preview.
+   (2) Credit on each chart: "Data: Wikipedia page views · therallyback.com". (3) Use the site's specific reason,
+   not a vague one ("A new adaptation of the game" for Ocarina of Time; the data says interest rose ahead of the
+   release). (4) Brand: yellow title/end card with the black logo to match the site and icon; dark story screens
+   can stay. (5) Don't let a "1.0x" starting frame become the thumbnail. Narration not yet reviewed.
 9. Spring 2027 (before the July 2027 file limit): revisit thin title pages (no reason yet, on our list 2 days or
    less, ~43% of `site/w/`). Plan: serve them from one shared page that fills itself in from the title data, at
    the same address so Share links keep working (needs a preview). Alternative: Workers Paid ($5/month).
