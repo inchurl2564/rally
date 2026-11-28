@@ -476,7 +476,8 @@ def privacy_page(site: str, site_url: str) -> None:
         ("The short version",
          "<p>We collect as little as we can. Reading The Rallyback needs no account, sets no cookies and has no ads or "
          "tracking. The only personal information we get is what you choose to send us: your email address if you "
-         "subscribe to the newsletter, and whatever you write in a tip, correction or message.</p>"),
+         "subscribe to the newsletter, and whatever you write in a tip, correction or message. We don't sell or rent "
+         "anyone's personal information, and we don't use it for targeted advertising.</p>"),
         ("Reading the site",
          "<ul><li><b>No cookies, no analytics, no ads.</b> We don't track what you read.</li>"
          "<li><b>Saved in your own browser only:</b> the titles you follow (the ☆ Follow button) and whether you've "
@@ -485,7 +486,11 @@ def privacy_page(site: str, site_url: str) -> None:
          "<li><b>Services that load parts of the page:</b> the site is hosted by Cloudflare; fonts come from Google "
          "Fonts; pictures come from Wikimedia Commons; the chart library comes from Cloudflare's code library "
          "(cdnjs); the newsletter sign-up box comes from Beehiiv. Like any website, these services receive your "
-         "IP address and browser details when your browser asks them for a file. Their own privacy policies apply.</li></ul>"),
+         "IP address and browser details when your browser asks them for a file. Their own privacy policies apply.</li>"
+         "<li><b>Do Not Track:</b> because we don't track you, there's nothing for Do Not Track or Global Privacy "
+         "Control signals to turn off. The site works the same whether or not your browser sends them.</li>"
+         "<li><b>No other tracking:</b> apart from the services listed above, we don't let any other company collect "
+         "information about what you do on our site or follow you across other websites.</li></ul>"),
         ("The newsletter",
          "<p>If you subscribe, your email address is held by <a href=\"https://www.beehiiv.com/privacy\">Beehiiv</a>, "
          "which sends the newsletter for us. Beehiiv may record whether emails are opened and links clicked, which "
