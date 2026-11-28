@@ -16,6 +16,12 @@ Updated as items move. Last updated: 2026-11-23 (sources reviewed against their 
 | Monthly backups | You | Download the GitHub repository (Code → Download ZIP) and the Beehiiv subscriber list once a month |
 | Emergency access | You | Decide who could run the site if you couldn't (password manager emergency access) |
 
+## Planned next
+
+| Item | Waiting for | Then |
+| --- | --- | --- |
+| YouTube channel (faceless, mostly text): a daily Short + a weekly longer video, 2-week trial | Deciding who builds the video system | It reads the site's existing data files; a person reviews each video; manual uploads until YouTube's compliance review. Details in HANDOFF.md, step 8b |
+
 ## Waiting on the business plan
 
 | Item | Plan phase | Notes |

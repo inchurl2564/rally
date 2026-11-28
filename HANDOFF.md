@@ -286,6 +286,14 @@ YouTube key; LLC → trademark; delete the two paused old morning-report tasks; 
 6. Written corrections policy (defamation risk from automated reasons) before sponsorships.
 7. Once affiliates are approved: "Watch / Listen / Read / Play" buttons + Apple artwork next to Apple badges.
 8. Mastodon cross-posting if Bluesky works well.
+8b. YouTube channel (plan from Nov 27, faceless, mostly text): a daily Short (45-60 s) from the daily list and a
+   weekly 6-10 min video from the weekly roundup; 2-week trial at 5 Shorts + 1 weekly. Reads the data the site
+   already publishes (`data/latest.json`, `data/runs/<date>.json`, `data/weekly/<week>.json`); script from the
+   site's own headlines and reasons only (never Currents headlines or Bluesky text); Commons pictures with credit;
+   music only from YouTube Audio Library or a licensed library; leave out or label "Possible" reasons; a person
+   reviews every video before upload (a video can't be corrected like the site); check YouTube's AI labelling.
+   Uploads manual at first (API uploads stay private until YouTube's compliance review). Vary formats (charts,
+   mysteries, deep dives) to stay clear of YouTube's repetitive-content rules. Decide who builds it.
 9. Spring 2027 (before the July 2027 file limit): revisit thin title pages (no reason yet, on our list 2 days or
    less, ~43% of `site/w/`). Plan: serve them from one shared page that fills itself in from the title data, at
    the same address so Share links keep working (needs a preview). Alternative: Workers Paid ($5/month).
