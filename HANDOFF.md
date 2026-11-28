@@ -231,6 +231,11 @@ the check before publishing. GitHub runs them on every code push (`.github/workf
 fix a new wrong reason, add a test with the real example. Archive output is deterministic (identical data
 gives identical files), so old/new diffs show only real changes.
 
+**New page files:** a new top-level file the page builder writes (like `site/privacy.html`) must be added to
+the `git add` lines in both `.github/workflows/radar.yml` and `.github/workflows/quickfix.yml`, or it is built
+but never published. The privacy page (`archive.privacy_page`, date in `PRIVACY_UPDATED`) must be updated
+before adding analytics, ads, affiliate links or any new outside service.
+
 ### Google Search Console
 "Not indexed" reasons that are intentional: **Excluded by 'noindex'** (thin title pages), **Page with
 redirect** (`.html` and www addresses), **Alternate page with proper canonical tag** (the old GitHub address,
