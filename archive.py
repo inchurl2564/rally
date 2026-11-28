@@ -268,6 +268,7 @@ def build(site: str, site_url: str = "") -> None:
     leaders(site, hist, runs)
     weekly(site, hist, runs, latest)
     pages(site, site_url, [q for q, *_ in index], hist, store)
+    privacy_page(site, site_url)
     store.save()
     homepage(site, latest, hist)
     log(f"      archive: {len(index)} titles ({written} pages updated)")
@@ -457,10 +458,70 @@ def _shell(base: str, title: str, desc: str, canon: str, img: str, ld: dict, par
 {chr(10).join(p for p in parts if p)}
 </main>
 <footer><div class="wrap">Every morning, The Rallyback finds older movies, shows, songs, games and books that people are suddenly into again, and tells you why.
-<a href="{e(base)}/">Today’s comebacks</a> · <a href="{e(base)}/week/">Every week</a> · <a href="{e(base)}/?tab=about">About us</a> · <a href="{e(base)}/?tab=subscribe">Weekly newsletter</a>
+<a href="{e(base)}/">Today’s comebacks</a> · <a href="{e(base)}/week/">Every week</a> · <a href="{e(base)}/?tab=about">About us</a> · <a href="{e(base)}/?tab=subscribe">Weekly newsletter</a> · <a href="{e(base)}/privacy">Privacy</a>
 <p class="small copy">© {dt.date.today().year} Castle Bridge Media</p></div></footer>
 </body></html>
 """
+
+
+PRIVACY_UPDATED = "2026-11-28"      # change when the policy's substance changes
+
+
+def privacy_page(site: str, site_url: str) -> None:
+    """site/privacy.html: what the site and the newsletter collect, in plain words.
+    Keep it true: update it when the site adds analytics, ads, affiliate links or a new outside service."""
+    base = site_url.rstrip("/")
+    upd = dt.date.fromisoformat(PRIVACY_UPDATED).strftime("%B %-d, %Y")
+    sections = [
+        ("The short version",
+         "<p>We collect as little as we can. Reading The Rallyback needs no account, sets no cookies and has no ads or "
+         "tracking. The only personal information we get is what you choose to send us: your email address if you "
+         "subscribe to the newsletter, and whatever you write in a tip, correction or message. We don't sell or rent "
+         "anyone's personal information, and we don't use it for targeted advertising.</p>"),
+        ("Reading the site",
+         "<ul><li><b>No cookies, no analytics, no ads.</b> We don't track what you read.</li>"
+         "<li><b>Saved in your own browser only:</b> the titles you follow (the ☆ Follow button) and whether you've "
+         "seen the \u201cHow it works\u201d box. This stays on your device; we never receive it. Clearing your browser's "
+         "site data removes it.</li>"
+         "<li><b>Services that load parts of the page:</b> the site is hosted by Cloudflare; fonts come from Google "
+         "Fonts; pictures come from Wikimedia Commons; the chart library comes from Cloudflare's code library "
+         "(cdnjs); the newsletter sign-up box comes from Beehiiv. Like any website, these services receive your "
+         "IP address and browser details when your browser asks them for a file. Their own privacy policies apply.</li>"
+         "<li><b>Do Not Track:</b> because we don't track you, there's nothing for Do Not Track or Global Privacy "
+         "Control signals to turn off. The site works the same whether or not your browser sends them.</li>"
+         "<li><b>No other tracking:</b> apart from the services listed above, we don't let any other company collect "
+         "information about what you do on our site or follow you across other websites.</li></ul>"),
+        ("The newsletter",
+         "<p>If you subscribe, your email address is held by <a href=\"https://www.beehiiv.com/privacy\">Beehiiv</a>, "
+         "which sends the newsletter for us. Beehiiv may record whether emails are opened and links clicked, which "
+         "helps us see what readers find useful. Every issue has a one-click unsubscribe link. We don't sell, rent or "
+         "share subscriber addresses.</p>"),
+        ("Tips, corrections and messages",
+         "<p>The \u201cKnow why? Tell us\u201d, \u201cReport a correction\u201d and contact forms send what you write to a "
+         "Google Form we manage (<a href=\"https://policies.google.com/privacy\">Google's privacy policy</a>). Your name "
+         "and email are optional except where you want a reply. We use them only to check the tip and answer you. "
+         "If a tip becomes an editor's note, we credit it as \u201ca reader tip\u201d, never by name. Email to "
+         "hello@therallyback.com reaches our inbox and is kept only as long as we need it.</p>"),
+        ("Our data about titles",
+         "<p>The comebacks we report are built from public, aggregate data (for example, Wikipedia page views, which "
+         "count visits without saying who made them). We don't collect information about individual readers to make it.</p>"),
+        ("Your choices",
+         "<p>You can unsubscribe at any time from any issue, and ask us to see or delete anything you've sent us by "
+         "writing to hello@therallyback.com. The site isn't aimed at children under 13, and we don't knowingly collect "
+         "their information.</p>"),
+        ("Who we are",
+         "<p>The Rallyback is made by Castle Bridge Media, PO Box 57, Littleton, CO 80160. Questions: hello@therallyback.com.</p>"),
+        ("Changes",
+         f"<p>If we change how we handle information, we'll update this page and the date below. Last updated {upd}.</p>"),
+    ]
+    parts = ['<p class="kicker">About us</p><h1 class="hed">Privacy</h1>']
+    for head, body in sections:
+        parts.append(f"<h2>{html.escape(head)}</h2>{body}")
+    page = _shell(base, "Privacy | The Rallyback", "What The Rallyback collects (very little) and how the newsletter and "
+                  "reader tips are handled.", f"{base}/privacy", f"{base}/og.png",
+                  {"@context": "https://schema.org", "@type": "WebPage", "name": "Privacy", "url": f"{base}/privacy",
+                   "dateModified": PRIVACY_UPDATED}, parts, og_type="website")
+    _write_if_changed(os.path.join(site, "privacy.html"), page)
 
 
 def _spark(vals: list, baseline: float) -> str:
