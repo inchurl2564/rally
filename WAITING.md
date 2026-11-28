@@ -20,7 +20,7 @@ Updated as items move. Last updated: 2026-11-23 (sources reviewed against their 
 
 | Item | Waiting for | Then |
 | --- | --- | --- |
-| YouTube channel (faceless, mostly text): a daily Short + a weekly longer video, 2-week trial | Deciding who builds the video system | It reads the site's existing data files; a person reviews each video; manual uploads until YouTube's compliance review. Details in HANDOFF.md, step 8b |
+| YouTube channel (faceless, mostly text): a daily Short + a weekly longer video, 2-week trial; made automatically each morning, uploaded as private, owner publishes with one tap | Deciding who builds the video system | It reads the site's existing data files; a person reviews each video; manual uploads until YouTube's compliance review. Details in HANDOFF.md, step 8b |
 
 ## Waiting on the business plan
 

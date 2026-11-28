@@ -303,6 +303,11 @@ YouTube key; LLC → trademark; delete the two paused old morning-report tasks; 
    not a vague one ("A new adaptation of the game" for Ocarina of Time; the data says interest rose ahead of the
    release). (4) Brand: yellow title/end card with the black logo to match the site and icon; dark story screens
    can stay. (5) Don't let a "1.0x" starting frame become the thumbnail. Narration not yet reviewed.
+   **Decided (Nov 28): one-tap publishing, always.** A GitHub job after each nightly edition makes the video
+   (script from the site's headlines, voice, charts, music) and uploads it to the channel as **private**; the
+   owner watches it in the YouTube Studio app and taps to make it public. Keep the tap even after YouTube's
+   compliance review (videos can't be corrected like the site). Every upload sets "not made for kids", the AI
+   label if YouTube's rules require it, and a title/description from the site's data with a link to therallyback.com.
 9. Spring 2027 (before the July 2027 file limit): revisit thin title pages (no reason yet, on our list 2 days or
    less, ~43% of `site/w/`). Plan: serve them from one shared page that fills itself in from the title data, at
    the same address so Share links keep working (needs a preview). Alternative: Workers Paid ($5/month).
